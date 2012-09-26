@@ -6,11 +6,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class DiskUtils {
+public class FileUtils {
 
 	public static File makeDownloadDir() {
 		if (Constants.isLinux || Constants.isOSX) {
-			File downDir = new File(SystemProperties.getUserPath() + File.separator + ConfigurationDefaults.DOWNLOAD_DIRECTORY);
+			File downDir = new File(SystemProperties.getUserPath() + File.separator + Constants.DOWNLOAD_DIRECTORY);
 			if (!downDir.exists()) {
 				downDir.mkdir();
 			}
@@ -42,7 +42,7 @@ public class DiskUtils {
 	}
 
 	private static File makeHiddenDir(File dir) {
-		File downDir = new File(dir, ConfigurationDefaults.DOWNLOAD_DIRECTORY);
+		File downDir = new File(dir, Constants.DOWNLOAD_DIRECTORY);
 		try {
 			if (!downDir.exists()) {
 				if (downDir.mkdir()) {
