@@ -83,9 +83,18 @@ public class Main {
 		mntmOpen.setText("Open");
 		MenuItem mntmAbout = new MenuItem(menu, SWT.NONE);
 		mntmAbout.addSelectionListener(new SelectionAdapter() {
+			private AboutWindow about;
+			private volatile boolean opening;
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				new AboutWindow(shell).open();
+				if (!opening) {
+					about = new AboutWindow(shell);
+					opening = true;
+					about.open();
+					opening = false;
+				} else {
+					about.forceFocus();
+				}
 			}
 		});
 		mntmAbout.setText("About");
