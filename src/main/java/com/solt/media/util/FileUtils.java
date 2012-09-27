@@ -63,4 +63,9 @@ public class FileUtils {
 		}
 		return null;
 	}
+
+	public static void mkdirs(File dir) {
+		// TODO Auto-generated method stub
+		
+	}
 }

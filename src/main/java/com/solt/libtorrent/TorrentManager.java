@@ -1,5 +1,7 @@
 package com.solt.libtorrent;
 
+import java.io.File;
+
 import com.solt.media.stream.NanoHTTPD;
 
 public class TorrentManager {
@@ -14,5 +16,9 @@ public class TorrentManager {
 	
 	public static TorrentManager listenOn(int port, String wwwRoot) {
 		return instance;
+	}
+
+	public void addTorrent(File torrentFile) {
+		
 	}
 }
