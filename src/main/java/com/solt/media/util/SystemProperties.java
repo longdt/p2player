@@ -222,7 +222,7 @@ public class SystemProperties {
 				File dir = new File(temp_user_path);
 
 				if (!dir.exists()) {
-					FileUtil.mkdirs(dir);
+					FileUtils.mkdirs(dir);
 				}
 
 				logger.debug("SystemProperties::getUserPath(Custom): user_path = "
@@ -272,7 +272,7 @@ public class SystemProperties {
 			//if the directory doesn't already exist, create it
 			File dir = new File(temp_user_path);
 			if (!dir.exists()) {
-				FileUtil.mkdirs(dir);
+				FileUtils.mkdirs(dir);
 			}
 
 			return temp_user_path;
