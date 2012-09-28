@@ -16,6 +16,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
 import com.solt.libtorrent.TorrentManager;
+import com.solt.mediaplayer.mplayer.swt.Player;
 
 public class Main {
 	protected Shell shell;
@@ -80,7 +81,16 @@ public class Main {
 				if (path != null) {
 					File torrentFile = new File(path);
 					if (torrentFile.isFile()) {
-						torrManager.addTorrent(torrentFile);
+						String url = torrManager.addTorrent(torrentFile);
+						if (url != null) {
+							Shell mplayer = new Shell();
+							mplayer.setText(url);
+							try {
+								Player.play(mplayer, url);
+							} catch (Exception e1) {
+								e1.printStackTrace();
+							}
+						}
 					}
 				}
 			}

@@ -29,8 +29,12 @@ public class TorrentManager {
 		return instance;
 	}
 
-	public void addTorrent(File torrentFile) {
-		System.out.println(torrent.addTorrent(torrentFile.getAbsolutePath(), 1, false));
+	public String addTorrent(File torrentFile) {
+		String hashCode = torrent.addTorrent(torrentFile.getAbsolutePath(), 1, false);
+		if (hashCode != null) {
+			return "http://127.0.0.1:" + HTTPD_PORT + "/" + hashCode;
+		}
+		return null;
 	}
 
 	public void shutdown() {
