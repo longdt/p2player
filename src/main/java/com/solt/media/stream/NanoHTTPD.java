@@ -273,6 +273,10 @@ public class NanoHTTPD
 		myThread.start();
 	}
 
+	public NanoHTTPD(int port, String wwwRoot, LibTorrent torrent) throws IOException {
+		this(port, new File(wwwRoot), torrent);
+	}
+
 	/**
 	 * shutdowns the server.
 	 */

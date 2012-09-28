@@ -20,7 +20,7 @@ import com.solt.libtorrent.TorrentManager;
 public class Main {
 	protected Shell shell;
 	private boolean minimize = true;
-	private TorrentManager torrManager;
+	private TorrentManager torrManager = TorrentManager.listenOn(0, "./");
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */
@@ -34,6 +34,7 @@ public class Main {
 		try {
 			Main window = new Main();
 			window.open();
+			window.exit();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -54,6 +55,10 @@ public class Main {
 				display.sleep();
 			}
 		}
+	}
+	
+	public void exit() {
+		torrManager.shutdown();
 	}
 
 	/**
