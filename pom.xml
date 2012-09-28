@@ -32,6 +32,8 @@
   		<groupId>com.solt.mediaplayer</groupId>
   		<artifactId>mplayer</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
+  		<scope>system</scope>
+  		<systemPath>${basedir}/lib/mplayer-0.0.1-SNAPSHOT.jar</systemPath>
   	</dependency>
   </dependencies>
 </project>
