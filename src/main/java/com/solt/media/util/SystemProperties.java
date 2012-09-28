@@ -41,99 +41,17 @@ public class SystemProperties {
    */
   public static final String SEP = System.getProperty("file.separator");
   
-  public static final String	AZ_APP_ID	= "az";
-  
-  public static String APPLICATION_NAME 		= "SohaPlayer";
-  private static String APPLICATION_ID 			= AZ_APP_ID;
-  private static String APPLICATION_VERSION		= Constants.AZUREUS_VERSION;
+  private static String APPLICATION_VERSION		= Constants.VERSION;
   
   	// TODO: fix for non-SWT entry points one day
-  private static 		String APPLICATION_ENTRY_POINT 	= "org.gudy.azureus2.ui.swt.Main";
+  private static 		String APPLICATION_ENTRY_POINT 	= "com.solt.media.ui.Main";
   
   private static final 	String WIN_DEFAULT = "Application Data";
   private static final 	String OSX_DEFAULT = "Library" + SEP + "Application Support";
   
   	private static String user_path;
   	private static String app_path;
-  	
-	public static void
-	determineApplicationName()
-	{
-			// try and infer the application name. this is only required on OSX as the app name
-			// is a component of the "application path" used to find plugins etc.
 
-		if ( Constants.isOSX && !System.getProperty( "azureus.infer.app.name", "true" ).equals( "false" )){
-			
-			/* example class path
-			 
-			 /Applications/Utilities/Azureus.app/Contents/Resources/ 
-			Java/swt.jar:/Applications/Utilities/Azureus.app/Contents/Resources/ 
-			Java/swt-pi.jar:/Applications/Utilities/Azureus.app/Contents/Resources/ 
-			Java/Azureus2.jar:/System/Library/Java
-			*/
-			
-			String	classpath = System.getProperty("java.class.path");
-			
-			if ( classpath == null ){
-				
-					// System.out here as very early init!
-				
-				System.out.println( "SystemProperties: determineApplicationName - class path is null" );
-				
-			}else{
-				
-				int	dot_pos = classpath.indexOf( ".app/Contents" );
-				
-				if ( dot_pos == -1 ){
-					
-					System.out.println( "SystemProperties: determineApplicationName -  can't determine application name from " + classpath );
-					
-				}else{
-					
-					int	start_pos = dot_pos;
-					
-					while( start_pos >= 0 && classpath.charAt(start_pos) != '/' ){
-						
-						start_pos--;
-					}
-					
-					String	app_name = classpath.substring( start_pos+1, dot_pos );
-					
-					setApplicationName( app_name );
-				}
-			}
-		}
-	}
-  	
-	public static void
-	setApplicationName(
-		String		name )
-	{
-		if ( name != null && name.trim().length() > 0 ){
-			
-			name	= name.trim();
-			
-			if ( user_path != null ){
-				
-				if ( !name.equals( APPLICATION_NAME )){
-					
-					System.out.println( "**** SystemProperties::setApplicationName called too late! ****" );
-				}
-			}
-			
-			APPLICATION_NAME			= name;
-		}
-	}
-	
-	public static void
-	setApplicationIdentifier(
-		String		application_id )
-	{
-		if ( application_id != null && application_id.trim().length() > 0 ){
-			
-			APPLICATION_ID			= application_id.trim();
-		}
-	}
 	
 	public static void
 	setApplicationEntryPoint(
@@ -143,31 +61,6 @@ public class SystemProperties {
 
 			APPLICATION_ENTRY_POINT	= entry_point.trim();
 		}
-	}
-	
-	public static String
-	getApplicationName()
-	{
-		return( APPLICATION_NAME );
-	}
-	
-	public static void
-	setApplicationVersion(
-		String	v )
-	{
-		APPLICATION_VERSION = v;
-	}
-	
-	public static String
-	getApplicationVersion()
-	{
-		return( APPLICATION_VERSION );
-	}
-	
-	public static String
-	getApplicationIdentifier()
-	{
-		return( APPLICATION_ID );
 	}	
 	
 	public static String
@@ -247,14 +140,14 @@ public class SystemProperties {
 											+ temp_user_path);
 					}
 
-					temp_user_path = temp_user_path + SEP + APPLICATION_NAME + SEP;
+					temp_user_path = temp_user_path + SEP + Constants.APP_NAME + SEP;
 
 					logger.debug("SystemProperties::getUserPath(Win): user_path = "
 										+ temp_user_path);
 
 				} else if (Constants.isOSX) {
 					temp_user_path = userhome + SEP + OSX_DEFAULT + SEP
-							+ APPLICATION_NAME + SEP;
+							+ Constants.APP_NAME + SEP;
 
 					logger.debug("SystemProperties::getUserPath(Mac): user_path = "
 										+ temp_user_path);
@@ -262,7 +155,7 @@ public class SystemProperties {
 				} else {
 					// unix type
 					temp_user_path = userhome + SEP + "."
-							+ APPLICATION_NAME.toLowerCase() + SEP;
+							+ Constants.APP_NAME.toLowerCase() + SEP;
 
 					logger.debug("SystemProperties::getUserPath(Unix): user_path = "
 										+ temp_user_path);
@@ -306,23 +199,6 @@ public class SystemProperties {
 	  
 	  return( app_path );
   }
-  
-  
-  /**
-   * Returns whether or not this running instance was started via
-   * Java's Web Start system.
-   */
-  public static boolean isJavaWebStartInstance() {
-    try {
-      String java_ws_prop = System.getProperty("azureus.javaws");
-      return ( java_ws_prop != null && java_ws_prop.equals( "true" ) );
-    }
-    catch (Throwable e) {
-      //we can get here if running in an applet, as we have no access to system props
-      return false;
-    }
-  }
-  
   
   
   /**
@@ -397,7 +273,7 @@ public class SystemProperties {
 
 	  if( Constants.isOSX ){
 
-		  str += SystemProperties.getApplicationName() + ".app/Contents/Resources/Java/";
+		  str += Constants.APP_NAME + ".app/Contents/Resources/Java/";
 	  }
 
 	  return( str + "Azureus2.jar" );			

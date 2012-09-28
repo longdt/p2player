@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FileUtils {
 
@@ -64,8 +66,23 @@ public class FileUtils {
 		return null;
 	}
 
-	public static void mkdirs(File dir) {
-		// TODO Auto-generated method stub
-		
+	/**
+	 * Makes Directories as long as the directory isn't directly in Volumes (OSX)
+	 * @param f
+	 * @return
+	 */
+	public static boolean mkdirs(File f) {
+		if (Constants.isOSX) {
+			Pattern pat = Pattern.compile("^(/Volumes/[^/]+)");
+			Matcher matcher = pat.matcher(f.getParent());
+			if (matcher.find()) {
+				String sVolume = matcher.group();
+				File fVolume = new File(sVolume);
+				if (!fVolume.isDirectory()) {
+					return false;
+				}
+			}
+		}
+		return f.mkdirs();
 	}
 }

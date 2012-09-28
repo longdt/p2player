@@ -47,9 +47,8 @@ Constants
   public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
   public static String LAUNCHER_FILE = "C:\\Soha Player\\update\\sohalauncher.exe";
   public static String OLD_LAUNCHER_FILE = "C:\\Soha Player\\sohalauncher.exe";
-  public static String SOHA_PLAYER_VERSION = "1.0.11.1129";
-  public static String ABOUT_US = "SohaPlayer: Chương trình xem phim HD\n\nVersion: " + SOHA_PLAYER_VERSION + "\n\nĐóng gói ngày: 28/11/2011\n\n(c) Bản quyền thuộc công ty cổ phần truyền thông Việt Nam VCCorp" ;
-
+  public static String VERSION = "1.0.12.0927";
+ 
   static{
 	  try{
 	  	BYTE_CHARSET 	= Charset.forName( Constants.BYTE_ENCODING );
@@ -69,15 +68,9 @@ Constants
   
   public static boolean DOWNLOAD_SOURCES_PRETEND_COMPLETE	= false;
 	  
-  	// keep the CVS style constant coz version checkers depend on it!
-  	// e.g. 2.0.8.3
-    //      2.0.8.3_CVS
-    //      2.0.8.3_Bnn       // incremental build
+
   
-  public static String APP_NAME = "Vuze";
-  public static final String AZUREUS_NAME	  = "SohaPlayer";
-  public static final String AZUREUS_VERSION  = "1.0.0.1310";  //4.6.0.3_CVS
-  public static final String AZUREUS_SUBVER	  = "";
+  public static String APP_NAME = "MediaPlayer";
 
   
   public static final String  OSName = System.getProperty("os.name");
@@ -250,7 +243,7 @@ Constants
   public static String
   getBaseVersion()
   {
-  	return( getBaseVersion( AZUREUS_VERSION ));
+  	return( getBaseVersion( VERSION ));
   }
   
   public static String
