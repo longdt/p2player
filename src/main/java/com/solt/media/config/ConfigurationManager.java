@@ -18,17 +18,20 @@ import com.solt.media.util.SystemProperties;
  * 
  */
 public class ConfigurationManager {
-	public static final String TORRENT_PORT = "torrent.port";
+	public static final String TORRENT_LISTEN_PORT = "torrent.port";
 	
-	private static final String CONFIG_FILE = SystemProperties.getMetaDataPath() + File.separator +  "metadata.conf";
+	private static final String CONFIG_FILE = SystemProperties.getMetaDataPath() +  "metadata.conf";
 
 	public static final String TORRENT_DOWNLOAD_DIR = "torrent.download.dir";
+	
+	public static final String TORRENT_FILE_DIR = "torrent.file.dir";
+	
 	private Properties props;
 	private static ConfigurationManager conf = new ConfigurationManager();
 	
 	private ConfigurationManager() {
 		props = new Properties();
-		props.setProperty(TORRENT_DOWNLOAD_DIR, SystemProperties.getMetaDataPath() + File.separator + "data");
+		props.setProperty(TORRENT_DOWNLOAD_DIR, SystemProperties.getMetaDataPath() + "data");
 		try {
 			load();
 		} catch (IOException e) {

@@ -1,6 +1,11 @@
 package com.solt.media.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -84,5 +89,37 @@ public class FileUtils {
 			}
 		}
 		return f.mkdirs();
+	}
+	
+	public static boolean copy(File source, File target) {
+		BufferedInputStream in = null;
+		BufferedOutputStream out = null;
+		try {
+			in = new BufferedInputStream(new FileInputStream(source));
+			out = new BufferedOutputStream(new FileOutputStream(target));
+			byte[] buffer = new byte[1024];
+			int length = 0;
+			while ((length = in.read(buffer)) != -1) {
+				out.write(buffer, 0, length);
+			}
+		} catch (IOException e) {
+			return false;
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return true;
 	}
 }
