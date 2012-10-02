@@ -1,26 +1,25 @@
 This makes slow peers pick blocks from the same piece, and fast peers pick from the same piece, and hence decreasing the likelihood of slow peers blocking the completion of pieces.
 TODO:
 F	+need api implement binding api get_download_queue() (done)
-NNN	+api reset piece deadline binding (important) (done)
+F	+api reset piece deadline binding (important) (done)
 		try re-send request if time-out (important)
 F	_fix bug upnp (http response gzip encoding) (done)
 		fixed on version 0.15.10
 SF	change: void torrent::remove_time_critical_piece(int piece, bool finished) {} (done) need tunning
-N	peer_connection::snub_peer
 F	change alert fix bug save_resume_data_alert (done)
 F	fix getFirstPieceIncompleted() implement lock (important) (done)
 F	change the way store map torrent-id torrent_handle by using hash (important) (done)
 F	remove torrent and delete data	(done) (need modify library boost compiled with exception why libtorrent build with boost_no_exception)
 		wordaround: build with boost exception or change code add try catch on method delete_on_file
 F	change api addTorrent using param automanaged instead isSequence	(done)
-N	throws exception on invalid torrent handle
+F	throws exception on invalid torrent handle (done)
 F	throws exception when set deadline/priority out of range (done)
 		ignore when piecedIdx out of range
 F	implement binding api getTorrentPieceNums (done)
-N	change function HandleAlert()
-N	add api read alert
+F	change function HandleAlert() (done)
+F	add api read alert (done)
 F	random listen port (important) (done)
-N	stream folder torrent(important)
+F	stream folder torrent(important) (done)
 N	optimize httpd when transfer data
 
 

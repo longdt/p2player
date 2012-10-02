@@ -12,7 +12,7 @@ public class FileUtils {
 
 	public static File makeDownloadDir() {
 		if (Constants.isLinux || Constants.isOSX) {
-			File downDir = new File(SystemProperties.getUserPath() + File.separator + Constants.DOWNLOAD_DIRECTORY);
+			File downDir = new File(SystemProperties.getMetaDataPath() + File.separator + Constants.DOWNLOAD_DIRECTORY);
 			if (!downDir.exists()) {
 				downDir.mkdir();
 			}

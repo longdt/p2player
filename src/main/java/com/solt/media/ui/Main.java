@@ -2,18 +2,18 @@ package com.solt.media.ui;
 
 import java.io.File;
 
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MenuDetectEvent;
-import org.eclipse.swt.widgets.Menu;
-import org.eclipse.swt.widgets.MenuItem;
-import org.eclipse.wb.swt.SWTResourceManager;
+import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TrayItem;
+import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.solt.libtorrent.TorrentManager;
 import com.solt.mediaplayer.mplayer.swt.Player;
@@ -21,7 +21,7 @@ import com.solt.mediaplayer.mplayer.swt.Player;
 public class Main {
 	protected Shell shell;
 	private boolean minimize = true;
-	private TorrentManager torrManager = TorrentManager.listenOn(0, "./");
+	private TorrentManager torrManager = TorrentManager.getInstance();
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */

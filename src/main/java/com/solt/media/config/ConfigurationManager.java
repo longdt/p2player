@@ -1,5 +1,6 @@
 package com.solt.media.config;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,21 +11,27 @@ import java.util.Collection;
 import java.util.Properties;
 
 import com.solt.media.util.StringUtils;
+import com.solt.media.util.SystemProperties;
 
 /**
  * @author thienlong
  * 
  */
 public class ConfigurationManager {
-	private static final String CONFIG_FILE = "";
+	public static final String TORRENT_PORT = "torrent.port";
+	
+	private static final String CONFIG_FILE = SystemProperties.getMetaDataPath() + File.separator +  "metadata.conf";
+
+	public static final String TORRENT_DOWNLOAD_DIR = "torrent.download.dir";
 	private Properties props;
 	private static ConfigurationManager conf = new ConfigurationManager();
 	
 	private ConfigurationManager() {
+		props = new Properties();
+		props.setProperty(TORRENT_DOWNLOAD_DIR, SystemProperties.getMetaDataPath() + File.separator + "data");
 		try {
 			load();
 		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
