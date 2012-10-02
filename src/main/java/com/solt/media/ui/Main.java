@@ -1,6 +1,7 @@
 package com.solt.media.ui;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
@@ -16,6 +17,7 @@ import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.solt.libtorrent.TorrentManager;
+import com.solt.media.config.ConfigurationManager;
 import com.solt.mediaplayer.mplayer.swt.Player;
 
 public class Main {
@@ -60,6 +62,11 @@ public class Main {
 	
 	public void exit() {
 		torrManager.shutdown();
+		try {
+			ConfigurationManager.getInstance().save();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
