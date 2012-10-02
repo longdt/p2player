@@ -458,9 +458,9 @@ bool saveResumeData() {
 		if (rd->resume_data) {
 			std::vector<char> out;
 			libtorrent::bencode(std::back_inserter(out), *rd->resume_data);
-			std::string savePath = h.save_path().string();
-			std::string fileName = h.name();
-			solt::SaveFile((savePath + fileName + RESUME_SUFFIX), out);
+			boost::filesystem::path savePath = h.save_path();
+			savePath /= (h.name() + RESUME_SUFFIX);
+			solt::SaveFile(savePath, out);
 		}
 		--num_resume_data;
 	}
