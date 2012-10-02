@@ -111,9 +111,9 @@ bool handle_read_piece_alert(sha1_hash &torrent_hash, piece_data_queue &queue, i
 		std::vector<char> out;
 		libtorrent::bencode(std::back_inserter(out),
 				*(saveAlrt->resume_data));
-		std::string savePath = saveAlrt->handle.save_path().string();
-		std::string fileName = saveAlrt->handle.name();
-		solt::SaveFile((savePath + fileName + RESUME_SUFFIX), out);
+		boost::filesystem::path savePath = saveAlrt->handle.save_path();
+		savePath /= (saveAlrt->handle.name() + RESUME_SUFFIX);
+		solt::SaveFile(savePath, out);
 		return false;
 	}
 	return false;
