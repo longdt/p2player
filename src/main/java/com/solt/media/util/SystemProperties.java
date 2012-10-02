@@ -22,7 +22,9 @@
  */
 package com.solt.media.util;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -35,7 +37,6 @@ public class SystemProperties {
   
 		// note this is also used in the restart code....
 	
-	public static final String SYS_PROP_CONFIG_OVERRIDE = "azureus.config.path";
   /**
    * Path separator charactor.
    */
@@ -82,13 +83,13 @@ public class SystemProperties {
 	}
 	
   /**
-   * Returns the full path to the user's home azureus directory.
-   * Under unix, this is usually ~/.azureus/
-   * Under Windows, this is usually .../Documents and Settings/username/Application Data/Azureus/
-   * Under OSX, this is usually /Users/username/Library/Application Support/Azureus/
+   * Returns the full path to the user's home MediaPlayer directory.
+   * Under unix, this is usually ~/.mediaplayer/
+   * Under Windows, this is usually .../Documents and Settings/username/Application Data/MediaPlayer/
+   * Under OSX, this is usually /Users/username/Library/Application Support/MediaPlayer/
    */
   public static String 
-  getUserPath() 
+  getMetaDataPath() 
   {
 		if (user_path != null) {
 			return user_path;
@@ -102,66 +103,45 @@ public class SystemProperties {
 
 		// Super Override -- no AZ_DIR or xxx_DEFAULT added at all.
 
-		String temp_user_path = System.getProperty(SYS_PROP_CONFIG_OVERRIDE);
+		String temp_user_path =null;
 
 		try {
-			if (temp_user_path != null) {
-
-				if (!temp_user_path.endsWith(SEP)) {
-
-					temp_user_path += SEP;
-				}
-
-				File dir = new File(temp_user_path);
-
-				if (!dir.exists()) {
-					FileUtils.mkdirs(dir);
-				}
-
-				logger.debug("SystemProperties::getUserPath(Custom): user_path = "
-									+ temp_user_path);
-
-				return temp_user_path;
-			}
-
 			// If platform failed, try some hackery
-			if (temp_user_path == null) {
-				String userhome = System.getProperty("user.home");
-
-				if (Constants.isWindows) {
-					temp_user_path = getEnvironmentalVariable("APPDATA");
-
-					if (temp_user_path != null && temp_user_path.length() > 0) {
-						logger.debug("Using user config path from APPDATA env var instead: "
-											+ temp_user_path);
-					} else {
-						temp_user_path = userhome + SEP + WIN_DEFAULT;
-						logger.debug("Using user config path from java user.home var instead: "
-											+ temp_user_path);
-					}
-
-					temp_user_path = temp_user_path + SEP + Constants.APP_NAME + SEP;
-
-					logger.debug("SystemProperties::getUserPath(Win): user_path = "
-										+ temp_user_path);
-
-				} else if (Constants.isOSX) {
-					temp_user_path = userhome + SEP + OSX_DEFAULT + SEP
-							+ Constants.APP_NAME + SEP;
-
-					logger.debug("SystemProperties::getUserPath(Mac): user_path = "
-										+ temp_user_path);
-
+			String userhome = System.getProperty("user.home");
+			
+			if (Constants.isWindows) {
+				temp_user_path = getEnvironmentalVariable("APPDATA");
+				
+				if (temp_user_path != null && temp_user_path.length() > 0) {
+					logger.debug("Using user config path from APPDATA env var instead: "
+							+ temp_user_path);
 				} else {
-					// unix type
-					temp_user_path = userhome + SEP + "."
-							+ Constants.APP_NAME.toLowerCase() + SEP;
-
-					logger.debug("SystemProperties::getUserPath(Unix): user_path = "
-										+ temp_user_path);
+					temp_user_path = userhome + SEP + WIN_DEFAULT;
+					logger.debug("Using user config path from java user.home var instead: "
+							+ temp_user_path);
 				}
+				
+				temp_user_path = temp_user_path + SEP + Constants.APP_NAME + SEP;
+				
+				logger.debug("SystemProperties::getUserPath(Win): user_path = "
+						+ temp_user_path);
+				
+			} else if (Constants.isOSX) {
+				temp_user_path = userhome + SEP + OSX_DEFAULT + SEP
+						+ Constants.APP_NAME + SEP;
+				
+				logger.debug("SystemProperties::getUserPath(Mac): user_path = "
+						+ temp_user_path);
+				
+			} else {
+				// unix type
+				temp_user_path = userhome + SEP + "."
+						+ Constants.APP_NAME.toLowerCase() + SEP;
+				
+				logger.debug("SystemProperties::getUserPath(Unix): user_path = "
+						+ temp_user_path);
 			}
-
+			
 			//if the directory doesn't already exist, create it
 			File dir = new File(temp_user_path);
 			if (!dir.exists()) {

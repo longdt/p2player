@@ -237,8 +237,8 @@ public class NanoHTTPD
 	{
 		this.libTorrent = libTorrent;
 		myTcpPort = port;
-		if (!wwwroot.isDirectory()) {
-			throw  new IOException(wwwroot + " is not directory");
+		if (!wwwroot.isDirectory() && !wwwroot.mkdirs()) {
+			throw  new IOException(wwwroot + ": cant create directory");
 		}
 		this.myRootDir = wwwroot;
 		ServerSocketChannel ssc = ServerSocketChannel.open();

@@ -2,36 +2,45 @@ package com.solt.libtorrent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
+import com.solt.media.config.ConfigurationManager;
 import com.solt.media.stream.NanoHTTPD;
 
 public class TorrentManager {
 	private static final int HTTPD_PORT = 18080;
-	private LibTorrent torrent;
+	private LibTorrent libTorrent;
 	private NanoHTTPD httpd;
+	private Set<String> torrents;
 	private static TorrentManager instance;
 	
 	private TorrentManager(int port, String wwwRoot) {
-		torrent = new LibTorrent();
-		torrent.setSession(port, wwwRoot);
 		try {
-			httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, torrent);
+			torrents = new HashSet<>();
+			libTorrent = new LibTorrent();
+			httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
+			libTorrent.setSession(port, wwwRoot);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 	}
 	
-	public synchronized static TorrentManager listenOn(int port, String wwwRoot) {
+	public synchronized static TorrentManager getInstance() {
 		if (instance == null) {
+			ConfigurationManager conf = ConfigurationManager.getInstance();
+			int port = conf.getInt(ConfigurationManager.TORRENT_PORT, 0);
+			String wwwRoot = conf.get(ConfigurationManager.TORRENT_DOWNLOAD_DIR);
 			instance = new TorrentManager(port, wwwRoot);
 		}
 		return instance;
 	}
 
 	public String addTorrent(File torrentFile) {
-		String hashCode = torrent.addTorrent(torrentFile.getAbsolutePath(), 1, false);
+		String hashCode = libTorrent.addTorrent(torrentFile.getAbsolutePath(), 1, false);
 		if (hashCode != null) {
+			torrents.add(hashCode);
 			return "http://127.0.0.1:" + HTTPD_PORT + "/" + hashCode;
 		}
 		return null;
@@ -39,6 +48,6 @@ public class TorrentManager {
 
 	public void shutdown() {
 		httpd.shutdown();
-		torrent.abortSession();
+		libTorrent.abortSession();
 	}
 }
