@@ -233,7 +233,7 @@ Constants
   
   public static final String	FILE_WILDCARD = isWindows?"*.*":"*";
   
-  public static final String DOWNLOAD_DIRECTORY = ".mediadata";
+  public static final String DOWNLOAD_DIRECTORY = ".mediacache";
   
   	/**
   	 * Gets the current version, or if a CVS version, the one on which it is based 

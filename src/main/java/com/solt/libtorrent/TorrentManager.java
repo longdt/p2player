@@ -65,6 +65,11 @@ public class TorrentManager {
 	public String addTorrent(File torrentFile) {
 		String hashCode = libTorrent.addTorrent(torrentFile.getAbsolutePath(), 0, false);
 		if (hashCode != null) {
+			try {
+				libTorrent.setUploadMode(hashCode, false);
+			} catch (TorrentException e) {
+				e.printStackTrace();
+			}
 			if (torrents.add(hashCode)) {
 				FileUtils.copy(torrentFile, new File(torrentsDir, hashCode));
 			}
