@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 
+import com.solt.media.util.Constants;
+import com.solt.media.util.FileUtils;
 import com.solt.media.util.StringUtils;
 import com.solt.media.util.SystemProperties;
 
@@ -31,9 +33,16 @@ public class ConfigurationManager {
 	
 	private ConfigurationManager() {
 		props = new Properties();
-		props.setProperty(TORRENT_DOWNLOAD_DIR, SystemProperties.getMetaDataPath() + "data");
+		//default configuration
 		try {
 			load();
+			String cacheDirString = props.getProperty(TORRENT_DOWNLOAD_DIR);
+			File cacheDir = null;
+			if (cacheDirString == null || !(new File(cacheDirString)).isDirectory()) {
+				cacheDir = FileUtils.makeDownloadDir();
+				cacheDirString = cacheDir != null ? cacheDir.getAbsolutePath() :  SystemProperties.getMetaDataPath() + Constants.DOWNLOAD_DIRECTORY;
+				props.setProperty(TORRENT_DOWNLOAD_DIR, cacheDirString);
+			}
 		} catch (IOException e) {
 		}
 	}
