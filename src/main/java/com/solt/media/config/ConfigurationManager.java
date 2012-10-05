@@ -27,6 +27,8 @@ public class ConfigurationManager {
 	public static final String TORRENT_DOWNLOAD_DIR = "torrent.download.dir";
 	
 	public static final String TORRENT_FILE_DIR = "torrent.file.dir";
+
+	public static final String TORRENT_CACHE_AMOUNT = "torrent.cache.amount";
 	
 	private Properties props;
 	private static ConfigurationManager conf = new ConfigurationManager();
