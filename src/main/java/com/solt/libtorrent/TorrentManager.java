@@ -28,7 +28,6 @@ public class TorrentManager {
 			libTorrent = new LibTorrent();
 			httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
 			libTorrent.setSession(port, wwwRoot);
-			policy = CachePolicyFactory.getDefaultCachePolicy();
 			loadExistTorrents();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -64,6 +63,7 @@ public class TorrentManager {
 			String wwwRoot = conf
 					.get(ConfigurationManager.TORRENT_DOWNLOAD_DIR);
 			instance = new TorrentManager(port, wwwRoot);
+			instance.policy = CachePolicyFactory.getDefaultCachePolicy();
 		}
 		return instance;
 	}
