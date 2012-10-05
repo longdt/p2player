@@ -20,6 +20,7 @@ F	change function HandleAlert() (done)
 F	add api read alert (done)
 F	random listen port (important) (done)
 F	stream folder torrent(important) (done)
+N	add api get torrent seed rank (important for CachePolicy)
 N	optimize httpd when transfer data
 
 
