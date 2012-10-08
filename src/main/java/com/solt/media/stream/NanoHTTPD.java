@@ -243,7 +243,7 @@ public class NanoHTTPD
 		this.myRootDir = wwwroot;
 		ServerSocketChannel ssc = ServerSocketChannel.open();
 		myServerSocket = ssc.socket();
-		myServerSocket.bind(new InetSocketAddress( myTcpPort ));
+		myServerSocket.bind(new InetSocketAddress("127.0.0.1", myTcpPort ));
 		workers = Executors.newFixedThreadPool(8);
 		sessions = new ArrayList<HTTPSession>();
 		serving = true;

@@ -19,7 +19,7 @@ public class NumberCachePolicy implements CachePolicy {
 	@Override
 	public void prepare(String torrentFile) {
 		LinkedHashSet<String> torrents = manager.getTorrents();
-		if (torrents.size() > maxNumTorrent) {
+		if (torrents.size() >= maxNumTorrent) {
 			String hashCode = torrents.iterator().next();
 			try {
 				manager.removeTorrent(hashCode);
