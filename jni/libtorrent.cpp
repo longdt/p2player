@@ -550,8 +550,8 @@ inline jboolean removeTorrent(libtorrent::torrent_handle* pTorrent) {
 inline jboolean deleteTorrent(libtorrent::torrent_handle* pTorrent) {
 	// the alert handler for save_resume_data_alert
 	// will save it to disk
-	boost::filesystem::path resumeFile = pTorrent->save_path().string()
-			+ pTorrent->name() + RESUME_SUFFIX;
+	boost::filesystem::path resumeFile = pTorrent->save_path();
+	resumeFile /= (pTorrent->name() + RESUME_SUFFIX);
 	bool del = false;
 	solt::torrent_alert_handler alert_handler(pTorrent->info_hash(),
 			torrent_alert_handler::alert_type::torrent_deleted, 1);
