@@ -4,8 +4,11 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,12 +94,30 @@ public class FileUtils {
 		return f.mkdirs();
 	}
 	
-	public static boolean copy(File source, File target) {
+	public static boolean copyFile(File source, File target) {
+		try {
+			return copyFile(new FileInputStream(source), new FileOutputStream(target));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean copyFile(InputStream is, File target) {
+		try {
+			return copyFile(is, new FileOutputStream(target));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean copyFile(InputStream is, OutputStream os) {
 		BufferedInputStream in = null;
 		BufferedOutputStream out = null;
 		try {
-			in = new BufferedInputStream(new FileInputStream(source));
-			out = new BufferedOutputStream(new FileOutputStream(target));
+			in = new BufferedInputStream(is);
+			out = new BufferedOutputStream(os);
 			byte[] buffer = new byte[1024];
 			int length = 0;
 			while ((length = in.read(buffer)) != -1) {
