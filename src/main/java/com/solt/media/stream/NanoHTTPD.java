@@ -14,16 +14,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
@@ -34,151 +30,10 @@ import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.Average;
+import com.sun.swing.internal.plaf.metal.resources.metal;
 
-/**
- * A simple, tiny, nicely embeddable HTTP 1.0 (partially 1.1) server in Java
- *
- * <p> NanoHTTPD version 1.25,
- * Copyright &copy; 2001,2005-2012 Jarno Elonen (elonen@iki.fi, http://iki.fi/elonen/)
- * and Copyright &copy; 2010 Konstantinos Togias (info@ktogias.gr, http://ktogias.gr)
- *
- * <p><b>Features + limitations: </b><ul>
- *
- *    <li> Only one Java file </li>
- *    <li> Java 1.1 compatible </li>
- *    <li> Released as open source, Modified BSD licence </li>
- *    <li> No fixed config files, logging, authorization etc. (Implement yourself if you need them.) </li>
- *    <li> Supports parameter parsing of GET and POST methods (+ rudimentary PUT support in 1.25) </li>
- *    <li> Supports both dynamic content and file serving </li>
- *    <li> Supports file upload (since version 1.2, 2010) </li>
- *    <li> Supports partial content (streaming)</li>
- *    <li> Supports ETags</li>
- *    <li> Never caches anything </li>
- *    <li> Doesn't limit bandwidth, request time or simultaneous connections </li>
- *    <li> Default code serves files and shows all HTTP parameters and headers</li>
- *    <li> File server supports directory listing, index.html and index.htm</li>
- *    <li> File server supports partial content (streaming)</li>
- *    <li> File server supports ETags</li>
- *    <li> File server does the 301 redirection trick for directories without '/'</li>
- *    <li> File server supports simple skipping for files (continue download) </li>
- *    <li> File server serves also very long files without memory overhead </li>
- *    <li> Contains a built-in list of most common mime types </li>
- *    <li> All header names are converted lowercase so they don't vary between browsers/clients </li>
- *
- * </ul>
- *
- * <p><b>Ways to use: </b><ul>
- *
- *    <li> Run as a standalone app, serves files and shows requests</li>
- *    <li> Subclass serve() and embed to your own program </li>
- *    <li> Call serveFile() from serve() with your own base directory </li>
- *
- * </ul>
- *
- * See the end of the source file for distribution license
- * (Modified BSD licence)
- */
 public class NanoHTTPD
 {
-
-	/**
-	 * HTTP response.
-	 * Return one of these from serve().
-	 */
-	public class Response
-	{
-
-		/**
-		 * Basic constructor.
-		 */
-		public Response(String status, String mimeType, String hashCode, long transferOffset, long dataLength )
-		{
-			this.status = status;
-			this.mimeType = mimeType;
-			this.hashCode = hashCode;
-			this.transferOffset = transferOffset;
-			this.dataLength = dataLength;
-		}
-		
-		public Response(String status, String mimeType)
-		{
-			this(status, mimeType, null, 0, 0);
-		}
-
-		/**
-		 * Adds given line to the header.
-		 */
-		public void addHeader( String name, String value )
-		{
-			headers.put( name, value );
-		}
-
-		public String getStatus() {
-			return status;
-		}
-
-		public void setStatus(String status) {
-			this.status = status;
-		}
-
-		public String getMimeType() {
-			return mimeType;
-		}
-
-		public void setMimeType(String mimeType) {
-			this.mimeType = mimeType;
-		}
-
-		public String getHashCode() {
-			return hashCode;
-		}
-
-		public void setHashCode(String hashCode) {
-			this.hashCode = hashCode;
-		}
-
-		public long getDataLength() {
-			return dataLength;
-		}
-
-		public void setDataLength(long dataLength) {
-			this.dataLength = dataLength;
-		}
-
-		public long getTransferOffset() {
-			return transferOffset;
-		}
-
-		public Properties getHeaders() {
-			return headers;
-		}
-
-		public void setHeaders(Properties headers) {
-			this.headers = headers;
-		}
-
-		/**
-		 * HTTP status code after processing, e.g. "200 OK", HTTP_OK
-		 */
-		private String status;
-
-		/**
-		 * MIME type of content, e.g. "text/html"
-		 */
-		private String mimeType;
-		
-		private long dataLength;
-		
-		private String hashCode;
-		
-		private long transferOffset;
-
-		/**
-		 * Headers for the HTTP response. Use addHeader()
-		 * to add lines.
-		 */
-		private Properties headers = new Properties();
-	}
 
 	/**
 	 * Some HTTP response status codes
@@ -203,6 +58,14 @@ public class NanoHTTPD
 		MIME_HTML = "text/html",
 		MIME_DEFAULT_BINARY = "application/octet-stream",
 		MIME_XML = "text/xml";
+
+	public static final String ACTION_VIEW = "/view";
+
+	public static final String ACTION_ADD = "/add";
+
+	public static final String PARAM_HASHCODE = "hashcode";
+
+	private static final String PARAM_FILE = "file";
 
 	// ==================================================
 	// Socket & server code
@@ -313,29 +176,10 @@ public class NanoHTTPD
 		{
 			try
 			{
-				InputStream is = mySocket.getInputStream();
-				if ( is == null) return;
-				BufferedReader hin = new BufferedReader( new InputStreamReader( is ));
-				Properties pre = new Properties();
-				Properties parms = new Properties();
-				Properties header = new Properties();
-
-				// Decode the header into parms and header java properties
-				decodeHeader(hin, pre, parms, header);
-				String method = pre.getProperty("method");
-				String uri = pre.getProperty("uri");
-
-
-				if (! method.equalsIgnoreCase( "GET" )) {
-					sendError( HTTP_NOTIMPLEMENTED, "SERVER DOES NOT IMPLEMENTS THIS METHOD ");
+				HttpRequest request = parseRequest(mySocket.getInputStream());
+				if (request != null) {
+					serveRequest(request);
 				}
-
-				// Ok, now do the serve()
-				Response r = serve( uri, method, header, parms);
-				if ( r == null )
-					sendError( HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response." );
-				else
-					sendResponse( r );
 			}
 			catch ( IOException ioe )
 			{
@@ -360,38 +204,62 @@ public class NanoHTTPD
 			}
 		}
 
+		private void serveRequest(HttpRequest request) throws InterruptedException {
+			String uri = request.getUri();
+			String hashCode = request.getParam(NanoHTTPD.PARAM_HASHCODE);
+			if (uri.equals(NanoHTTPD.ACTION_VIEW)) {
+				if (hashCode != null) {
+					HttpResponse r = serve(request);
+					sendResponse( r );
+				}
+			} else if (uri.equals(NanoHTTPD.ACTION_ADD)) {
+				String url = "http://localhost/" + hashCode;
+			} else {
+				sendError(HTTP_BADREQUEST, "invalid uri");
+			}
+		}
+
 		/**
 		 * Decodes the sent headers and loads the data into
 		 * java Properties' key - value pairs
 		**/
-		private  void decodeHeader(BufferedReader in, Properties pre, Properties parms, Properties header)
+		private  HttpRequest parseRequest(InputStream is)
 			throws InterruptedException
 		{
 			try {
+				BufferedReader in = new BufferedReader( new InputStreamReader( is ));
 				// Read the request line
 				String inLine = in.readLine();
-				if (inLine == null) return;
+				if (inLine == null) return null;
 				StringTokenizer st = new StringTokenizer( inLine );
 				if ( !st.hasMoreTokens())
 					sendError( HTTP_BADREQUEST, "BAD REQUEST: Syntax error. Usage: GET /example/file.html" );
 
-				String method = st.nextToken();
-				pre.put("method", method);
+				String methodString = st.nextToken();
+				int method = 0;
+				if (methodString.equalsIgnoreCase("GET")) {
+					method = HttpRequest.METHOD_GET;
+				} else if (methodString.equalsIgnoreCase("HEAD")) {
+					method = HttpRequest.METHOD_HEAD;
+				} else {
+					sendError( HTTP_NOTIMPLEMENTED, "SERVER DOES NOT IMPLEMENTS THIS METHOD ");
+				}
 
 				if ( !st.hasMoreTokens())
 					sendError( HTTP_BADREQUEST, "BAD REQUEST: Missing URI. Usage: GET /example/file.html" );
 
 				String uri = st.nextToken();
-
+				HttpRequest request = new HttpRequest();
+				request.setMethod(method);
 				// Decode parameters from the URI
 				int qmi = uri.indexOf( '?' );
 				if ( qmi >= 0 )
 				{
-					decodeParms( uri.substring( qmi+1 ), parms );
+					decodeParms( uri.substring( qmi+1 ), request.getParams() );
 					uri = decodePercent( uri.substring( 0, qmi ));
 				}
 				else uri = decodePercent(uri);
-
+				request.setUri(uri);
 				// If there's another token, it's protocol version,
 				// followed by HTTP headers. Ignore version but parse headers.
 				// NOTE: this now forces header names lowercase since they are
@@ -403,17 +271,17 @@ public class NanoHTTPD
 					{
 						int p = line.indexOf( ':' );
 						if ( p >= 0 )
-							header.put( line.substring(0,p).trim().toLowerCase(), line.substring(p+1).trim());
+							request.setHeader( line.substring(0,p).trim().toLowerCase(), line.substring(p+1).trim());
 						line = in.readLine();
 					}
 				}
-
-				pre.put("uri", uri);
+				return request;
 			}
 			catch ( IOException ioe )
 			{
 				sendError( HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
 			}
+			return null;
 		}
 
 		/**
@@ -458,7 +326,7 @@ public class NanoHTTPD
 		 * identical keys due to the simplicity of Properties -- if you need multiples,
 		 * you might want to replace the Properties with a Hashtable of Vectors or such.
 		 */
-		private void decodeParms( String parms, Properties p )
+		private void decodeParms( String parms, Map<String, String> map )
 			throws InterruptedException
 		{
 			if ( parms == null )
@@ -470,7 +338,7 @@ public class NanoHTTPD
 				String e = st.nextToken();
 				int sep = e.indexOf( '=' );
 				if ( sep >= 0 )
-					p.put( decodePercent( e.substring( 0, sep )).trim(),
+					map.put( decodePercent( e.substring( 0, sep )).trim(),
 						   decodePercent( e.substring( sep+1 )));
 			}
 		}
@@ -510,13 +378,14 @@ public class NanoHTTPD
 		 * Sends given response to the socket.
 		 * @throws InterruptedException 
 		 */
-		private void sendResponse( Response response ) throws InterruptedException
+		private void sendResponse( HttpResponse response ) throws InterruptedException
 		{
 			String status = response.getStatus();
 			String mime = response.getMimeType();
-			Properties header = response.getHeaders();
-			int lastSet = 0;
+			Map<String, String> header = response.getHeaders();
+
 			String hashCode = response.getHashCode();
+			String msg = response.getMessage();
 			PrintWriter pw = null;
 			try
 			{
@@ -529,17 +398,13 @@ public class NanoHTTPD
 				if ( mime != null )
 					pw.print("Content-Type: " + mime + "\r\n");
 
-				if ( header == null || header.getProperty( "Date" ) == null )
+				if ( header == null || header.get( "Date" ) == null )
 					pw.print( "Date: " + gmtFrmt.format( new Date()) + "\r\n");
 
 				if ( header != null )
 				{
-					Enumeration e = header.keys();
-					while ( e.hasMoreElements())
-					{
-						String key = (String)e.nextElement();
-						String value = header.getProperty( key );
-						pw.print( key + ": " + value + "\r\n");
+					for (Entry<String, String> entry : header.entrySet()) {
+						pw.print( entry.getKey() + ": " + entry.getValue() + "\r\n");
 					}
 				}
 
@@ -548,133 +413,133 @@ public class NanoHTTPD
 
 				if ( hashCode != null )
 				{
-					int state = libTorrent.getTorrentState(hashCode);
-					if (state == -1) {
-						return;
-					}
-					Average streamRate = Average.getInstance( 1000, 20 );
-					long pending = response.getDataLength();	// This is to support partial sends, see serveFile()
-
-					//TODO transfer data when downloading torrent
-					int pieceSize = libTorrent.getPieceSize(hashCode, false);
-				//	int PIECE_BUFFER_SIZE = 300 * 1024 * 30 / pieceSize;
-					long timeToWait = (pieceSize * 10000l) / (300 * 1024);
-					long transferOffset = response.getTransferOffset();
-					int streamPiece = (int) (transferOffset / pieceSize);
-					int setRead = -1;
-					int transferPieceIdx = streamPiece;
-					int transferPieceOffset = (int) (transferOffset - transferPieceIdx * pieceSize);
-					if (transferOffset > 0) {
-						//TODO clear piece deadline
-//						libTorrent.clearPiecesDeadline(hashCode);
-					}
-					
-					
-					int pieceNum = libTorrent.getPieceNum(hashCode);
-					lastSet = streamPiece;
-					int incompleteIdx = lastSet;
-					int numSet =  0;
-					byte[] buff = new byte[pieceSize];
-					ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-					mySocket.setSendBufferSize(pieceSize);
-					SocketChannel sc = mySocket.getChannel();
-					sc.configureBlocking(false);
-					int cancelPiece = 0;
-					long lastTime = System.currentTimeMillis();
-					boolean cancelled = false;
-					while (streaming && pending>0 && !Thread.currentThread().isInterrupted())
-					{
-						if (state != 4 && state != 5 && state != 3) {
-							state = libTorrent.getTorrentState(hashCode);
-						}
-						int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode, pieceSize, streamRate);
-						System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
-						if (state != 4 && state != 5 && streamPiece + PIECE_BUFFER_SIZE > incompleteIdx) {
-							incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode, transferOffset);
-							long currentTime = System.currentTimeMillis();
-							if (cancelPiece != incompleteIdx) {
-								if (cancelled && cancelPiece + PIECE_BUFFER_SIZE * 2 / 3 > incompleteIdx) {
-									libTorrent.cancelTorrentPiece(hashCode, incompleteIdx);
-								} else {
-									cancelled = false;
-								}
-								cancelPiece = incompleteIdx;
-								lastTime = currentTime;
-							} else if (lastTime + timeToWait < currentTime) {
-								libTorrent.cancelTorrentPiece(hashCode, cancelPiece);
-								cancelled = true;
-								lastTime = currentTime;
-							}
-
-							System.err.println(streamPiece);
-							if (incompleteIdx > lastSet) {
-								lastSet = incompleteIdx;
-							}
-							numSet =  incompleteIdx + PIECE_BUFFER_SIZE - lastSet;
-							if (numSet > 0) {
-		//						System.err.println("set deadline: [" + lastSet + ", " + (lastSet + numSet) + ")");
-								for (int i = 0; i < numSet && i + lastSet < pieceNum; ++i) {
-									libTorrent.setPieceDeadline(hashCode, lastSet + i, i *150 + 1500 );
-									if (lastSet + i + PIECE_BUFFER_SIZE < pieceNum) {
-										libTorrent.setPiecePriority(hashCode, lastSet + i + PIECE_BUFFER_SIZE, 7);
-									}
-								}
-								lastSet += numSet;
-							}
-							if (streamPiece == incompleteIdx) {
-								System.err.println("wait for libtorrent download data...");
-								Thread.sleep(500);
-								int len = sc.read(readBuffer);
-								if (len == -1) {
-									System.err.println("..........EOF........");
-									break;
-								} else if (len > 0) {
-									System.err.println("Player send data to server");
-								}
-								continue;
-							}
-						}
-						if (setRead != streamPiece) {
-							setRead = streamPiece;
-							libTorrent.setTorrentReadPiece(hashCode, setRead);
-							Thread.sleep(50);
-						}
-						int len = libTorrent.readTorrentPiece(hashCode, streamPiece, buff);
-						if (len == -1) {
-							break;
-						} else if (len == 0) {
-							Thread.sleep(50);
-							continue;
-						}
-						int offset = (streamPiece == transferPieceIdx)? transferPieceOffset : 0;
-						len = len - offset;
-						if (len > pending) {
-							len = (int) pending;
-						}
-						writeData(sc, buff, offset, len, streamRate);
-						pending -= len;
-						++streamPiece;
-					}
+					sendTorrentData(hashCode, response.getDataLength(), response.getTransferOffset());
+				} else if (msg != null) {
+					pw.write(msg);
 				}
-				
 			}
 			catch( Exception e )
 			{
 //				System.err.println("close stream: " + response.getTransferOffset() + " due: " + e.getMessage());
 //				e.printStackTrace();
 			} finally {
-				if (lastSet != 0) {
-//					for (int i = 0; i < RANGE; ++i) {
-//						libTorrent.resetPieceDeadline(hashCode, lastSet - i -1);
-//						libTorrent.setPiecePriority(hashCode, lastSet + i, 3);
-//					}
-				}
 				if (pw != null) {
 					pw.close();
 				}
 			}
 		}
 		
+		private void sendTorrentData(String hashCode, long dataLength, long transferOffset) throws Exception {
+			int lastSet = 0;
+			int state = libTorrent.getTorrentState(hashCode);
+			if (state == -1) {
+				return;
+			}
+			Average streamRate = Average.getInstance( 1000, 20 );
+			long pending = dataLength;	// This is to support partial sends, see serveFile()
+
+			//TODO transfer data when downloading torrent
+			int pieceSize = libTorrent.getPieceSize(hashCode, false);
+		//	int PIECE_BUFFER_SIZE = 300 * 1024 * 30 / pieceSize;
+			long timeToWait = (pieceSize * 10000l) / (300 * 1024);
+			int streamPiece = (int) (transferOffset / pieceSize);
+			int setRead = -1;
+			int transferPieceIdx = streamPiece;
+			int transferPieceOffset = (int) (transferOffset - transferPieceIdx * pieceSize);
+			if (transferOffset > 0) {
+				//TODO clear piece deadline
+//				libTorrent.clearPiecesDeadline(hashCode);
+			}
+			
+			
+			int pieceNum = libTorrent.getPieceNum(hashCode);
+			lastSet = streamPiece;
+			int incompleteIdx = lastSet;
+			int numSet =  0;
+			byte[] buff = new byte[pieceSize];
+			ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+			mySocket.setSendBufferSize(pieceSize);
+			SocketChannel sc = mySocket.getChannel();
+			sc.configureBlocking(false);
+			int cancelPiece = 0;
+			long lastTime = System.currentTimeMillis();
+			boolean cancelled = false;
+			while (streaming && pending>0 && !Thread.currentThread().isInterrupted())
+			{
+				if (state != 4 && state != 5 && state != 3) {
+					state = libTorrent.getTorrentState(hashCode);
+				}
+				int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode, pieceSize, streamRate);
+				System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
+				if (state != 4 && state != 5 && streamPiece + PIECE_BUFFER_SIZE > incompleteIdx) {
+					incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode, transferOffset);
+					long currentTime = System.currentTimeMillis();
+					if (cancelPiece != incompleteIdx) {
+						if (cancelled && cancelPiece + PIECE_BUFFER_SIZE * 2 / 3 > incompleteIdx) {
+							libTorrent.cancelTorrentPiece(hashCode, incompleteIdx);
+						} else {
+							cancelled = false;
+						}
+						cancelPiece = incompleteIdx;
+						lastTime = currentTime;
+					} else if (lastTime + timeToWait < currentTime) {
+						libTorrent.cancelTorrentPiece(hashCode, cancelPiece);
+						cancelled = true;
+						lastTime = currentTime;
+					}
+
+					System.err.println(streamPiece);
+					if (incompleteIdx > lastSet) {
+						lastSet = incompleteIdx;
+					}
+					numSet =  incompleteIdx + PIECE_BUFFER_SIZE - lastSet;
+					if (numSet > 0) {
+//						System.err.println("set deadline: [" + lastSet + ", " + (lastSet + numSet) + ")");
+						for (int i = 0; i < numSet && i + lastSet < pieceNum; ++i) {
+							libTorrent.setPieceDeadline(hashCode, lastSet + i, i *150 + 1500 );
+							if (lastSet + i + PIECE_BUFFER_SIZE < pieceNum) {
+								libTorrent.setPiecePriority(hashCode, lastSet + i + PIECE_BUFFER_SIZE, 7);
+							}
+						}
+						lastSet += numSet;
+					}
+					if (streamPiece == incompleteIdx) {
+						System.err.println("wait for libtorrent download data...");
+						Thread.sleep(500);
+						int len = sc.read(readBuffer);
+						if (len == -1) {
+							System.err.println("..........EOF........");
+							break;
+						} else if (len > 0) {
+							System.err.println("Player send data to server");
+						}
+						continue;
+					}
+				}
+				if (setRead != streamPiece) {
+					setRead = streamPiece;
+					libTorrent.setTorrentReadPiece(hashCode, setRead);
+					Thread.sleep(50);
+				}
+				int len = libTorrent.readTorrentPiece(hashCode, streamPiece, buff);
+				if (len == -1) {
+					break;
+				} else if (len == 0) {
+					Thread.sleep(50);
+					continue;
+				}
+				int offset = (streamPiece == transferPieceIdx)? transferPieceOffset : 0;
+				len = len - offset;
+				if (len > pending) {
+					len = (int) pending;
+				}
+				writeData(sc, buff, offset, len, streamRate);
+				pending -= len;
+				++streamPiece;
+			}
+					
+		}
+
 		private void writeData(SocketChannel sc, byte[] buff, int offset, int len, Average streamRate) throws IOException, InterruptedException {
 			ByteBuffer buffer = ByteBuffer.wrap(buff, offset, len); //TODO Need tunning
 			sc.write(buffer);
@@ -733,23 +598,13 @@ public class NanoHTTPD
 		 * @return HTTP response, see class Response for details
 		 * @throws InterruptedException 
 		 */
-		Response serve( String uri, String method, Properties header, Properties parms ) throws InterruptedException
+		HttpResponse serve( HttpRequest request) throws InterruptedException
 		{
-			Response res = null;
-			// Remove URL arguments
-			uri = uri.trim().replace( File.separatorChar, '/' );
-			if ( uri.indexOf( '?' ) >= 0 )
-				uri = uri.substring(0, uri.indexOf( '?' ));
-	
-			// Prohibit getting out of current directory
-			if ( uri.startsWith( ".." ) || uri.endsWith( ".." ) || uri.indexOf( "../" ) >= 0 )
-				sendError(HTTP_FORBIDDEN, "FORBIDDEN: Won't serve ../ for security reasons.");
-					
-		
+			HttpResponse res = null;
 			try
 			{
-				String hashCode = uri.substring(1);
-				String file = parms.getProperty(FILE_PARAM);
+				String hashCode = request.getParam(PARAM_HASHCODE);
+				String file = request.getParam(PARAM_FILE);
 				int index = 0;
 				if (file != null) {
 					index = Integer.parseInt(file);
@@ -775,7 +630,7 @@ public class NanoHTTPD
 				// Support (simple) skipping:
 				long startFrom = 0;
 				long endAt = -1;
-				String range = header.getProperty( "range" );
+				String range = request.getHeader( "range" );
 				if ( range != null )
 				{
 					if ( range.startsWith( "bytes=" ))
@@ -799,9 +654,9 @@ public class NanoHTTPD
 				{
 					if ( startFrom >= fileLen)
 					{
-						res = new Response(HTTP_RANGE_NOT_SATISFIABLE, MIME_PLAINTEXT);
-						res.addHeader( "Content-Range", "bytes 0-0/" + fileLen);
-						res.addHeader( "ETag", etag);
+						res = new HttpResponse(HTTP_RANGE_NOT_SATISFIABLE, MIME_PLAINTEXT, null);
+						res.setHeader( "Content-Range", "bytes 0-0/" + fileLen);
+						res.setHeader( "ETag", etag);
 					}
 					 else {
 						if ( endAt < 0 )
@@ -810,25 +665,25 @@ public class NanoHTTPD
 						if ( newLen < 0 ) newLen = 0;
 	
 						final long dataLen = newLen;
-						if (method.equalsIgnoreCase("HEAD")) {
-							res = new Response(HTTP_PARTIALCONTENT, mime );
+						if (request.getMethod() == HttpRequest.METHOD_HEAD) {
+							res = new HttpResponse(HTTP_PARTIALCONTENT, mime, null );
 						} else {
-							res = new Response(HTTP_PARTIALCONTENT, mime, hashCode, fileOffset + startFrom, dataLen);
+							res = new HttpResponse(HTTP_PARTIALCONTENT, mime, hashCode, fileOffset + startFrom, dataLen);
 						}
-						res.addHeader( "Content-Length", "" + dataLen);
-						res.addHeader( "Content-Range", "bytes " + startFrom + "-" + endAt + "/" + fileLen);
-						res.addHeader( "ETag", etag);
+						res.setHeader( "Content-Length", "" + dataLen);
+						res.setHeader( "Content-Range", "bytes " + startFrom + "-" + endAt + "/" + fileLen);
+						res.setHeader( "ETag", etag);
 					}
 				}
 				else
 				{
-					if (etag.equals(header.getProperty("if-none-match")))
-						res = new Response(HTTP_NOTMODIFIED, mime);
+					if (etag.equals(request.getHeader("if-none-match")))
+						res = new HttpResponse(HTTP_NOTMODIFIED, mime, null);
 					else
 					{
-						res = method.equalsIgnoreCase("HEAD") ? new Response(HTTP_OK, mime) : new Response(HTTP_OK, mime, hashCode, fileOffset, fileLen);
-						res.addHeader( "Content-Length", "" + fileLen);
-						res.addHeader( "ETag", etag);
+						res = request.getMethod() == HttpRequest.METHOD_HEAD ? new HttpResponse(HTTP_OK, mime, null) : new HttpResponse(HTTP_OK, mime, hashCode, fileOffset, fileLen);
+						res.setHeader( "Content-Length", "" + fileLen);
+						res.setHeader( "ETag", etag);
 					}
 				}
 			
@@ -842,9 +697,8 @@ public class NanoHTTPD
 				sendError(HTTP_NOTFOUND, "Error 404, file not found.");
 			}
 		
-			res.addHeader( "Accept-Ranges", "bytes"); // Announce that the file server accepts partial content requestes
+			res.setHeader( "Accept-Ranges", "bytes"); // Announce that the file server accepts partial content requestes
 			return res;
-		
 		}
 
 		private Socket mySocket;
@@ -861,7 +715,6 @@ public class NanoHTTPD
 	private volatile boolean serving;
 	private static int		DEFAULT_BUFFER_SECS = 60;
 	private static int		DEFAULT_MIN_PIECES_TO_BUFFER = 5;
-	private static String FILE_PARAM = "file";
 	// ==================================================
 	// File server code
 	// ==================================================
@@ -904,11 +757,6 @@ public class NanoHTTPD
 		while ( st.hasMoreTokens())
 			theMimeTypes.put( st.nextToken(), st.nextToken());
 	}
-	
-	
-
-	
-
 
 	// Change this if you want to log to somewhere else than stdout
 	protected static PrintStream myOut = System.out; 
@@ -922,35 +770,5 @@ public class NanoHTTPD
 		gmtFrmt = new java.text.SimpleDateFormat( "E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
 		gmtFrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
-
-	/**
-	 * The distribution licence
-	 */
-	private static final String LICENCE =
-		"Copyright (C) 2001,2005-2011 by Jarno Elonen <elonen@iki.fi>\n"+
-		"and Copyright (C) 2010 by Konstantinos Togias <info@ktogias.gr>\n"+
-		"\n"+
-		"Redistribution and use in source and binary forms, with or without\n"+
-		"modification, are permitted provided that the following conditions\n"+
-		"are met:\n"+
-		"\n"+
-		"Redistributions of source code must retain the above copyright notice,\n"+
-		"this list of conditions and the following disclaimer. Redistributions in\n"+
-		"binary form must reproduce the above copyright notice, this list of\n"+
-		"conditions and the following disclaimer in the documentation and/or other\n"+
-		"materials provided with the distribution. The name of the author may not\n"+
-		"be used to endorse or promote products derived from this software without\n"+
-		"specific prior written permission. \n"+
-		" \n"+
-		"THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR\n"+
-		"IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES\n"+
-		"OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.\n"+
-		"IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,\n"+
-		"INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT\n"+
-		"NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,\n"+
-		"DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"+
-		"THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT\n"+
-		"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n"+
-		"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
 }
 

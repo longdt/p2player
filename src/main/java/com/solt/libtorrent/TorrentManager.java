@@ -3,7 +3,6 @@ package com.solt.libtorrent;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 import com.solt.libtorrent.policy.CachePolicy;
 import com.solt.libtorrent.policy.CachePolicyFactory;
@@ -81,7 +80,7 @@ public class TorrentManager {
 					FileUtils
 							.copy(torrentFile, new File(torrentsDir, hashCode));
 				}
-				return "http://127.0.0.1:" + HTTPD_PORT + "/" + hashCode;
+				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW + "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 			}
 		} catch (TorrentException e) {
 			e.printStackTrace();
