@@ -8,11 +8,18 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LibTorrent {
 	private static final String LIBTORRENT_DLL = "libtorrent.dll";
+	private static final Set<String> mediaExts = new HashSet<String>();
+
 	static {
 		loadLibraryFromJar();
+		String[] extensions = new String[] {"mp3", "mp4", "ogv", "flv", "mov", "mkv", "avi", "asf", "wmv"};
+		mediaExts.addAll(Arrays.asList(extensions));
 	}
 
 	private static void loadLibraryFromJar() {
@@ -717,4 +724,26 @@ public class LibTorrent {
 	 */
 	public native long getTorrentSize(String torrentFile);
 	// -----------------------------------------------------------------------------
+	
+	public int getBestStreamableFile(String hashCode) throws TorrentException {
+		FileEntry[] entries = getTorrentFiles(hashCode);
+		long maxSize = 0;
+		int index = -1;
+		for (int i = 0; i < entries.length; ++i) {
+			if (isStreamable(entries[i]) && entries[i].getSize() > maxSize) {
+				maxSize = entries[i].getSize();
+				index = i;
+			}
+		}
+		return index;
+	}
+
+	private boolean isStreamable(FileEntry entry) {
+		int index = entry.getPath().lastIndexOf('.');
+		if (index != -1) {
+			String extension = entry.getPath().substring(index + 1).toLowerCase();
+			return mediaExts.contains(extension);
+		}
+		return false;
+	}
 }
