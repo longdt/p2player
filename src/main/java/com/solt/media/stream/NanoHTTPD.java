@@ -80,27 +80,6 @@ import com.solt.media.util.Average;
  */
 public class NanoHTTPD
 {
-	private int getBestStreamableFile(String hashCode) throws TorrentException {
-		FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
-		long maxSize = 0;
-		int index = -1;
-		for (int i = 0; i < entries.length; ++i) {
-			if (isStreamable(entries[i]) && entries[i].getSize() > maxSize) {
-				maxSize = entries[i].getSize();
-				index = i;
-			}
-		}
-		return index;
-	}
-
-	private boolean isStreamable(FileEntry entry) {
-		int index = entry.getPath().lastIndexOf('.');
-		if (index != -1) {
-			String extension = entry.getPath().substring(index + 1).toLowerCase();
-			return mediaExts.contains(extension);
-		}
-		return false;
-	}
 
 	/**
 	 * HTTP response.
@@ -538,12 +517,13 @@ public class NanoHTTPD
 			Properties header = response.getHeaders();
 			int lastSet = 0;
 			String hashCode = response.getHashCode();
+			PrintWriter pw = null;
 			try
 			{
 				if ( status == null )
 					throw new Error( "sendResponse(): Status can't be null." );
 
-				PrintWriter pw = new PrintWriter( mySocket.getOutputStream() );
+				pw = new PrintWriter( mySocket.getOutputStream() );
 				pw.print("HTTP/1.0 " + status + " \r\n");
 
 				if ( mime != null )
@@ -676,8 +656,7 @@ public class NanoHTTPD
 						++streamPiece;
 					}
 				}
-				pw.flush();
-				pw.close();
+				
 			}
 			catch( Exception e )
 			{
@@ -689,6 +668,9 @@ public class NanoHTTPD
 //						libTorrent.resetPieceDeadline(hashCode, lastSet - i -1);
 //						libTorrent.setPiecePriority(hashCode, lastSet + i, 3);
 //					}
+				}
+				if (pw != null) {
+					pw.close();
 				}
 			}
 		}
@@ -772,7 +754,7 @@ public class NanoHTTPD
 				if (file != null) {
 					index = Integer.parseInt(file);
 				} else {
-					index = getBestStreamableFile(hashCode);
+					index = libTorrent.getBestStreamableFile(hashCode);
 				}
 				FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
 				File f = new File(myRootDir, entries[index].getPath());
@@ -889,11 +871,8 @@ public class NanoHTTPD
 	 * Hashtable mapping (String)FILENAME_EXTENSION -> (String)MIME_TYPE
 	 */
 	private static Map<String, String> theMimeTypes = new HashMap<String, String>();
-	private static Set<String> mediaExts = new HashSet<String>();
 	static
 	{
-		String[] extensions = new String[] {"mp3", "mp4", "ogv", "flv", "mov", "mkv", "avi", "asf", "wmv"};
-		mediaExts.addAll(Arrays.asList(extensions));
 		StringTokenizer st = new StringTokenizer(
 			"css		text/css "+
 			"htm		text/html "+
