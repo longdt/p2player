@@ -72,7 +72,6 @@ public class TorrentManager {
 
 	public synchronized String addTorrent(File torrentFile) {
 		try {
-			policy.prepare(torrentFile.getAbsolutePath());
 			String hashCode = libTorrent.addTorrent(
 					torrentFile.getAbsolutePath(), 0, false);
 			if (hashCode != null) {
@@ -82,6 +81,7 @@ public class TorrentManager {
 				if (torrents.add(hashCode)) {
 					FileUtils.copyFile(torrentFile, new File(torrentsDir,
 							hashCode));
+					policy.prepare(torrentFile.getAbsolutePath());
 				}
 				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
@@ -102,6 +102,7 @@ public class TorrentManager {
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode));
+					policy.prepare(torrentFile.getAbsolutePath());
 				}
 				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
