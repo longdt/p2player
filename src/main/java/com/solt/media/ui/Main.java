@@ -2,6 +2,7 @@ package com.solt.media.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
@@ -22,12 +23,20 @@ import com.solt.mediaplayer.mplayer.swt.Player;
 
 public class Main {
 	protected Shell shell;
-	private boolean minimize = true;
-	private TorrentManager torrManager = TorrentManager.getInstance();
+	private boolean minimize;
+	private TorrentManager torrManager;
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */
 	private final TrayItem trtmMediaPlayer = new TrayItem(Display.getDefault().getSystemTray(), SWT.NONE);
+	
+	/**
+	 * 
+	 */
+	public Main() {
+		torrManager = TorrentManager.getInstance();
+		minimize = true;
+	}
 
 	/**
 	 * Launch the application.
@@ -36,7 +45,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			Main window = new Main();
-			window.open();
+			window.open(args);
 			window.exit();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -45,8 +54,15 @@ public class Main {
 
 	/**
 	 * Open the window.
+	 * @throws MalformedURLException 
 	 */
-	public void open() {
+	public void open(String[] args) throws MalformedURLException {
+		if (args.length > 0) {
+			TorrentManager.requestAddTorrent(args[0]);
+		}
+		if (torrManager == null) {
+			return;
+		}
 		Display display = Display.getDefault();
 		createContents();
 		if (!minimize) {
@@ -61,6 +77,9 @@ public class Main {
 	}
 	
 	public void exit() {
+		if (torrManager == null) {
+			return;
+		}
 		torrManager.shutdown();
 		try {
 			ConfigurationManager.getInstance().save();
