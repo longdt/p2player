@@ -150,7 +150,7 @@ public class Main {
 			}
 		});
 		mntmExit.setText("Exit");
-		trtmMediaPlayer.setImage(SWTResourceManager.getImage(Main.class, "/systemtray.png"));
+		trtmMediaPlayer.setImage(SWTResourceManager.getImage(Main.class, "/mediaplayer.ico"));
 		
 		trtmMediaPlayer.setToolTipText("Media Player");
 		trtmMediaPlayer.addMenuDetectListener(new MenuDetectListener() {
