@@ -21,42 +21,48 @@ import com.solt.media.util.SystemProperties;
  */
 public class ConfigurationManager {
 	public static final String TORRENT_LISTEN_PORT = "torrent.port";
-	
-	private static final String CONFIG_FILE = SystemProperties.getMetaDataPath() +  "metadata.conf";
+
+	private static final String CONFIG_FILE = SystemProperties
+			.getMetaDataPath() + "metadata.conf";
 
 	public static final String TORRENT_DOWNLOAD_DIR = "torrent.download.dir";
-	
+
 	public static final String TORRENT_FILE_DIR = "torrent.file.dir";
 
 	public static final String TORRENT_CACHE_AMOUNT = "torrent.cache.amount";
-	
+
 	private Properties props;
 	private static ConfigurationManager conf = new ConfigurationManager();
-	
+
 	private ConfigurationManager() {
 		props = new Properties();
-		//default configuration
-		try {
-			load();
-			String cacheDirString = props.getProperty(TORRENT_DOWNLOAD_DIR);
-			File cacheDir = null;
-			if (cacheDirString == null || !(new File(cacheDirString)).isDirectory()) {
-				cacheDir = FileUtils.makeDownloadDir();
-				cacheDirString = cacheDir != null ? cacheDir.getAbsolutePath() :  SystemProperties.getMetaDataPath() + Constants.DOWNLOAD_DIRECTORY;
-				props.setProperty(TORRENT_DOWNLOAD_DIR, cacheDirString);
-			}
-		} catch (IOException e) {
+		// default configuration
+		load();
+		String cacheDirString = props.getProperty(TORRENT_DOWNLOAD_DIR);
+		File cacheDir = null;
+		if (cacheDirString == null || !(new File(cacheDirString)).isDirectory()) {
+			cacheDir = FileUtils.makeDownloadDir();
+			cacheDirString = cacheDir != null ? cacheDir.getAbsolutePath()
+					: SystemProperties.getMetaDataPath()
+							+ Constants.DOWNLOAD_DIRECTORY;
+			props.setProperty(TORRENT_DOWNLOAD_DIR, cacheDirString);
 		}
+
 	}
-	
-	private void load() throws IOException {
+
+	private void load() {
 		Reader reader = null;
 		try {
 			reader = new FileReader(CONFIG_FILE);
 			props.load(reader);
+		} catch (IOException e) {
 		} finally {
 			if (reader != null) {
-				reader.close();
+				try {
+					reader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -72,7 +78,7 @@ public class ConfigurationManager {
 			}
 		}
 	}
-	
+
 	public static ConfigurationManager getInstance() {
 		return conf;
 	}
