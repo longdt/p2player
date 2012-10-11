@@ -1,5 +1,5 @@
 -injars mediaplayer.jar
--outjars proguard_test.jar
+-outjars mediaplayer_proguarded.jar
 
 -libraryjars 'C:\Program Files\Java\jre7\lib\rt.jar'
 -libraryjars mediaplayer_lib\log4j-1.2.17.jar
@@ -21,7 +21,7 @@
 -keep class org.**
 
 -keep class com.solt.libtorrent.FileEntry {
-    *** <init>(...);
+    <init>(...);
 }
 
 # Keep - Applications. Keep all application classes, along with their 'main'
