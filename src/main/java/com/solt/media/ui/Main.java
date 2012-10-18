@@ -19,6 +19,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
+import com.solt.media.update.UpdateChecker;
 import com.solt.media.util.Constants;
 import com.solt.mediaplayer.mplayer.swt.Player;
 
@@ -26,6 +27,7 @@ public class Main {
 	protected Shell shell;
 	private boolean minimize;
 	private TorrentManager torrManager;
+	private UpdateChecker updater;
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */
@@ -37,6 +39,11 @@ public class Main {
 	public Main() {
 		torrManager = TorrentManager.getInstance();
 		minimize = true;
+	}
+	
+	private void initUpdater() {
+		updater = new UpdateChecker();
+		updater.start();
 	}
 
 	/**
@@ -64,6 +71,7 @@ public class Main {
 		if (torrManager == null) {
 			return;
 		}
+		initUpdater();
 		Display display = Display.getDefault();
 		createContents();
 		if (!minimize) {
@@ -82,9 +90,13 @@ public class Main {
 			return;
 		}
 		torrManager.shutdown();
+		SWTResourceManager.dispose();
 		try {
 			ConfigurationManager.getInstance().save();
+			updater.stop();
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
