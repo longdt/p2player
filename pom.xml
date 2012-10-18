@@ -32,8 +32,13 @@
   		<groupId>com.solt.mediaplayer</groupId>
   		<artifactId>mplayer</artifactId>
   		<version>0.0.1-SNAPSHOT</version>
-  		<scope>system</scope>
-  		<systemPath>${basedir}/lib/mplayer-0.0.1-SNAPSHOT.jar</systemPath>
+  	<!-- 	<scope>system</scope>
+  		<systemPath>${basedir}/lib/mplayer-0.0.1-SNAPSHOT.jar</systemPath> -->
+  	</dependency>
+  	<dependency>
+  		<groupId>com.googlecode.json-simple</groupId>
+  		<artifactId>json-simple</artifactId>
+  		<version>1.1.1</version>
   	</dependency>
   </dependencies>
 </project>
