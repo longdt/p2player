@@ -143,4 +143,12 @@ public class FileUtils {
 		}
 		return true;
 	}
+	
+	public static String getMD5Hash(File file) {
+		return null;
+	}
+	
+	public static String getSHA1Hash(File file) {
+		return null;
+	}
 }
