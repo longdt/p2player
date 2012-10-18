@@ -4,6 +4,7 @@
 package com.solt.media.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,10 +25,14 @@ public class MultipartDownloader {
 	}
 	
 	public void download(URL file, File target) {
-		
+		try {
+			FileUtils.copyFile(file.openStream(), target);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void shutdown() {
-		
+		executor.shutdownNow();
 	}
 }
