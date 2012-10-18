@@ -1,7 +1,6 @@
 package com.solt.libtorrent.policy;
 
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
@@ -28,5 +27,4 @@ public class NumberCachePolicy implements CachePolicy {
 			}
 		}
 	}
-
 }
