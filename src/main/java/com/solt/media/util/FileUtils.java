@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -145,10 +147,45 @@ public class FileUtils {
 	}
 	
 	public static String getMD5Hash(File file) {
+		try {
+			MessageDigest md5 = MessageDigest.getInstance("MD5");
+			return hash(md5, file);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 	
 	public static String getSHA1Hash(File file) {
+		try {
+			MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+			return hash(sha1, file);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 		return null;
+	}
+
+	private static String hash(MessageDigest digest, File file) {
+		BufferedInputStream in = null;
+		try {
+			in = new BufferedInputStream(new FileInputStream(file));
+			byte[] buffer = new byte[1024];
+			int length = 0;
+			while ((length = in.read(buffer)) != -1) {
+				digest.update(buffer, 0, length);
+			}
+		} catch (IOException e) {
+			return null;
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return StringUtils.byteToHexString(digest.digest());
 	}
 }
