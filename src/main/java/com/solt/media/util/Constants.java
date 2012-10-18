@@ -41,12 +41,8 @@ Constants
   public static final String BYTE_ENCODING 		= "ISO-8859-1";
   public static Charset	BYTE_CHARSET;
   public static Charset	DEFAULT_CHARSET;
-  public static int IDLE_DOWNLOAD_SPEED = 200 * 1024;
-  public static int DEFAULT_DOWNLOAD_SPEED = 1048576;
   public static long TRANSFER_BYTES_PAYED_THRESHOLD = 52428800;
   public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
-  public static String LAUNCHER_FILE = "C:\\Soha Player\\update\\sohalauncher.exe";
-  public static String OLD_LAUNCHER_FILE = "C:\\Soha Player\\sohalauncher.exe";
   public static String VERSION = "1.0.12.0927";
  
   static{
@@ -71,7 +67,7 @@ Constants
 
   
   public static String APP_NAME = "MediaPlayer";
-
+  public static String PROTOCOL = "mdp";
   
   public static final String  OSName = System.getProperty("os.name");
   
@@ -337,7 +333,7 @@ Constants
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(compareVersions("3.0.0.1", "3.0.0.0"));
+		System.out.println(compareVersions("3.0.0.1018", "3.0.0.0"));
 		System.out.println(compareVersions("3.0.0.0_B1", "3.0.0.0"));
 		System.out.println(compareVersions("3.0.0.0", "3.0.0.0_B1"));
 		System.out.println(compareVersions("3.0.0.0_B1", "3.0.0.0_B4"));

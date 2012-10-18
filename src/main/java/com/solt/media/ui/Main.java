@@ -19,6 +19,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
+import com.solt.media.util.Constants;
 import com.solt.mediaplayer.mplayer.swt.Player;
 
 public class Main {
@@ -57,8 +58,8 @@ public class Main {
 	 * @throws MalformedURLException 
 	 */
 	public void open(String[] args) throws MalformedURLException {
-		if (args.length > 0) {
-			TorrentManager.requestAddTorrent(args[0]);
+		if (args.length > 0 && args[0].startsWith(Constants.PROTOCOL + "://")) {
+			TorrentManager.requestAddTorrent(args[0].substring(Constants.PROTOCOL.length() + 3));
 		}
 		if (torrManager == null) {
 			return;
