@@ -16,6 +16,7 @@ import org.json.simple.JSONValue;
 
 import com.solt.media.ui.Main;
 import com.solt.media.util.Constants;
+import com.solt.media.util.Downloader;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.MultipartDownloader;
 
@@ -51,7 +52,7 @@ public class UpdateChecker implements Runnable {
 	@Override
 	public void run() {
 		int state = INITIAL;
-		MultipartDownloader downloader = null;
+		Downloader downloader = null;
 		File target = new File("setup.exe");
 		File temp = new File ("setup.exe.part");
 		try {
