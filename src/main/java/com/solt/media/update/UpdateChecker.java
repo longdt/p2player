@@ -14,6 +14,7 @@ import org.eclipse.swt.program.Program;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.solt.media.ui.Main;
 import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.MultipartDownloader;
@@ -30,11 +31,13 @@ public class UpdateChecker implements Runnable {
 	private static final String MD5_FIELD = "md5";
 	private static final int NUM_PART = 4;
 	private Thread checker;
+	private Main app;
 	/**
 	 * 
 	 */
-	public UpdateChecker() {
+	public UpdateChecker(Main app) {
 		checker = new Thread(this, "UpdateChecker");
+		this.app = app;
 	}
 	
 	public void start() {
@@ -49,7 +52,8 @@ public class UpdateChecker implements Runnable {
 	public void run() {
 		int state = INITIAL;
 		MultipartDownloader downloader = null;
-		File target = new File("setup.exe.part");
+		File target = new File("setup.exe");
+		File temp = new File ("setup.exe.part");
 		try {
 			Thread.sleep(10000);
 			URL updateUrl = new URL(Constants.UPDATE_URL);
@@ -67,9 +71,9 @@ public class UpdateChecker implements Runnable {
 					}
 					URL file = new URL(updateUrl, "setup.exe");
 					
-					downloader.download(file, target);
-					if (hash == null || ((hashFile = FileUtils.getMD5Hash(target)) != null && hash.equalsIgnoreCase(hashFile))) {
-						target.renameTo(new File(target.getParentFile(), "setup.exe"));
+					downloader.download(file, temp);
+					if (hash == null || ((hashFile = FileUtils.getMD5Hash(temp)) != null && hash.equalsIgnoreCase(hashFile))) {
+						temp.renameTo(target);
 						state = COMPLETE;
 						break;
 					}
@@ -87,6 +91,7 @@ public class UpdateChecker implements Runnable {
 		}
 		if (state == COMPLETE) {
 			Program.launch(target.getAbsolutePath());
+			app.requestShutdown();
 		}
 	}
 	

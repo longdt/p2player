@@ -42,7 +42,7 @@ public class Main {
 	}
 	
 	private void initUpdater() {
-		updater = new UpdateChecker();
+		updater = new UpdateChecker(this);
 		updater.start();
 	}
 
@@ -85,7 +85,15 @@ public class Main {
 		}
 	}
 	
-	public void exit() {
+	public void requestShutdown() {
+		Display.getDefault().asyncExec(new Runnable() {
+		    public void run() {
+		    	shell.dispose();
+		    }
+		});
+	}
+	
+	private void exit() {
 		if (torrManager == null) {
 			return;
 		}
@@ -159,7 +167,7 @@ public class Main {
 		mntmExit.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				shell.dispose();
+				requestShutdown();
 			}
 		});
 		mntmExit.setText("Exit");
