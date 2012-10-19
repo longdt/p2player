@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
  * @author ThienLong
  *
  */
-public class MultipartDownloader {
+public class MultipartDownloader implements Downloader {
 	private int numPart;
 	private ExecutorService executor;
 	/**
@@ -24,6 +24,10 @@ public class MultipartDownloader {
 		executor = Executors.newFixedThreadPool(numPart);
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.solt.media.util.Downloader#download(java.net.URL, java.io.File)
+	 */
+	@Override
 	public void download(URL file, File target) {
 		try {
 			FileUtils.copyFile(file.openStream(), target);
@@ -32,6 +36,10 @@ public class MultipartDownloader {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.solt.media.util.Downloader#shutdown()
+	 */
+	@Override
 	public void shutdown() {
 		executor.shutdownNow();
 	}
