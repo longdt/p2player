@@ -7,12 +7,13 @@ import java.net.URL;
 public class SingleDownloader implements Downloader {
 
 	@Override
-	public void download(URL file, File target) {
+	public boolean download(URL file, File target) {
 		try {
-			FileUtils.copyFile(file.openStream(), target);
+			return FileUtils.copyFile(file.openStream(), target);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return false;
 	}
 
 	@Override
