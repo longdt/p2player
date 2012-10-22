@@ -72,7 +72,10 @@ public class UpdateChecker implements Runnable {
 					}
 					URL file = new URL(updateUrl, "setup.exe");
 					
-					downloader.download(file, temp);
+					if (!downloader.download(file, temp)) {
+						Thread.sleep(INTERVAL);
+						continue;
+					}
 					if (hash == null || ((hashFile = FileUtils.getMD5Hash(temp)) != null && hash.equalsIgnoreCase(hashFile))) {
 						temp.renameTo(target);
 						state = COMPLETE;

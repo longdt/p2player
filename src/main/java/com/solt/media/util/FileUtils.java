@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -187,5 +188,39 @@ public class FileUtils {
 			}
 		}
 		return StringUtils.byteToHexString(digest.digest());
+	}
+
+	/**
+	 * @param inputStream
+	 * @param raf
+	 */
+	public static boolean copyFile(InputStream is, RandomAccessFile raf) {
+		BufferedInputStream in = null;
+		try {
+			in = new BufferedInputStream(is);
+			byte[] buffer = new byte[1024];
+			int length = 0;
+			while ((length = in.read(buffer)) != -1) {
+				raf.write(buffer, 0, length);
+			}
+		} catch (IOException e) {
+			return false;
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (raf != null) {
+				try {
+					raf.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return true;
 	}
 }
