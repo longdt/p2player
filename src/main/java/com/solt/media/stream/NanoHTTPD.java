@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -404,12 +405,12 @@ public class NanoHTTPD {
 
 			String hashCode = req.getHashCode();
 			String msg = req.getMessage();
-			PrintWriter pw = null;
+			PrintStream pw = null;
 			try {
 				if (status == null)
 					throw new Error("sendResponse(): Status can't be null.");
 
-				pw = new PrintWriter(mySocket.getOutputStream());
+				pw = new PrintStream(mySocket.getOutputStream());
 				pw.print("HTTP/1.0 " + status + " \r\n");
 
 				if (mime != null)
@@ -429,10 +430,19 @@ public class NanoHTTPD {
 				pw.flush();
 
 				if (hashCode != null) {
-					sendTorrentData(hashCode, req.getIndex(), req.getDataLength(),
-							req.getTransferOffset());
+					int state = libTorrent.getTorrentState(hashCode);
+					if (state == -1) {
+						return;
+					} else if (state == 4 || state == 5) {
+						FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
+						File f = new File(myRootDir, entries[req.getIndex()].getPath());
+						sendFileData(pw, f, req.getDataLength(), req.getTransferOffset());
+					} else {
+						sendTorrentData(hashCode, req.getIndex(), req.getDataLength(),
+								req.getTransferOffset());
+					}
 				} else if (msg != null) {
-					pw.write(msg);
+					pw.print(msg);
 				}
 			} catch (Exception e) {
 				// System.err.println("close stream: " +
@@ -445,13 +455,39 @@ public class NanoHTTPD {
 			}
 		}
 
+		/**
+		 * @param pw
+		 * @param f
+		 * @param dataLength
+		 * @param transferOffset
+		 * @throws IOException 
+		 */
+		private void sendFileData(PrintStream out, File f, long dataLength,
+				long transferOffset) throws IOException {
+			RandomAccessFile raf = null;	 
+			try {
+				raf = new RandomAccessFile(f, "rw");
+				raf.seek(transferOffset);
+				byte[] buf = new byte[1024];
+				int len = 0;
+				while (streaming && dataLength > 0 && !Thread.currentThread().isInterrupted()) {
+					len = raf.read(buf);
+					if (len == -1) {
+						break;
+					}
+					out.write(buf, 0, len);
+					dataLength = dataLength - len;
+				}
+			} finally {
+				if (raf != null) {
+					raf.close();
+				}
+			}
+		}
+
 		private void sendTorrentData(String hashCode, int index, long dataLength,
 				long transferOffset) throws Exception {
 			int lastSet = 0;
-			int state = libTorrent.getTorrentState(hashCode);
-			if (state == -1) {
-				return;
-			}
 			Average streamRate = Average.getInstance(1000, 20);
 			long pending = dataLength; // This is to support partial sends, see
 										// serveFile()
@@ -483,6 +519,7 @@ public class NanoHTTPD {
 			int cancelPiece = 0;
 			long lastTime = System.currentTimeMillis();
 			boolean cancelled = false;
+			int state = 0;
 			while (streaming && pending > 0
 					&& !Thread.currentThread().isInterrupted()) {
 				if (state != 4 && state != 5 && state != 3) {
