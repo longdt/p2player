@@ -3,7 +3,7 @@ package com.solt.media.stream;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpResponse {
+public class TorrentRequest {
 
 	/**
 	 * HTTP status code after processing, e.g. "200 OK", HTTP_OK
@@ -18,6 +18,8 @@ public class HttpResponse {
 	private long dataLength;
 
 	private String hashCode;
+	
+	private int index;
 
 	private long transferOffset;
 	
@@ -30,16 +32,17 @@ public class HttpResponse {
 	/**
 	 * Basic constructor.
 	 */
-	public HttpResponse(String status, String mimeType, String hashCode,
+	public TorrentRequest(String status, String mimeType, String hashCode, int index,
 			long transferOffset, long dataLength) {
 		this.status = status;
 		this.mimeType = mimeType;
 		this.hashCode = hashCode;
+		this.index = index;
 		this.transferOffset = transferOffset;
 		this.dataLength = dataLength;
 	}
 
-	public HttpResponse(String status, String mimeType, String message) {
+	public TorrentRequest(String status, String mimeType, String message) {
 		this.status = status;
 		this.mimeType =  mimeType;
 		this.message = message;
@@ -102,5 +105,19 @@ public class HttpResponse {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	/**
+	 * @return the index
+	 */
+	public int getIndex() {
+		return index;
+	}
+
+	/**
+	 * @param index the index to set
+	 */
+	public void setIndex(int index) {
+		this.index = index;
 	}
 }

@@ -201,7 +201,7 @@ public class NanoHTTPD {
 			String hashCode = request.getParam(NanoHTTPD.PARAM_HASHCODE);
 			if (uri.equals(NanoHTTPD.ACTION_VIEW)) {
 				if (hashCode != null) {
-					HttpResponse r = serve(request);
+					TorrentRequest r = serve(request);
 					sendResponse(r);
 				} else {
 					String torrentList = listTorrents();
@@ -396,14 +396,14 @@ public class NanoHTTPD {
 		 * 
 		 * @throws InterruptedException
 		 */
-		private void sendResponse(HttpResponse response)
+		private void sendResponse(TorrentRequest req)
 				throws InterruptedException {
-			String status = response.getStatus();
-			String mime = response.getMimeType();
-			Map<String, String> header = response.getHeaders();
+			String status = req.getStatus();
+			String mime = req.getMimeType();
+			Map<String, String> header = req.getHeaders();
 
-			String hashCode = response.getHashCode();
-			String msg = response.getMessage();
+			String hashCode = req.getHashCode();
+			String msg = req.getMessage();
 			PrintWriter pw = null;
 			try {
 				if (status == null)
@@ -429,8 +429,8 @@ public class NanoHTTPD {
 				pw.flush();
 
 				if (hashCode != null) {
-					sendTorrentData(hashCode, response.getDataLength(),
-							response.getTransferOffset());
+					sendTorrentData(hashCode, req.getIndex(), req.getDataLength(),
+							req.getTransferOffset());
 				} else if (msg != null) {
 					pw.write(msg);
 				}
@@ -445,7 +445,7 @@ public class NanoHTTPD {
 			}
 		}
 
-		private void sendTorrentData(String hashCode, long dataLength,
+		private void sendTorrentData(String hashCode, int index, long dataLength,
 				long transferOffset) throws Exception {
 			int lastSet = 0;
 			int state = libTorrent.getTorrentState(hashCode);
@@ -460,6 +460,7 @@ public class NanoHTTPD {
 			int pieceSize = libTorrent.getPieceSize(hashCode, false);
 			// int PIECE_BUFFER_SIZE = 300 * 1024 * 30 / pieceSize;
 			long timeToWait = (pieceSize * 10000l) / (300 * 1024);
+			transferOffset += libTorrent.getTorrentFiles(hashCode)[index].getOffset();
 			int streamPiece = (int) (transferOffset / pieceSize);
 			int setRead = -1;
 			int transferPieceIdx = streamPiece;
@@ -640,8 +641,8 @@ public class NanoHTTPD {
 		 * @return HTTP response, see class Response for details
 		 * @throws InterruptedException
 		 */
-		HttpResponse serve(HttpRequest request) throws InterruptedException {
-			HttpResponse res = null;
+		TorrentRequest serve(HttpRequest request) throws InterruptedException {
+			TorrentRequest res = null;
 			try {
 				String hashCode = request.getParam(PARAM_HASHCODE);
 				String file = request.getParam(PARAM_FILE);
@@ -653,7 +654,6 @@ public class NanoHTTPD {
 				}
 				FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
 				File f = new File(myRootDir, entries[index].getPath());
-				long fileOffset = entries[index].getOffset();
 
 				// Get MIME type from file name extension, if possible
 				String mime = null;
@@ -693,7 +693,7 @@ public class NanoHTTPD {
 				long fileLen = entries[index].getSize();
 				if (range != null && startFrom >= 0) {
 					if (startFrom >= fileLen) {
-						res = new HttpResponse(HTTP_RANGE_NOT_SATISFIABLE,
+						res = new TorrentRequest(HTTP_RANGE_NOT_SATISFIABLE,
 								MIME_PLAINTEXT, null);
 						res.setHeader("Content-Range", "bytes 0-0/" + fileLen);
 						res.setHeader("ETag", etag);
@@ -706,11 +706,11 @@ public class NanoHTTPD {
 
 						final long dataLen = newLen;
 						if (request.getMethod() == HttpRequest.METHOD_HEAD) {
-							res = new HttpResponse(HTTP_PARTIALCONTENT, mime,
+							res = new TorrentRequest(HTTP_PARTIALCONTENT, mime,
 									null);
 						} else {
-							res = new HttpResponse(HTTP_PARTIALCONTENT, mime,
-									hashCode, fileOffset + startFrom, dataLen);
+							res = new TorrentRequest(HTTP_PARTIALCONTENT, mime,
+									hashCode, index, startFrom, dataLen);
 						}
 						res.setHeader("Content-Length", "" + dataLen);
 						res.setHeader("Content-Range", "bytes " + startFrom
@@ -719,11 +719,11 @@ public class NanoHTTPD {
 					}
 				} else {
 					if (etag.equals(request.getHeader("if-none-match")))
-						res = new HttpResponse(HTTP_NOTMODIFIED, mime, null);
+						res = new TorrentRequest(HTTP_NOTMODIFIED, mime, null);
 					else {
-						res = request.getMethod() == HttpRequest.METHOD_HEAD ? new HttpResponse(
-								HTTP_OK, mime, null) : new HttpResponse(
-								HTTP_OK, mime, hashCode, fileOffset, fileLen);
+						res = request.getMethod() == HttpRequest.METHOD_HEAD ? new TorrentRequest(
+								HTTP_OK, mime, null) : new TorrentRequest(
+								HTTP_OK, mime, hashCode, index, 0, fileLen);
 						res.setHeader("Content-Length", "" + fileLen);
 						res.setHeader("ETag", etag);
 					}
