@@ -15,11 +15,16 @@ import java.util.Set;
 public class LibTorrent {
 	private static final String LIBTORRENT_DLL = "libtorrent.dll";
 	private static final Set<String> mediaExts = new HashSet<String>();
-
+	private TorrentManager manager;
+	
 	static {
 		loadLibraryFromJar();
 		String[] extensions = new String[] {"mp3", "mp4", "ogv", "flv", "mov", "mkv", "avi", "asf", "wmv"};
 		mediaExts.addAll(Arrays.asList(extensions));
+	}
+	
+	LibTorrent(TorrentManager manager) {
+		this.manager = manager;
 	}
 
 	private static void loadLibraryFromJar() {
@@ -745,5 +750,9 @@ public class LibTorrent {
 			return mediaExts.contains(extension);
 		}
 		return false;
+	}
+	
+	public TorrentManager getTorrentManager() {
+		return manager;
 	}
 }

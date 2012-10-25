@@ -209,8 +209,11 @@ public class NanoHTTPD {
 					sendMessage(HTTP_OK, torrentList);
 				}
 			} else if (uri.equals(NanoHTTPD.ACTION_ADD)) {
-				URL url = new URL(DOWN_TORRENT_LINK + hashCode + ".torrent");
-				String mediaUrl = TorrentManager.getInstance().addTorrent(url);
+				String mediaUrl = libTorrent.getTorrentManager().getMediaUrl(hashCode);
+				if (mediaUrl == null) {
+					URL url = new URL(DOWN_TORRENT_LINK + hashCode + ".torrent");
+					mediaUrl = TorrentManager.getInstance().addTorrent(url);
+				}
 				if (mediaUrl != null) {
 					sendMessage(HTTP_OK, mediaUrl);
 				} else {

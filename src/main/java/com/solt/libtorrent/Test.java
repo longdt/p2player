@@ -20,7 +20,7 @@ public class Test {
 	public static void main(String[] args) throws InterruptedException,
 			IOException, TorrentException {
 		System.out.println(Charset.defaultCharset());
-		final LibTorrent libTorrent = new LibTorrent();
+		final LibTorrent libTorrent = new LibTorrent(null);
 		
 		libTorrent.setSession(18080, "./", 0, 0 * 1024);
 		libTorrent.setSessionOptions(true, true, true, true);

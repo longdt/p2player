@@ -27,7 +27,7 @@ public class TorrentManager {
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
 		torrents = new LinkedHashSet<String>();
-		libTorrent = new LibTorrent();
+		libTorrent = new LibTorrent(this);
 		httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
 		libTorrent.setSession(port, wwwRoot);
 		loadExistTorrents();
@@ -111,9 +111,21 @@ public class TorrentManager {
 		}
 		return null;
 	}
+	
+	public String getMediaUrl(String hashCode) {
+		if (contains(hashCode)) {
+			return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+					+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
+		}
+		return null;
+	}
 
 	public LinkedHashSet<String> getTorrents() {
 		return torrents;
+	}
+	
+	public synchronized boolean contains(String hashCode) {
+		return torrents.contains(hashCode);
 	}
 
 	public void shutdown() {
