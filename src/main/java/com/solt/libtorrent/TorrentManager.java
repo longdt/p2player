@@ -27,7 +27,7 @@ public class TorrentManager {
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
 		torrents = new LinkedHashSet<String>();
-		libTorrent = new LibTorrent(this);
+		libTorrent = new LibTorrent();
 		httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
 		libTorrent.setSession(port, wwwRoot);
 		loadExistTorrents();
