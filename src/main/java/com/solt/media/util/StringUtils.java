@@ -140,6 +140,16 @@ public class StringUtils {
     }
     return sbuf.toString();
   }
+  
+  public static String collectionToString(Collection<String> strs) {
+	  if (strs.isEmpty()) { return ""; }
+	    StringBuilder sbuf = new StringBuilder();
+	    for (String str : strs) {
+	    	sbuf.append(str).append(",");
+	    }
+	    sbuf.deleteCharAt(sbuf.length() - 1);
+	    return sbuf.toString();
+  }
 
   /**
    * Given an array of bytes it will convert the bytes to a hex string
