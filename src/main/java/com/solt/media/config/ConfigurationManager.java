@@ -461,4 +461,8 @@ public class ConfigurationManager {
 	public void setStrings(String name, String... values) {
 		set(name, StringUtils.arrayToString(values));
 	}
+	
+	public void setStrings(String name, Collection<String> values) {
+		set(name, StringUtils.collectionToString(values));
+	}
 }
