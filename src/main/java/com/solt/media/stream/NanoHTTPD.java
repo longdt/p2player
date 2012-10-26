@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -408,12 +409,12 @@ public class NanoHTTPD {
 
 			String hashCode = req.getHashCode();
 			String msg = req.getMessage();
-			PrintStream pw = null;
+			PrintWriter pw = null;
 			try {
 				if (status == null)
 					throw new Error("sendResponse(): Status can't be null.");
-
-				pw = new PrintStream(mySocket.getOutputStream());
+				OutputStream out = mySocket.getOutputStream();
+				pw = new PrintWriter(out);
 				pw.print("HTTP/1.0 " + status + " \r\n");
 
 				if (mime != null)
@@ -439,7 +440,7 @@ public class NanoHTTPD {
 					} else if (state == 4 || state == 5) {
 						FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
 						File f = new File(myRootDir, entries[req.getIndex()].getPath());
-						sendFileData(pw, f, req.getDataLength(), req.getTransferOffset());
+						sendFileData(out, f, req.getDataLength(), req.getTransferOffset());
 					} else {
 						sendTorrentData(hashCode, req.getIndex(), req.getDataLength(),
 								req.getTransferOffset());
@@ -465,11 +466,11 @@ public class NanoHTTPD {
 		 * @param transferOffset
 		 * @throws IOException 
 		 */
-		private void sendFileData(PrintStream out, File f, long dataLength,
+		private void sendFileData(OutputStream out, File f, long dataLength,
 				long transferOffset) throws IOException {
 			RandomAccessFile raf = null;	 
 			try {
-				raf = new RandomAccessFile(f, "rw");
+				raf = new RandomAccessFile(f, "r");
 				raf.seek(transferOffset);
 				byte[] buf = new byte[1024];
 				int len = 0;
