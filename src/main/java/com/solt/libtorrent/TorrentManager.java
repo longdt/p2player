@@ -147,7 +147,7 @@ public class TorrentManager {
 	 * @throws MalformedURLException 
 	 */
 	public static void requestAddTorrent(String hashCode) throws MalformedURLException {
-		URL url = new URL("http://localhost:" + HTTPD_PORT + NanoHTTPD.ACTION_ADD + "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode);
+		URL url = new URL("http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_ADD + "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode);
 		BufferedReader in = null;
 		try {
 			in = new BufferedReader(new InputStreamReader( url.openStream()));
