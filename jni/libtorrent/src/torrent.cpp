@@ -5690,11 +5690,6 @@ namespace libtorrent
 			}
 
 			// loop until every block has been requested from this piece (i->piece)
-			time_duration wait = m_average_piece_time == seconds(0) || m_average_piece_time > seconds(30)? seconds(30) : m_average_piece_time;
-			if (now > i->deadline && i->last_requested + wait < now) {
-				m_picker->cancel_request(i->piece);
-				i->last_requested = now;
-			}
 			do
 			{
 				// pick the peer with the lowest download_queue_time that has i->piece
@@ -5724,6 +5719,8 @@ namespace libtorrent
 				{
 					c.make_time_critical(interesting_blocks.front());
 					added_request = true;
+					if (!m_picker->mark_as_downloading(interesting_blocks.front(), c.peer_info_struct(), piece_picker::fast))
+						break;
 				}
 				else if (!interesting_blocks.empty())
 				{
@@ -5743,10 +5740,7 @@ namespace libtorrent
 				if (added_request)
 				{
 					peers_with_requests.insert(peers_with_requests.begin(), &c);
-					if (i->first_requested == min_time()) {
-						i->first_requested = now;
-						i->last_requested = now;
-					}
+					if (i->first_requested == min_time()) i->first_requested = now;
 
 					if (!c.can_request_time_critical())
 					{
