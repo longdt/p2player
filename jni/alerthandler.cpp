@@ -11,167 +11,133 @@
 #include <map>
 #include "torrentinfo.h"
 
+extern std::string gDefaultSave;
+using namespace libtorrent;
+
 namespace solt {
 
-void torrent_alert_handler::operator()(torrent_finished_alert const& a) {
-	if (a.handle.is_valid()) {
-		a.handle.save_resume_data();
-		if (expected_type == alert_type::torrent_finished && torrent_hash == a.handle.info_hash()) {
-			--num_alert;
+bool torrent_alert_handler::handle(const alert* a) {
+#ifdef TORRENT_USE_OPENSSL
+	if (const torrent_need_cert_alert* p = alert_cast<torrent_need_cert_alert>(a))
+	{
+		torrent_handle h = p->handle;
+		error_code ec;
+		file_status st;
+		std::string cert = combine_path("certificates", to_hex(h.info_hash().to_string())) + ".pem";
+		std::string priv = combine_path("certificates", to_hex(h.info_hash().to_string())) + "_key.pem";
+		stat_file(cert, &st, ec);
+		if (ec)
+		{
+			char msg[256];
+			snprintf(msg, sizeof(msg), "ERROR. could not load certificate %s: %s\n", cert.c_str(), ec.message().c_str());
+			if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+			return true;
 		}
-	}
-	error_alert = false;
-	last_type = alert_type::torrent_finished;
-}
-
-void torrent_alert_handler::operator()(save_resume_data_alert const& a) {
-	if (a.handle.is_valid() && a.resume_data) {
-		std::vector<char> out;
-		libtorrent::bencode(std::back_inserter(out),
-				*(a.resume_data));
-		boost::filesystem::path savePath = a.handle.save_path();
-		savePath /= (a.handle.name() + RESUME_SUFFIX);
-		solt::SaveFile(savePath, out);
-
-		if (expected_type == alert_type::save_resume_data && torrent_hash == a.handle.info_hash()) {
-			--num_alert;
+		stat_file(priv, &st, ec);
+		if (ec)
+		{
+			char msg[256];
+			snprintf(msg, sizeof(msg), "ERROR. could not load private key %s: %s\n", priv.c_str(), ec.message().c_str());
+			if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+			return true;
 		}
-	}
-	error_alert = false;
-	last_type = alert_type::save_resume_data;
-}
 
-void torrent_alert_handler::operator()(save_resume_data_failed_alert const& a) {
-	if (a.handle.is_valid()) {
-		if (expected_type == alert_type::save_resume_data && torrent_hash == a.handle.info_hash()) {
-			--num_alert;
+		char msg[256];
+		snprintf(msg, sizeof(msg), "loaded certificate %s and key %s\n", cert.c_str(), priv.c_str());
+		if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+
+		h.set_ssl_certificate(cert, priv, "certificates/dhparams.pem", "1234");
+		h.resume();
+	}
+#endif
+
+	if (const add_torrent_alert* p = alert_cast<add_torrent_alert>(a))
+	{
+		if (expected_type == alert_type::torrent_add && torrent_hash == p->handle.info_hash()) {
+			done = true;
 		}
-	}
-	error_alert = true;
-	last_type = alert_type::save_resume_data;
-}
-
-void torrent_alert_handler::operator()(torrent_deleted_alert const& a) {
-	if (expected_type == alert_type::torrent_deleted && torrent_hash == a.info_hash) {
-		--num_alert;
-	}
-	error_alert = false;
-	last_type = alert_type::torrent_deleted;
-}
-
-void torrent_alert_handler::operator()(torrent_delete_failed_alert const& a) {
-	if (a.handle.is_valid()) {
-		if (expected_type == alert_type::torrent_deleted && torrent_hash == a.handle.info_hash()) {
-			--num_alert;
+		if (p->error)
+		{
+			fprintf(stderr, "failed to add torrent: %s\n", p->error.message().c_str());
+			error_alert = true;
 		}
-	}
-	error_alert = true;
-	last_type = alert_type::torrent_deleted;
-}
-
-void hand_read_piece_alert(const read_piece_alert *a) {
-	if (a->handle.is_valid()) {
-		TorrentInfo* pTorrentInfo = GetTorrentInfo(a->handle.info_hash());
-		if (pTorrentInfo) {
-			read_piece_alert* old = (pTorrentInfo->piece_queue).push(a->piece,(read_piece_alert *) a->clone().release());
-			if (old) {
-				delete old;
+		else
+		{
+			error_alert = false;
+			//update gTorrents
+			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
+			if (pTorrentInfo) {
+				pTorrentInfo->handle = p->handle;
+#ifdef START_ON_ADD
+				if (p->handle.is_paused()) {
+					p->handle.resume();
+				}
+#endif
 			}
 		}
 	}
-}
+	else if (const torrent_finished_alert* p = alert_cast<torrent_finished_alert>(a))
+	{
+		p->handle.set_max_connections(50 / 2);
 
-bool handle_read_piece_alert(sha1_hash &torrent_hash, piece_data_queue &queue, int expected_piece, const libtorrent::alert* a) {
-	const libtorrent::read_piece_alert* readPieceAlrt = libtorrent::alert_cast<
-						libtorrent::read_piece_alert>(a);
-	if (readPieceAlrt) {
-		if(readPieceAlrt->handle.info_hash() == torrent_hash) {
-			if (readPieceAlrt->piece == expected_piece) {
-				return true;
-			} else {
-				read_piece_alert* old = queue.push(readPieceAlrt->piece, (read_piece_alert *)readPieceAlrt->clone().release());
+		// write resume data for the finished torrent
+		// the alert handler for save_resume_data_alert
+		// will save it to disk
+		 p->handle.save_resume_data();
+	}
+	else if (const save_resume_data_alert* p = alert_cast<save_resume_data_alert>(a))
+	{
+		TORRENT_ASSERT(p->resume_data);
+		if (p->resume_data)
+		{
+			std::vector<char> out;
+			bencode(std::back_inserter(out), *p->resume_data);
+			std::string filename = combine_path(gDefaultSave, combine_path(RESUME
+											, to_hex(p->handle.info_hash().to_string()) + RESUME));
+						solt::SaveFile(filename, out);
+		}
+		if (expected_type == alert_type::save_resume_data && torrent_hash == p->handle.info_hash()) {
+			error_alert = false;
+			done = true;
+		}
+
+	}
+	else if (const save_resume_data_failed_alert* p = alert_cast<save_resume_data_failed_alert>(a))
+	{
+		if (expected_type == alert_type::save_resume_data && torrent_hash == p->handle.info_hash()) {
+			error_alert = true;
+			done = true;
+		}
+	}
+	else if (const torrent_paused_alert* p = alert_cast<torrent_paused_alert>(a))
+	{
+		// write resume data for the finished torrent
+		// the alert handler for save_resume_data_alert
+		// will save it to disk
+		p->handle.save_resume_data();
+	} else if (const read_piece_alert* p = alert_cast<read_piece_alert>(a)) {
+		if (p->handle.is_valid()) {
+			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
+			if (pTorrentInfo) {
+				read_piece_alert* old = (pTorrentInfo->piece_queue).push(p->piece,(read_piece_alert *) p->clone().release());
 				if (old) {
 					delete old;
 				}
 			}
-		} else {
-			hand_read_piece_alert(readPieceAlrt);
 		}
-		return false;
-	}
-	const libtorrent::torrent_finished_alert* finAlrt = libtorrent::alert_cast<
-				libtorrent::torrent_finished_alert>(a);
-	if (finAlrt) {
-		finAlrt->handle.save_resume_data();
-		return false;
-	}
-	const libtorrent::save_resume_data_alert* saveAlrt =
-			libtorrent::alert_cast<libtorrent::save_resume_data_alert>(a);
-	if (saveAlrt && saveAlrt->handle.is_valid() && saveAlrt->resume_data) {
-		std::vector<char> out;
-		libtorrent::bencode(std::back_inserter(out),
-				*(saveAlrt->resume_data));
-		boost::filesystem::path savePath = saveAlrt->handle.save_path();
-		savePath /= (saveAlrt->handle.name() + RESUME_SUFFIX);
-		solt::SaveFile(savePath, out);
-		return false;
-	}
-	return false;
-}
-
-void handle_alert(torrent_alert_handler &handler,const libtorrent::alert* a) {
-	const libtorrent::torrent_finished_alert* finAlrt = libtorrent::alert_cast<
-			libtorrent::torrent_finished_alert>(a);
-	if (finAlrt) {
-		LOG_ERR("torrent_finished_alert");
-		handler(*finAlrt);
-		return;
-	}
-	const libtorrent::save_resume_data_alert* saveAlrt =
-			libtorrent::alert_cast<libtorrent::save_resume_data_alert>(a);
-	if (saveAlrt) {
-		LOG_ERR("save_resume_data_alert");
-		handler(*saveAlrt);
-		return;
-	}
-	const libtorrent::save_resume_data_failed_alert* saveFailAlrt =
-				libtorrent::alert_cast<libtorrent::save_resume_data_failed_alert>(a);
-	if (saveFailAlrt) {
-		LOG_ERR("save_resume_data_failed_alert");
-		handler(*saveFailAlrt);
-		return;
-	}
-	const libtorrent::torrent_deleted_alert* delAlrt =
-			libtorrent::alert_cast<libtorrent::torrent_deleted_alert>(a);
-	if (delAlrt) {
+	} else if (const torrent_deleted_alert* p = alert_cast<libtorrent::torrent_deleted_alert>(a)) {
 		LOG_ERR("torrent_deleted_alert");
-		handler(*delAlrt);
-		return;
+		if (expected_type == alert_type::torrent_deleted && torrent_hash == p->info_hash) {
+			done = true;
+			error_alert = false;
+		}
+	} else if (const torrent_delete_failed_alert* p = alert_cast<torrent_delete_failed_alert>(a)) {
+		if (expected_type == alert_type::torrent_deleted && torrent_hash == p->handle.info_hash()) {
+			done = true;
+			error_alert = true;
+		}
 	}
-	const libtorrent::torrent_delete_failed_alert* delFailAlrt = libtorrent::alert_cast<
-			libtorrent::torrent_delete_failed_alert>(a);
-	if (delFailAlrt) {
-		LOG_ERR("torrent_delete_failed_alert");
-		handler(*delFailAlrt);
-		return;
-	}
-
-	const libtorrent::read_piece_alert* readPieceAlrt = libtorrent::alert_cast<
-				libtorrent::read_piece_alert>(a);
-	if (readPieceAlrt) {
-		LOG_ERR("read_piece_alert");
-		hand_read_piece_alert(readPieceAlrt);
-		return;
-	}
-}
-
-void handle_remove_torrent_alert(torrent_alert_handler &handler,const libtorrent::alert* a) {
-	const libtorrent::read_piece_alert* readPieceAlrt = libtorrent::alert_cast<
-					libtorrent::read_piece_alert>(a);
-	if (readPieceAlrt && readPieceAlrt->handle.info_hash() == handler.info_hash()) {
-		return;
-	}
-	handle_alert(handler, a);
+	return done;
 }
 
 } /* namespace solt */

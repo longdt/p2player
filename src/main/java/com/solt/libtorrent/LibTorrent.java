@@ -164,7 +164,6 @@ public class LibTorrent {
 	 * <ul>
 	 * <li>0-storage_mode_allocate
 	 * <li>1-storage_mode_sparse
-	 * <li>2-storage_mode_compact
 	 * </ul>
 	 * 
 	 * @param torentFile
@@ -183,7 +182,6 @@ public class LibTorrent {
 	 * <ul>
 	 * <li>0-storage_mode_allocate
 	 * <li>1-storage_mode_sparse
-	 * <li>2-storage_mode_compact
 	 * </ul>
 	 * 
 	 * @param torentFile
@@ -192,10 +190,20 @@ public class LibTorrent {
 	 */
 	public native String addTorrent(String torentFile, int storageMode,
 			boolean autoManaged);
+	
+	public String addAsyncTorrent(String torentFile, int storageMode) {
+		return addAsyncTorrent(torentFile, storageMode, true);
+	}
+	
+	public native String addAsyncTorrent(String torentFile, int storageMode,
+			boolean autoManaged);
 
-	// TODO implement
-	//public native String addTorrent(URI magnetLink, int storageMode,
-	//		boolean autoManaged);
+	
+	public native String addMagnetUri(String magnetLink, int storageMode,
+			boolean autoManaged);
+	
+	public native String addAsyncMagnetUri(String magnetLink, int storageMode,
+			boolean autoManaged);
 
 	// TODO implement
 	public native boolean saveResumeData();
@@ -727,6 +735,8 @@ public class LibTorrent {
 	 */
 	public native long getTorrentSize(String torrentFile);
 	// -----------------------------------------------------------------------------
+	
+	public native void handleAlerts();
 	
 	public int getBestStreamableFile(String hashCode) throws TorrentException {
 		FileEntry[] entries = getTorrentFiles(hashCode);

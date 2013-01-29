@@ -24,7 +24,7 @@ public:
 
 	solt::piece_data_queue piece_queue;
 
-	TorrentInfo() : pieceTransferIdx(0), firstPieceIncompleteIdx(0) {
+	TorrentInfo() : handle(), pieceTransferIdx(0), firstPieceIncompleteIdx(0) {
 	}
 };
 
