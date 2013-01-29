@@ -86,6 +86,7 @@ public class Main {
 	}
 	
 	public void requestShutdown() {
+		torrManager.cancelStream();
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
 		    	shell.dispose();
