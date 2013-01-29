@@ -8,7 +8,6 @@
 #ifndef JNIUTILS_H_
 #define JNIUTILS_H_
 #include <jni.h>
-#include <boost/filesystem/path.hpp>
 #include <vector>
 #include "libtorrent/peer_id.hpp"
 #include "libtorrent/torrent_handle.hpp"
@@ -27,9 +26,9 @@
 #endif
 
 namespace solt {
-#define RESUME_SUFFIX ".resume"
+#define RESUME ".resume"
 
-int SaveFile(boost::filesystem::path const& filename, std::vector<char>& v);
+int SaveFile(std::string const& filename, std::vector<char>& v);
 
 inline void JStringToHash(JNIEnv *env, libtorrent::sha1_hash &hash,
 		jstring JniString) {
