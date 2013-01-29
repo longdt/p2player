@@ -23,6 +23,8 @@ public class TorrentManager {
 	private File torrentsDir;
 	private CachePolicy policy;
 	private static TorrentManager instance;
+	private boolean processAlerts;
+	private Thread alertsService;
 
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
@@ -30,25 +32,25 @@ public class TorrentManager {
 		libTorrent = new LibTorrent();
 		httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
 		libTorrent.setSession(port, wwwRoot);
-		loadExistTorrents();
+		loadAsyncExistTorrents();
 	}
 
 	/**
 	 * 
 	 */
-	private void loadExistTorrents() {
+	private void loadAsyncExistTorrents() {
 		String hashCode = null;
 		for (File torrent : torrentsDir.listFiles()) {
 			if (torrent.isFile()) {
-				hashCode = libTorrent.addTorrent(torrent.getAbsolutePath(), 0,
+				hashCode = libTorrent.addAsyncTorrent(torrent.getAbsolutePath(), 0,
 						false);
 				if (hashCode != null) {
 					torrents.add(hashCode);
-				}
-				try {
-					libTorrent.setUploadMode(hashCode, true);
-				} catch (TorrentException e) {
-					e.printStackTrace();
+//					try {
+//						libTorrent.setUploadMode(hashCode, true);
+//					} catch (TorrentException e) {
+//						e.printStackTrace();
+//					}
 				}
 			}
 		}
@@ -63,10 +65,44 @@ public class TorrentManager {
 			try {
 				instance = new TorrentManager(port, wwwRoot);
 				instance.policy = CachePolicyFactory.getDefaultCachePolicy();
+				instance.startAlertsProcessService(1000);
 			} catch (IOException e) {
 			}
 		}
 		return instance;
+	}
+	
+	public synchronized void startAlertsProcessService(final long duration) {
+		if (processAlerts) {
+			return;
+		}
+		alertsService = new Thread("AlertsProcService") {
+			@Override
+			public void run() {
+				try {
+					while (true) {
+						libTorrent.handleAlerts();
+						Thread.sleep(duration);
+					}
+				} catch (InterruptedException e) {
+				}
+			}
+		};
+		alertsService.start();
+		processAlerts = true;
+	}
+	
+	public synchronized void stopAlertsProcessService() {
+		if (!processAlerts) {
+			return;
+		}
+		alertsService.interrupt();
+		try {
+			alertsService.join();
+			processAlerts = false;
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public synchronized String addTorrent(File torrentFile) {
@@ -134,6 +170,7 @@ public class TorrentManager {
 
 	public void shutdown() {
 		httpd.shutdown();
+		stopAlertsProcessService();
 		libTorrent.abortSession();
 	}
 
