@@ -127,6 +127,10 @@ public class TorrentManager {
 	public synchronized boolean contains(String hashCode) {
 		return torrents.contains(hashCode);
 	}
+	
+	public void cancelStream() {
+		httpd.cancelStream();
+	}
 
 	public void shutdown() {
 		httpd.shutdown();
@@ -139,7 +143,6 @@ public class TorrentManager {
 			torrents.remove(hashCode);
 			(new File(torrentsDir, hashCode)).delete();
 		}
-
 	}
 
 	/**
