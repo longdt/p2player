@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Arrays;
@@ -13,6 +12,118 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class LibTorrent {
+	/**
+	 * <p>
+	 * If flag_seed_mode is set, libtorrent will assume that all files are
+	 * present for this torrent and that they all match the hashes in the
+	 * torrent file. Each time a peer requests to download a block, the piece is
+	 * verified against the hash, unless it has been verified already. If a hash
+	 * fails, the torrent will automatically leave the seed mode and recheck all
+	 * the files. The use case for this mode is if a torrent is created and
+	 * seeded, or if the user already know that the files are complete, this is
+	 * a way to avoid the initial file checks, and significantly reduce the
+	 * startup time.
+	 * <p>
+	 * Setting flag_seed_mode on a torrent without metadata (a .torrent file) is
+	 * a no-op and will be ignored.
+	 * <p>
+	 * If resume data is passed in with this torrent, the seed mode saved in
+	 * there will override the seed mode you set here.
+	 */
+	public static final int FLAG_SEED_MODE = 0x001;
+	/**
+	 * If flag_override_resume_data is set, the paused and auto_managed state of
+	 * the torrent are not loaded from the resume data, but the states requested
+	 * by the flags in add_torrent_params will override them.
+	 */
+	public static final int FLAG_OVERRIDE_RESUME_DATA = 0x002;
+	/**
+	 * <p>
+	 * If flag_upload_mode is set, the torrent will be initialized in
+	 * upload-mode, which means it will not make any piece requests. This state
+	 * is typically entered on disk I/O errors, and if the torrent is also auto
+	 * managed, it will be taken out of this state periodically. This mode can
+	 * be used to avoid race conditions when adjusting priorities of pieces
+	 * before allowing the torrent to start downloading.
+	 * <p>
+	 * If the torrent is auto-managed (flag_auto_managed), the torrent will
+	 * eventually be taken out of upload-mode, regardless of how it got there.
+	 * If it's important to manually control when the torrent leaves upload
+	 * mode, don't make it auto managed.
+	 */
+	public static final int FLAG_UPLOAD_MODE = 0x004;
+	/**
+	 * <p>determines if the torrent should be added in share mode or not. Share
+	 * mode indicates that we are not interested in downloading the torrent, but
+	 * merlely want to improve our share ratio (i.e. increase it). A torrent
+	 * started in share mode will do its best to never download more than it
+	 * uploads to the swarm. If the swarm does not have enough demand for upload
+	 * capacity, the torrent will not download anything. This mode is intended
+	 * to be safe to add any number of torrents to, without manual screening,
+	 * without the risk of downloading more than is uploaded.
+	 * <p>
+	 * A torrent in share mode sets the priority to all pieces to 0, except for
+	 * the pieces that are downloaded, when pieces are decided to be downloaded.
+	 * This affects the progress bar, which might be set to "100% finished" most
+	 * of the time. Do not change file or piece priorities for torrents in share
+	 * mode, it will make it not work.
+	 * <p>
+	 * The share mode has one setting, the share ratio target, see
+	 * session_settings::share_mode_target for more info.
+	 */
+	public static final int FLAG_SHARE_MODE = 0x008;
+	/**
+	 * determines if the IP filter should apply to this torrent or not. By
+	 * default all torrents are subject to filtering by the IP filter (i.e. this
+	 * flag is set by default). This is useful if certain torrents needs to be
+	 * excempt for some reason, being an auto-update torrent for instance.
+	 */
+	public static final int FLAG_APPLY_IP_FILTER = 0x010;
+	/**
+	 * <p>
+	 * specifies whether or not the torrent is to be started in a paused state.
+	 * I.e. it won't connect to the tracker or any of the peers until it's
+	 * resumed. This is typically a good way of avoiding race conditions when
+	 * setting configuration options on torrents before starting them.
+	 * <p>
+	 * If you pass in resume data, the paused state of the torrent when the
+	 * resume data was saved will override the paused state you pass in here.
+	 * You can override this by setting flag_override_resume_data.
+	 * <p>
+	 * If the torrent is auto-managed (flag_auto_managed), the torrent may be
+	 * resumed at any point, regardless of how it paused. If it's important to
+	 * manually control when the torrent is paused and resumed, don't make it
+	 * auto managed.
+	 */
+	public static final int FLAG_PAUSED = 0x020;
+	/**
+	 * <p>
+	 * If flag_auto_managed is set, the torrent will be queued, started and
+	 * seeded automatically by libtorrent. When this is set, the torrent should
+	 * also be started as paused. The default queue order is the order the
+	 * torrents were added. They are all downloaded in that order. For more
+	 * details, see queuing.
+	 * <p>
+	 * If you pass in resume data, the auto_managed state of the torrent when
+	 * the resume data was saved will override the auto_managed state you pass
+	 * in here. You can override this by setting override_resume_data.
+	 */
+	public static final int FLAG_AUTO_MANAGED = 0x040;
+	public static final int FLAG_DUPLICATE_IS_ERROR = 0x080;
+	/**
+	 * defaults to off and specifies whether tracker URLs loaded from resume
+	 * data should be added to the trackers in the torrent or replace the
+	 * trackers.
+	 */
+	public static final int FLAG_MERGE_RESUME_TRACKERS = 0x100;
+	/**
+	 * is on by default and means that this torrent will be part of state
+	 * updates when calling post_torrent_updates().
+	 */
+	public static final int FLAG_UPDATE_SUBSCRIBE = 0x200;
+	public static final int DEFAULT_FLAGS = FLAG_UPDATE_SUBSCRIBE
+			| FLAG_AUTO_MANAGED | FLAG_PAUSED | FLAG_APPLY_IP_FILTER;
+
 	private static final String LIBTORRENT_DLL = "libtorrent.dll";
 	private static final Set<String> mediaExts = new HashSet<String>();
 	
@@ -35,6 +146,9 @@ public class LibTorrent {
 				OutputStream out = null;
 				try {
 					in = getClass().getResourceAsStream("/" + LIBTORRENT_DLL);
+					if (in == null) {
+						in = getClass().getResourceAsStream("/resources/" + LIBTORRENT_DLL);
+					}
 					out = new FileOutputStream(tmpFile);
 
 					byte[] buf = new byte[8192];
@@ -171,7 +285,7 @@ public class LibTorrent {
 	 * @return hashCode of added torrent or <code>null</code> if error occurs
 	 */
 	public String addTorrent(String torentFile, int storageMode) {
-		return addTorrent(torentFile, storageMode, true);
+		return addTorrent(torentFile, storageMode, DEFAULT_FLAGS);
 	}
 
 	/**
@@ -189,21 +303,20 @@ public class LibTorrent {
 	 * @return hashCode of added torrent or <code>null</code> if error occurs
 	 */
 	public native String addTorrent(String torentFile, int storageMode,
-			boolean autoManaged);
-	
-	public String addAsyncTorrent(String torentFile, int storageMode) {
-		return addAsyncTorrent(torentFile, storageMode, true);
-	}
-	
-	public native String addAsyncTorrent(String torentFile, int storageMode,
-			boolean autoManaged);
+			int flags);
 
-	
+	public String addAsyncTorrent(String torentFile, int storageMode) {
+		return addAsyncTorrent(torentFile, storageMode, DEFAULT_FLAGS);
+	}
+
+	public native String addAsyncTorrent(String torentFile, int storageMode,
+			int flags);
+
 	public native String addMagnetUri(String magnetLink, int storageMode,
-			boolean autoManaged);
-	
+			int flags);
+
 	public native String addAsyncMagnetUri(String magnetLink, int storageMode,
-			boolean autoManaged);
+			int flags);
 
 	// TODO implement
 	public native boolean saveResumeData();
