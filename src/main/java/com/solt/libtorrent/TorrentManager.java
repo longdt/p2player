@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashSet;
 
@@ -43,14 +44,9 @@ public class TorrentManager {
 		for (File torrent : torrentsDir.listFiles()) {
 			if (torrent.isFile()) {
 				hashCode = libTorrent.addAsyncTorrent(torrent.getAbsolutePath(), 0,
-						false);
+						LibTorrent.FLAG_UPLOAD_MODE);
 				if (hashCode != null) {
 					torrents.add(hashCode);
-//					try {
-//						libTorrent.setUploadMode(hashCode, true);
-//					} catch (TorrentException e) {
-//						e.printStackTrace();
-//					}
 				}
 			}
 		}
@@ -108,7 +104,7 @@ public class TorrentManager {
 	public synchronized String addTorrent(File torrentFile) {
 		try {
 			String hashCode = libTorrent.addTorrent(
-					torrentFile.getAbsolutePath(), 0, false);
+					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
 
 				libTorrent.setUploadMode(hashCode, false);
@@ -132,7 +128,7 @@ public class TorrentManager {
 		try {
 			FileUtils.copyFile(url.openStream(), torrentFile);
 			String hashCode = libTorrent.addTorrent(
-					torrentFile.getAbsolutePath(), 0, false);
+					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
@@ -143,6 +139,27 @@ public class TorrentManager {
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public synchronized String addTorrent(URI magnetUri) {
+		try {
+			String hashCode = libTorrent.addMagnetUri(
+					magnetUri.toString(), 0, 0);
+			if (hashCode != null) {
+				libTorrent.setUploadMode(hashCode, false);
+				if (torrents.add(hashCode)) {
+					//TODO save magnet link
+//					FileUtils.copyFile(torrentFile, new File(torrentsDir,
+//							hashCode));
+					policy.prepare(hashCode);
+				}
+				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
+			}
+		} catch (TorrentException e) {
 			e.printStackTrace();
 		}
 		return null;

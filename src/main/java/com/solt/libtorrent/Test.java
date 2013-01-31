@@ -29,7 +29,7 @@ public class Test {
 		if (args.length > 0 && !args[0].trim().isEmpty()) {
 			torrentFile = args[0].trim();
 		}
-		final String hashCode = libTorrent.addTorrent(torrentFile, 0, false);
+		final String hashCode = libTorrent.addTorrent(torrentFile, 0);
 		String mediaUrl = "http://localhost:18008/"
 				+ URLEncoder.encode(hashCode, "UTF-8");
 		System.out.println(mediaUrl);

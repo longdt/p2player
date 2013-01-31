@@ -3,6 +3,8 @@ package com.solt.media.ui;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
@@ -120,30 +122,61 @@ public class Main {
 		
 		final Menu menu = new Menu(shell, SWT.POP_UP);
 		shell.setMenu(menu);
-		MenuItem mntmOpen = new MenuItem(menu, SWT.NONE);
-		mntmOpen.addSelectionListener(new SelectionAdapter() {
+		MenuItem mntmOpenFile = new MenuItem(menu, SWT.NONE);
+		mntmOpenFile.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				FileDialog dialog = new FileDialog(shell, SWT.OPEN);
 				String path = dialog.open();
 				if (path != null) {
 					File torrentFile = new File(path);
+					String url = null;
 					if (torrentFile.isFile()) {
-						String url = torrManager.addTorrent(torrentFile);
-						if (url != null) {
-							Shell mplayer = new Shell();
-							mplayer.setText(url);
-							try {
-								Player.play(mplayer, url);
-							} catch (Exception e1) {
-								e1.printStackTrace();
-							}
+						url = torrManager.addTorrent(torrentFile);
+					}
+					if (url != null) {
+						Shell mplayer = new Shell();
+						mplayer.setText(url);
+						try {
+							Player.play(mplayer, url);
+						} catch (Exception e1) {
+							e1.printStackTrace();
 						}
 					}
 				}
 			}
 		});
-		mntmOpen.setText("Open");
+		mntmOpenFile.setText("Open File");
+		
+		MenuItem mntmOpenLink = new MenuItem(menu, SWT.NONE);
+		mntmOpenLink.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				InputDialog input = new InputDialog(shell, "Enter torrent link", SWT.CLOSE | SWT.TITLE);
+				String link = input.open();
+				if (link == null) return;
+				String url = null;
+				if (link.startsWith("magnet:")) {
+						url = torrManager.addTorrent(URI.create(link));
+				} else if (link.startsWith("http:")) {
+					try {
+						url = torrManager.addTorrent(new URL(link));
+					} catch (MalformedURLException e1) {
+						e1.printStackTrace();
+					}
+				}
+				if (url != null) {
+					Shell mplayer = new Shell();
+					mplayer.setText(url);
+					try {
+						Player.play(mplayer, url);
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		mntmOpenLink.setText("Open Link");
 		MenuItem mntmAbout = new MenuItem(menu, SWT.NONE);
 		mntmAbout.addSelectionListener(new SelectionAdapter() {
 			private AboutWindow about;
