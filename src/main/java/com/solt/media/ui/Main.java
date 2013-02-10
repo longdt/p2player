@@ -117,7 +117,6 @@ public class Main {
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setSize(640, 360);
 		shell.setText("SWT Application");
 		
 		final Menu menu = new Menu(shell, SWT.POP_UP);

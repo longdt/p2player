@@ -54,7 +54,7 @@ public class AboutWindow extends Dialog {
 		shell = new Shell(getParent(), SWT.DIALOG_TRIM);
 		shell.setSize(580, 280);
 		shell.setText(getText());
-		
+		Utils.centreWindow(shell);
 		text = new Text(shell, SWT.BORDER | SWT.MULTI);
 		text.setText(ABOUT_US);
 		text.setEditable(false);

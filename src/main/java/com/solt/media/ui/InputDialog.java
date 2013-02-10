@@ -49,7 +49,7 @@ public class InputDialog extends Dialog {
 		shell = new Shell(getParent(), getStyle());
 		shell.setSize(450, 78);
 		shell.setText(getText());
-		
+		Utils.centreWindow(shell);
 		input = new Text(shell, SWT.BORDER);
 		input.setBounds(10, 10, 331, 21);
 		
