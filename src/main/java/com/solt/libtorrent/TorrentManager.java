@@ -106,7 +106,7 @@ public class TorrentManager {
 			String hashCode = libTorrent.addTorrent(
 					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
-
+				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setUploadMode(hashCode, false);
 
 				if (torrents.add(hashCode)) {
@@ -130,6 +130,7 @@ public class TorrentManager {
 			String hashCode = libTorrent.addTorrent(
 					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
+				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode));
@@ -149,6 +150,7 @@ public class TorrentManager {
 			String hashCode = libTorrent.addMagnetUri(
 					magnetUri.toString(), 0, 0);
 			if (hashCode != null) {
+				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
 					//TODO save magnet link
