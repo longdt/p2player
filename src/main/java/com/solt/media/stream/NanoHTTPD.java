@@ -63,6 +63,8 @@ public class NanoHTTPD {
 	public static final String ACTION_VIEW = "/view";
 
 	public static final String ACTION_ADD = "/add";
+	
+	public static final String ACTION_DEL = "/del";
 
 	public static final String PARAM_HASHCODE = "hashcode";
 
@@ -220,6 +222,14 @@ public class NanoHTTPD {
 					sendMessage(HTTP_OK, mediaUrl);
 				} else {
 					sendMessage(HTTP_NOTFOUND, "false");
+				}
+			} else if (uri.equals(NanoHTTPD.ACTION_DEL) && hashCode != null) {
+				TorrentManager manager = TorrentManager.getInstance();
+				try {
+					manager.removeTorrent(hashCode);
+					sendMessage(HTTP_OK, "true");
+				} catch (TorrentException e) {
+					sendMessage(HTTP_BADREQUEST, "invalid hashcode");
 				}
 			} else {
 				sendMessage(HTTP_BADREQUEST, "invalid uri");
@@ -452,7 +462,7 @@ public class NanoHTTPD {
 			} catch (Exception e) {
 				// System.err.println("close stream: " +
 				// response.getTransferOffset() + " due: " + e.getMessage());
-				// e.printStackTrace();
+				e.printStackTrace();
 			} finally {
 				if (pw != null) {
 					pw.close();
@@ -576,13 +586,7 @@ public class NanoHTTPD {
 						System.err
 								.println("wait for libtorrent download data...");
 						Thread.sleep(500);
-						int len = sc.read(readBuffer);
-						if (len == -1) {
-							System.err.println("..........EOF........");
-							break;
-						} else if (len > 0) {
-							System.err.println("Player send data to server");
-						}
+						checkEOF(sc, readBuffer);
 						continue;
 					}
 				}
@@ -593,10 +597,12 @@ public class NanoHTTPD {
 				}
 				int len = libTorrent.readTorrentPiece(hashCode, streamPiece,
 						buff);
+				System.err.println("Read Piece: " + streamPiece + " with len: " + len);
 				if (len == -1) {
 					break;
 				} else if (len == 0) {
 					Thread.sleep(50);
+					checkEOF(sc, readBuffer);
 					continue;
 				}
 				int offset = (streamPiece == transferPieceIdx) ? transferPieceOffset
@@ -610,6 +616,15 @@ public class NanoHTTPD {
 				++streamPiece;
 			}
 
+		}
+
+		private void checkEOF(SocketChannel sc, ByteBuffer readBuffer) throws IOException {
+			int len = sc.read(readBuffer);
+			if (len == -1) {
+				throw new IOException("player send EOF signal");
+			} else if (len > 0) {
+				System.err.println("Player send data to server");
+			}
 		}
 
 		private void writeData(SocketChannel sc, byte[] buff, int offset,
