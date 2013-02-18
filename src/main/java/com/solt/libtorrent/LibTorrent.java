@@ -248,12 +248,13 @@ public class LibTorrent {
 
 	// -----------------------------------------------------------------------------
 	/**
-	 * Start/stop services: <i>DHT, Local Service Discovery, UPnP, NATPMP</i>. Set
-	 * true to start and false to stop corresponding service.<br>
+	 * Start/stop services: <i>DHT, Local Service Discovery, UPnP, NATPMP</i>.
+	 * Set true to start and false to stop corresponding service.<br>
 	 * When started, the listen port and the DHT port are attempted to be
 	 * forwarded on local UPnP router devices.
 	 * 
-	 * @param dht to start DHT
+	 * @param dht
+	 *            to start DHT
 	 * 
 	 * @param lsd
 	 *            to start service LSD
@@ -263,8 +264,8 @@ public class LibTorrent {
 	 *            to start service NATPMP
 	 * @return true if successful and false if otherwise
 	 */
-	public native boolean setSessionOptions(boolean dht, boolean lsd, boolean upnp,
-			boolean natpmp);
+	public native boolean setSessionOptions(boolean dht, boolean lsd,
+			boolean upnp, boolean natpmp);
 
 	// -----------------------------------------------------------------------------
 
@@ -569,6 +570,14 @@ public class LibTorrent {
 	public native void setUploadMode(String hashCode, boolean mode)
 			throws TorrentException;
 
+	
+	public native boolean isUploadMode(String hashCode) throws TorrentException;
+	
+	public native void setShareMode(String hashCode, boolean mode)
+			throws TorrentException;
+	
+	public native boolean isShareMode(String hashcode) throws TorrentException;
+	
 	/**
 	 * test if a torrent is in auto managed mode
 	 * 
