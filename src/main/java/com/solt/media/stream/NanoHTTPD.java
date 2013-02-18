@@ -209,7 +209,7 @@ public class NanoHTTPD {
 					sendResponse(r);
 				} else {
 					String torrentList = listTorrents();
-					sendMessage(HTTP_OK, torrentList);
+					sendMessage(HTTP_OK, MIME_HTML, torrentList);
 				}
 			} else if (uri.equals(NanoHTTPD.ACTION_ADD)) {
 				TorrentManager manager = TorrentManager.getInstance();
@@ -239,21 +239,29 @@ public class NanoHTTPD {
 		private String listTorrents() {
 			StringBuilder info = new StringBuilder();
 			Set<String> torrents = TorrentManager.getInstance().getTorrents();
+			info.append("<html><body><table>");
+			info.append("<tr><td>progress<td>hashcode<td>state<td>download rate<td>name<td>upload mode<td>auto manage\n");
 			try {
 				for (String hashCode : torrents) {
-					info.append(libTorrent.getTorrentProgress(hashCode))
-							.append('\t')
+					info.append("<tr><td>").append(libTorrent.getTorrentProgress(hashCode))
+							.append("<td>")
 							.append(hashCode)
-							.append('\t')
+							.append("<td>")
 							.append(libTorrent.getTorrentState(hashCode))
-							.append('\t')
+							.append("<td>")
 							.append(libTorrent.getTorrentDownloadRate(hashCode,
-									true)).append('\t')
-							.append(libTorrent.getTorrentName(hashCode)).append('\n');
+									true)).append("<td>")
+							.append(libTorrent.getTorrentName(hashCode))
+							.append("<td>")
+							.append(libTorrent.isUploadMode(hashCode))
+							.append("<td>")
+							.append(libTorrent.isAutoManaged(hashCode))
+							.append('\n');
 				}
 			} catch (TorrentException e) {
 
 			}
+			info.append("</table></body></html>");
 			return info.toString();
 		}
 
@@ -385,13 +393,17 @@ public class NanoHTTPD {
 		 */
 		private void sendMessage(String status, String msg)
 				throws InterruptedException {
+			sendMessage(status, MIME_PLAINTEXT, msg);
+		}
+		private void sendMessage(String status, String mimeType, String msg)
+				throws InterruptedException {
 			try {
 				if (status == null)
 					throw new Error("sendResponse(): Status can't be null.");
 
 				PrintWriter pw = new PrintWriter(mySocket.getOutputStream());
 				pw.print("HTTP/1.0 " + status + " \r\n");
-				pw.print("Content-Type: " + MIME_PLAINTEXT + "\r\n");
+				pw.print("Content-Type: " + mimeType + "\r\n");
 				pw.print("Date: " + gmtFrmt.format(new Date()) + "\r\n");
 				pw.print("Accept-Ranges: bytes\r\n");
 				pw.print("\r\n");

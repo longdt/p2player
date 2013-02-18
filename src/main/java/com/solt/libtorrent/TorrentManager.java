@@ -44,7 +44,7 @@ public class TorrentManager {
 		for (File torrent : torrentsDir.listFiles()) {
 			if (torrent.isFile()) {
 				hashCode = libTorrent.addAsyncTorrent(torrent.getAbsolutePath(), 0,
-						LibTorrent.FLAG_UPLOAD_MODE);
+						LibTorrent.FLAG_UPLOAD_MODE | LibTorrent.FLAG_OVERRIDE_RESUME_DATA);
 				if (hashCode != null) {
 					torrents.add(hashCode);
 				}
@@ -107,6 +107,7 @@ public class TorrentManager {
 					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
 				libTorrent.resumeTorrent(hashCode);
+				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
 
 				if (torrents.add(hashCode)) {
@@ -131,6 +132,7 @@ public class TorrentManager {
 					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
 				libTorrent.resumeTorrent(hashCode);
+				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode));
@@ -151,6 +153,7 @@ public class TorrentManager {
 					magnetUri.toString(), 0, 0);
 			if (hashCode != null) {
 				libTorrent.resumeTorrent(hashCode);
+				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
 				if (torrents.add(hashCode)) {
 					//TODO save magnet link
