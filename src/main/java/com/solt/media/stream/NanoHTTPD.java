@@ -239,7 +239,7 @@ public class NanoHTTPD {
 		private String listTorrents() {
 			StringBuilder info = new StringBuilder();
 			Set<String> torrents = TorrentManager.getInstance().getTorrents();
-			info.append("<html><body><table>");
+			info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
 			info.append("<tr><td>progress<td>hashcode<td>state<td>download rate<td>name<td>upload mode<td>auto manage\n");
 			try {
 				for (String hashCode : torrents) {
