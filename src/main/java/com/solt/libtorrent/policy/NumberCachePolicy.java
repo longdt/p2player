@@ -1,6 +1,6 @@
 package com.solt.libtorrent.policy;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
@@ -17,7 +17,7 @@ public class NumberCachePolicy implements CachePolicy {
 
 	@Override
 	public void prepare(String torrentFile) {
-		LinkedHashSet<String> torrents = manager.getTorrents();
+		Set<String> torrents = manager.getTorrents();
 		if (torrents.size() >= maxNumTorrent) {
 			String hashCode = torrents.iterator().next();
 			try {
