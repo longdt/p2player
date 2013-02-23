@@ -65,6 +65,10 @@ public class Constants {
 
 	public static String APP_NAME = "MediaPlayer";
 	public static String PROTOCOL = "mdp";
+	
+	public static final String TORRENT_FILE_EXTENSION = ".tor";
+	
+	public static final String MAGNET_FILE_EXTENSION = ".mag";
 
 	public static final String OSName = System.getProperty("os.name");
 

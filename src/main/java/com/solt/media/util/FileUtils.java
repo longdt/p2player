@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,6 +17,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -222,5 +224,40 @@ public class FileUtils {
 			}
 		}
 		return true;
+	}
+
+	public static void writeFile(File file, String content) {
+		PrintWriter writer = null;
+		try {
+			writer = new PrintWriter(file);
+			writer.print(content);
+		} catch (IOException e) {
+		} finally {
+			if (writer != null) {
+				writer.close();
+			}
+		}
+	}
+
+	public static String getStringContent(File file) {
+		Scanner in = null;
+		StringBuilder result = new StringBuilder();
+		try {
+			in = new Scanner(file);
+			while (in.hasNextLine()) {
+				result.append(in.nextLine()).append('\n');
+			}
+			if (result.length() > 0) {
+				result.deleteCharAt(result.length() - 1);
+			}
+			return result.toString();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} finally {
+			if (in != null) {
+				in.close();
+			}
+		}
+		return null;
 	}
 }
