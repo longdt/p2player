@@ -36,7 +36,7 @@ public class PartialPieceInfo {
 		this.pieceState = pieceState;
 	}
 	
-	int[] getBlocks() {
+	public int[] getBlocks() {
 		return blocks;
 	}
 }

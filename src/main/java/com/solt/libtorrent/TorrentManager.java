@@ -137,7 +137,7 @@ public class TorrentManager {
 					FileUtils.copyFile(torrentFile, new File(torrentsDir,
 							hashCode + Constants.TORRENT_FILE_EXTENSION));
 				}
-				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_STREAM
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 			}
 		} catch (TorrentException e) {
@@ -163,7 +163,7 @@ public class TorrentManager {
 				} else if (!existFile) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION));
 				}
-				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_STREAM
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 			}
 		} catch (Exception e) {
@@ -187,7 +187,7 @@ public class TorrentManager {
 							hashCode + Constants.MAGNET_FILE_EXTENSION), magnetUri.toString());
 					policy.prepare(hashCode);
 				}
-				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+				return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_STREAM
 						+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 			}
 		} catch (TorrentException e) {
@@ -198,7 +198,7 @@ public class TorrentManager {
 	
 	public String getMediaUrl(String hashCode) {
 		if (contains(hashCode)) {
-			return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_VIEW
+			return "http://127.0.0.1:" + HTTPD_PORT + NanoHTTPD.ACTION_STREAM
 					+ "?" + NanoHTTPD.PARAM_HASHCODE + "=" + hashCode;
 		}
 		return null;

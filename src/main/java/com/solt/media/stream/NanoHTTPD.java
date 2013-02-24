@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,9 +34,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
+import com.solt.libtorrent.PartialPieceInfo;
+import com.solt.libtorrent.PieceInfoComparator;
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
 import com.solt.media.util.Average;
+import com.solt.media.util.StringUtils;
 
 public class NanoHTTPD {
 
@@ -60,6 +64,8 @@ public class NanoHTTPD {
 			MIME_DEFAULT_BINARY = "application/octet-stream",
 			MIME_XML = "text/xml";
 
+	public static final String ACTION_STREAM = "/stream";
+	
 	public static final String ACTION_VIEW = "/view";
 
 	public static final String ACTION_ADD = "/add";
@@ -203,14 +209,12 @@ public class NanoHTTPD {
 				throws InterruptedException, MalformedURLException {
 			String uri = request.getUri();
 			String hashCode = request.getParam(NanoHTTPD.PARAM_HASHCODE);
-			if (uri.equals(NanoHTTPD.ACTION_VIEW)) {
-				if (hashCode != null) {
-					TorrentRequest r = serve(request);
-					sendResponse(r);
-				} else {
-					String torrentList = listTorrents();
-					sendMessage(HTTP_OK, MIME_HTML, torrentList);
-				}
+			if (uri.equals(NanoHTTPD.ACTION_STREAM) && hashCode != null) {
+				TorrentRequest r = serve(request);
+				sendResponse(r);
+			} else if (uri.equals(NanoHTTPD.ACTION_VIEW)) {
+				String view = hashCode != null? getTorrentInfo(hashCode) : listTorrents();
+				sendMessage(HTTP_OK, MIME_HTML, view);
 			} else if (uri.equals(NanoHTTPD.ACTION_ADD)) {
 				TorrentManager manager = TorrentManager.getInstance();
 				String mediaUrl = manager.getMediaUrl(hashCode);
@@ -236,26 +240,42 @@ public class NanoHTTPD {
 			}
 		}
 
+		private String getTorrentInfo(String hashCode) {
+			StringBuilder info = new StringBuilder();
+			info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
+			info.append("<tr><td>index<td>state<td>progress\n");
+			try {
+				PartialPieceInfo[] pieces = libTorrent.getPieceDownloadQueue(hashCode);
+				if (pieces != null) {
+					Arrays.sort(pieces, pieceComparator);
+					for (int i = 0; i < pieces.length; ++i) {
+						info.append("<tr><td>").append(pieces[i].getPieceIdx())
+							.append("<td>").append(pieces[i].getPieceState())
+							.append("<td>").append(StringUtils.progressPiece(pieces[i]))
+							.append("\n");
+					}
+				}
+			} catch (TorrentException e) {
+			}
+			info.append("</table></body></html>");
+			return info.toString();
+		}
+
 		private String listTorrents() {
 			StringBuilder info = new StringBuilder();
 			Set<String> torrents = TorrentManager.getInstance().getTorrents();
 			info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
-			info.append("<tr><td>progress<td>hashcode<td>state<td>download rate<td>name<td>upload mode<td>auto manage\n");
+			info.append("<tr><td>hashcode<td>state<td>progress<td>downloaded<td>download rate<td>name<td>upload mode<td>auto manage\n");
 			try {
 				for (String hashCode : torrents) {
-					info.append("<tr><td>").append(libTorrent.getTorrentProgress(hashCode))
-							.append("<td>")
-							.append(hashCode)
-							.append("<td>")
-							.append(libTorrent.getTorrentState(hashCode))
-							.append("<td>")
-							.append(libTorrent.getTorrentDownloadRate(hashCode,
-									true)).append("<td>")
-							.append(libTorrent.getTorrentName(hashCode))
-							.append("<td>")
-							.append(libTorrent.isUploadMode(hashCode))
-							.append("<td>")
-							.append(libTorrent.isAutoManaged(hashCode))
+					info.append("<tr><td>").append(hashCode)
+							.append("<td>").append(libTorrent.getTorrentState(hashCode))
+							.append("<td>").append(libTorrent.getTorrentProgress(hashCode))
+							.append("<td>").append(libTorrent.getTorrentProgressSize(hashCode, 0))
+							.append("<td>").append(libTorrent.getTorrentDownloadRate(hashCode, true))
+							.append("<td>").append(libTorrent.getTorrentName(hashCode))
+							.append("<td>").append(libTorrent.isUploadMode(hashCode))
+							.append("<td>").append(libTorrent.isAutoManaged(hashCode))
 							.append('\n');
 				}
 			} catch (TorrentException e) {
@@ -827,6 +847,7 @@ public class NanoHTTPD {
 	private volatile boolean serving;
 	private static int DEFAULT_BUFFER_SECS = 60;
 	private static int DEFAULT_MIN_PIECES_TO_BUFFER = 5;
+	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
 	// ==================================================
 	// File server code
 	// ==================================================

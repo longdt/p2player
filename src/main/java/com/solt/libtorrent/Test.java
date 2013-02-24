@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import com.solt.media.stream.NanoHTTPD;
+import com.solt.media.util.StringUtils;
 
 public class Test {
 	private static volatile boolean shutdown = false;
@@ -93,7 +94,7 @@ public class Test {
 				Arrays.sort(infos, comparator);
 				for (int i = 0; i < infos.length; ++i) {
 					System.out.println("piece[" + infos[i].getPieceIdx() + "]: "
-						+ infos[i].getPieceState() + progressPiece(infos[i]));
+						+ infos[i].getPieceState() + StringUtils.progressPiece(infos[i]));
 				}
 				System.out.println();
 			}
@@ -108,42 +109,6 @@ public class Test {
 		libTorrent.abortSession();
 	}
 
-	private static String progressPiece(PartialPieceInfo info) {
-		StringBuilder builder = new StringBuilder();
-		int[] blocks = info.getBlocks();
-		int totalBytes = 0;
-		for (int i = 0; i < info.getNumBlocks(); ++i) {
-			totalBytes += blocks[i * 4 + 1];
-			int state = blocks[i * 4];
-			if (state == 3) {
-				builder.append('#');
-			} else if (state == 2) {
-				builder.append('=');
-			} else if (state == 1) {
-				builder.append('+');
-			} else if (state == 0) {
-				builder.append('_');
-			} else {
-				builder.append(' ');
-			}
-		}
-		builder.append('\t').append(totalBytes);
-		return builder.toString();
-	}
 
-}
 
-class PieceInfoComparator implements Comparator<PartialPieceInfo> {
-
-	@Override
-	public int compare(PartialPieceInfo o1, PartialPieceInfo o2) {
-		if (o1.getPieceIdx() < o2.getPieceIdx()) {
-			return -1;
-		} else if (o1.getPieceIdx() > o2.getPieceIdx()) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	
 }
