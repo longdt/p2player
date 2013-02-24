@@ -7,6 +7,28 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef com_solt_libtorrent_LibTorrent_FLAG_SEED_MODE
+#define com_solt_libtorrent_LibTorrent_FLAG_SEED_MODE 1L
+#undef com_solt_libtorrent_LibTorrent_FLAG_OVERRIDE_RESUME_DATA
+#define com_solt_libtorrent_LibTorrent_FLAG_OVERRIDE_RESUME_DATA 2L
+#undef com_solt_libtorrent_LibTorrent_FLAG_UPLOAD_MODE
+#define com_solt_libtorrent_LibTorrent_FLAG_UPLOAD_MODE 4L
+#undef com_solt_libtorrent_LibTorrent_FLAG_SHARE_MODE
+#define com_solt_libtorrent_LibTorrent_FLAG_SHARE_MODE 8L
+#undef com_solt_libtorrent_LibTorrent_FLAG_APPLY_IP_FILTER
+#define com_solt_libtorrent_LibTorrent_FLAG_APPLY_IP_FILTER 16L
+#undef com_solt_libtorrent_LibTorrent_FLAG_PAUSED
+#define com_solt_libtorrent_LibTorrent_FLAG_PAUSED 32L
+#undef com_solt_libtorrent_LibTorrent_FLAG_AUTO_MANAGED
+#define com_solt_libtorrent_LibTorrent_FLAG_AUTO_MANAGED 64L
+#undef com_solt_libtorrent_LibTorrent_FLAG_DUPLICATE_IS_ERROR
+#define com_solt_libtorrent_LibTorrent_FLAG_DUPLICATE_IS_ERROR 128L
+#undef com_solt_libtorrent_LibTorrent_FLAG_MERGE_RESUME_TRACKERS
+#define com_solt_libtorrent_LibTorrent_FLAG_MERGE_RESUME_TRACKERS 256L
+#undef com_solt_libtorrent_LibTorrent_FLAG_UPDATE_SUBSCRIBE
+#define com_solt_libtorrent_LibTorrent_FLAG_UPDATE_SUBSCRIBE 512L
+#undef com_solt_libtorrent_LibTorrent_DEFAULT_FLAGS
+#define com_solt_libtorrent_LibTorrent_DEFAULT_FLAGS 624L
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    setSession
@@ -34,34 +56,34 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSessionOptions
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    addTorrent
- * Signature: (Ljava/lang/String;IZ)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;II)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrent
-  (JNIEnv *, jobject, jstring, jint, jboolean);
+  (JNIEnv *, jobject, jstring, jint, jint);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    addAsyncTorrent
- * Signature: (Ljava/lang/String;IZ)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;II)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncTorrent
-  (JNIEnv *, jobject, jstring, jint, jboolean);
+  (JNIEnv *, jobject, jstring, jint, jint);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    addMagnetUri
- * Signature: (Ljava/lang/String;IZ)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;II)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addMagnetUri
-  (JNIEnv *, jobject, jstring, jint, jboolean);
+  (JNIEnv *, jobject, jstring, jint, jint);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    addAsyncMagnetUri
- * Signature: (Ljava/lang/String;IZ)Ljava/lang/String;
+ * Signature: (Ljava/lang/String;II)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncMagnetUri
-  (JNIEnv *, jobject, jstring, jint, jboolean);
+  (JNIEnv *, jobject, jstring, jint, jint);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
@@ -238,6 +260,30 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadLimit
  */
 JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setUploadMode
   (JNIEnv *, jobject, jstring, jboolean);
+
+/*
+ * Class:     com_solt_libtorrent_LibTorrent
+ * Method:    isUploadMode
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_isUploadMode
+  (JNIEnv *, jobject, jstring);
+
+/*
+ * Class:     com_solt_libtorrent_LibTorrent
+ * Method:    setShareMode
+ * Signature: (Ljava/lang/String;Z)V
+ */
+JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setShareMode
+  (JNIEnv *, jobject, jstring, jboolean);
+
+/*
+ * Class:     com_solt_libtorrent_LibTorrent
+ * Method:    isShareMode
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_isShareMode
+  (JNIEnv *, jobject, jstring);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
