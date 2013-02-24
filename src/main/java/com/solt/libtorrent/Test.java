@@ -22,7 +22,7 @@ public class Test {
 		System.out.println(Charset.defaultCharset());
 		final LibTorrent libTorrent = new LibTorrent();
 		
-		libTorrent.setSession(18080, "./", 0, 0 * 1024);
+		libTorrent.setSession(18080, new File("./"), 0, 0 * 1024);
 		libTorrent.setSessionOptions(true, true, true, true);
 		final NanoHTTPD httpd = new NanoHTTPD(18008, new File("./"), libTorrent);
 		String torrentFile = "a.torrent";
