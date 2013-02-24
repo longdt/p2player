@@ -191,6 +191,9 @@ public class LibTorrent {
 	//
 	// private LibTorrent(){};
 	// -----------------------------------------------------------------------------
+	private native boolean setSession(int listenPort, String defaultSave,
+			int uploadLimit, int downloadLimit);
+
 	/**
 	 * create session which listens on a given port and has defaultSave path.
 	 * It's also set download/upload limit speed. This method only was called
@@ -202,20 +205,8 @@ public class LibTorrent {
 	 * @param downloadLimit
 	 * @return true if successful and false if otherwise
 	 */
-	public native boolean setSession(int listenPort, String defaultSave,
-			int uploadLimit, int downloadLimit);
-
-	/**
-	 * Same as {@code LibTorrent#setSession(listenPort, defaultSave, 0, 0)}.<br/>
-	 * See {@link LibTorrent#setSession(int, String, int, int)} for more
-	 * information
-	 * 
-	 * @param listenPort
-	 * @param defaultSave
-	 * @return true if successful and false if otherwise
-	 */
-	public boolean setSession(int listenPort, String defaultSave) {
-		return setSession(listenPort, defaultSave, 0, 0);
+	public boolean setSession(int listenPort, File defaultSave, int uploadLimit, int downloadLimit) {
+		return setSession(listenPort, defaultSave.getAbsolutePath(), uploadLimit, downloadLimit);
 	}
 
 	/**

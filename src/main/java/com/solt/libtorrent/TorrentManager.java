@@ -38,8 +38,9 @@ public class TorrentManager {
 		torrentsDir = SystemProperties.getTorrentsDir();
 		torrents = new LinkedHashMap<String, Boolean>();
 		libTorrent = new LibTorrent();
-		httpd = new NanoHTTPD(HTTPD_PORT, wwwRoot, libTorrent);
-		libTorrent.setSession(port, wwwRoot);
+		File root = new File(wwwRoot);
+		httpd = new NanoHTTPD(HTTPD_PORT, root, libTorrent);
+		libTorrent.setSession(port, root, 0, 0);
 		loadAsyncExistTorrents();
 	}
 
