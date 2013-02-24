@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
+import com.solt.libtorrent.PartialPieceInfo;
+
 /**
  * General string utils
  */
@@ -727,4 +729,27 @@ public class StringUtils {
     }
     return sb.toString();
   }
+  
+	public static String progressPiece(PartialPieceInfo info) {
+		StringBuilder builder = new StringBuilder();
+		int[] blocks = info.getBlocks();
+		int totalBytes = 0;
+		for (int i = 0; i < info.getNumBlocks(); ++i) {
+			totalBytes += blocks[i * 4 + 1];
+			int state = blocks[i * 4];
+			if (state == 3) {
+				builder.append('#');
+			} else if (state == 2) {
+				builder.append('=');
+			} else if (state == 1) {
+				builder.append('+');
+			} else if (state == 0) {
+				builder.append('_');
+			} else {
+				builder.append(' ');
+			}
+		}
+		builder.append('\t').append(totalBytes);
+		return builder.toString();
+	}
 }
