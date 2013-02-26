@@ -342,7 +342,11 @@ public class LibTorrent {
 	 * 
 	 * @return true if successful and false if otherwise
 	 */
-	public native boolean abortSession();
+	public native boolean abortSession(boolean saveResumeData);
+	
+	public boolean abortSession() {
+		return abortSession(true);
+	}
 
 	// -----------------------------------------------------------------------------
 	/**

@@ -10,7 +10,7 @@
 #include "libtorrent/alert_types.hpp"
 #include "libtorrent/alert.hpp"
 #include "piecedataqueue.h"
-//#define START_ON_ADD
+
 namespace solt {
 using namespace libtorrent;
 
