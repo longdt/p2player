@@ -112,10 +112,10 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeSession
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    abortSession
- * Signature: ()Z
+ * Signature: (Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jboolean);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent

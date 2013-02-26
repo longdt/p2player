@@ -79,8 +79,8 @@ inline void gSession_del(bool saveState) {
 			solt::SaveFile(filename, out);
 		}
 		//delete session
-		delete gSession;
-		//session_proxy proxy = gSession->abort();
+		//delete gSession;
+		session_proxy proxy = gSession->abort();
 		gSession = NULL;
 	}
 }
@@ -732,13 +732,15 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_saveResumeData
 
 //-----------------------------------------------------------------------------
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession(
-		JNIEnv *env, jobject) {
+		JNIEnv *env, jobject, jboolean save) {
 	jboolean result = JNI_FALSE;
 	boost::unique_lock< boost::shared_mutex > lock(access);
 	try {
 		if (gSessionState) {
 			gSession->pause();
-			saveResumeData();
+			if (save == JNI_TRUE) {
+				saveResumeData();
+			}
 			gSession_del();
 			//free gTorrents
 			for (std::map<libtorrent::sha1_hash, TorrentInfo*>::iterator iter = gTorrents.begin(); iter != gTorrents.end(); ++iter) {
@@ -1118,7 +1120,9 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 			boost::shared_lock< boost::shared_mutex > lock(access);
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo && pieceIdx < pTorrentInfo->handle.get_torrent_info().num_pieces()) {
-				pTorrentInfo->handle.read_piece(pieceIdx);
+				if (pTorrentInfo->piece_queue.set_read(pieceIdx)) {
+					pTorrentInfo->handle.read_piece(pieceIdx);
+				}
 			}
 		}
 	} catch (...) {
