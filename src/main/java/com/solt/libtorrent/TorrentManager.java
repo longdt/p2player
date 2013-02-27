@@ -41,6 +41,7 @@ public class TorrentManager {
 		File root = new File(wwwRoot);
 		httpd = new NanoHTTPD(HTTPD_PORT, root, libTorrent);
 		libTorrent.setSession(port, root, 0, 0);
+		libTorrent.setSessionOptions(true, true, true, true);
 		loadAsyncExistTorrents();
 	}
 
