@@ -154,24 +154,22 @@ public class Main {
 				InputDialog input = new InputDialog(shell, "Enter torrent link", SWT.CLOSE | SWT.TITLE);
 				String link = input.open();
 				if (link == null) return;
-				String url = null;
-				if (link.startsWith("magnet:")) {
-						url = torrManager.addTorrent(URI.create(link));
-				} else if (link.startsWith("http:")) {
-					try {
-						url = torrManager.addTorrent(new URL(link));
-					} catch (MalformedURLException e1) {
-						e1.printStackTrace();
+				try {
+					String url = null;
+					if (link.startsWith("magnet:")) {
+							url = torrManager.addTorrent(URI.create(link));
+					} else if (link.startsWith("http:")) {
+							url = torrManager.addTorrent(new URL(link));
 					}
-				}
-				if (url != null) {
-					Shell mplayer = new Shell();
-					mplayer.setText(url);
-					try {
+					if (url != null) {
+						Shell mplayer = new Shell();
+						mplayer.setText(url);
 						Player.play(mplayer, url);
-					} catch (Exception e1) {
-						e1.printStackTrace();
+	
 					}
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
 				}
 			}
 		});
