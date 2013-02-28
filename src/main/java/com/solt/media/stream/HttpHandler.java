@@ -11,17 +11,16 @@ import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-import java.util.Map.Entry;
 
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
@@ -29,7 +28,6 @@ import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PieceInfoComparator;
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
-import com.solt.media.util.Average;
 import com.solt.media.util.StringUtils;
 
 public class HttpHandler implements Runnable{
@@ -46,8 +44,7 @@ public class HttpHandler implements Runnable{
 	private static final String PARAM_FILE = "file";
 	
 	private static final String DOWN_TORRENT_LINK = "http://localhost/";
-	private static int DEFAULT_BUFFER_SECS = 60;
-	private static int DEFAULT_MIN_PIECES_TO_BUFFER = 5;
+
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
 	private File rootDir;
 	private LibTorrent libTorrent;
@@ -113,11 +110,7 @@ public class HttpHandler implements Runnable{
 		} catch (InterruptedException ie) {
 			// Thrown by sendError, ignore and exit the thread.
 		} finally {
-			try {
-				mySocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			stop();
 			httpd.removeHandler(this);
 		}
 	}
@@ -451,169 +444,12 @@ public class HttpHandler implements Runnable{
 
 	private void sendTorrentData(String hashCode, int index, long dataLength,
 			long transferOffset) throws Exception {
-		int lastSet = 0;
-		Average streamRate = Average.getInstance(1000, 20);
-		long pending = dataLength; // This is to support partial sends, see
-									// serveFile()
-
-		// TODO transfer data when downloading torrent
-		int pieceSize = libTorrent.getPieceSize(hashCode, false);
-		// int PIECE_BUFFER_SIZE = 300 * 1024 * 30 / pieceSize;
-		long timeToWait = (pieceSize * 10000l) / (300 * 1024);
-		transferOffset += libTorrent.getTorrentFiles(hashCode)[index].getOffset();
-		int streamPiece = (int) (transferOffset / pieceSize);
-		int setRead = -1;
-		int transferPieceIdx = streamPiece;
-		int transferPieceOffset = (int) (transferOffset - transferPieceIdx
-				* pieceSize);
-		if (transferOffset > 0) {
-			// TODO clear piece deadline
-			// libTorrent.clearPiecesDeadline(hashCode);
-		}
-
-		int pieceNum = libTorrent.getPieceNum(hashCode);
-		lastSet = streamPiece;
-		int incompleteIdx = lastSet;
-		int numSet = 0;
-		byte[] buff = new byte[pieceSize];
-		ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-		mySocket.setSendBufferSize(pieceSize);
-		SocketChannel sc = mySocket.getChannel();
-		sc.configureBlocking(false);
-		int cancelPiece = 0;
-		long lastTime = System.currentTimeMillis();
-		boolean cancelled = false;
-		int state = 0;
-		while (streaming && pending > 0
-				&& !Thread.currentThread().isInterrupted()) {
-			if (state != 4 && state != 5 && state != 3) {
-				state = libTorrent.getTorrentState(hashCode);
-			}
-			int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode,
-					pieceSize, streamRate);
-			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
-			if (state != 4 && state != 5
-					&& streamPiece + PIECE_BUFFER_SIZE > incompleteIdx) {
-				incompleteIdx = libTorrent.getFirstPieceIncomplete(
-						hashCode, transferOffset);
-				long currentTime = System.currentTimeMillis();
-				if (cancelPiece != incompleteIdx) {
-					if (cancelled
-							&& cancelPiece + PIECE_BUFFER_SIZE * 2 / 3 > incompleteIdx) {
-						libTorrent.cancelTorrentPiece(hashCode,
-								incompleteIdx);
-					} else {
-						cancelled = false;
-					}
-					cancelPiece = incompleteIdx;
-					lastTime = currentTime;
-				} else if (lastTime + timeToWait < currentTime) {
-					libTorrent.cancelTorrentPiece(hashCode, cancelPiece);
-					cancelled = true;
-					lastTime = currentTime;
-				}
-
-				System.err.println(streamPiece);
-				if (incompleteIdx > lastSet) {
-					lastSet = incompleteIdx;
-				}
-				numSet = incompleteIdx + PIECE_BUFFER_SIZE - lastSet;
-				if (numSet > 0) {
-					// System.err.println("set deadline: [" + lastSet + ", "
-					// + (lastSet + numSet) + ")");
-					for (int i = 0; i < numSet && i + lastSet < pieceNum; ++i) {
-						libTorrent.setPieceDeadline(hashCode, lastSet + i,
-								i * 150 + 1500);
-						if (lastSet + i + PIECE_BUFFER_SIZE < pieceNum) {
-							libTorrent.setPiecePriority(hashCode, lastSet
-									+ i + PIECE_BUFFER_SIZE, 7);
-						}
-					}
-					lastSet += numSet;
-				}
-				if (streamPiece == incompleteIdx) {
-					System.err
-							.println("wait for libtorrent download data...");
-					Thread.sleep(500);
-					checkEOF(sc, readBuffer);
-					continue;
-				}
-			}
-			if (setRead != streamPiece) {
-				setRead = streamPiece;
-				libTorrent.setTorrentReadPiece(hashCode, setRead);
-				Thread.sleep(50);
-			}
-			int len = libTorrent.readTorrentPiece(hashCode, streamPiece,
-					buff);
-			System.err.println("Read Piece: " + streamPiece + " with len: " + len);
-			if (len == -1) {
-				break;
-			} else if (len == 0) {
-				Thread.sleep(50);
-				checkEOF(sc, readBuffer);
-				continue;
-			}
-			int offset = (streamPiece == transferPieceIdx) ? transferPieceOffset
-					: 0;
-			len = len - offset;
-			if (len > pending) {
-				len = (int) pending;
-			}
-			writeData(sc, buff, offset, len, streamRate);
-			pending -= len;
-			++streamPiece;
-		}
-
+		new TorrentStreamerImpl(this, hashCode, index, dataLength, transferOffset).stream();
 	}
 
-	private void checkEOF(SocketChannel sc, ByteBuffer readBuffer) throws IOException {
-		int len = sc.read(readBuffer);
-		if (len == -1) {
-			throw new IOException("player send EOF signal");
-		} else if (len > 0) {
-			System.err.println("Player send data to server");
-		}
-	}
 
-	private void writeData(SocketChannel sc, byte[] buff, int offset,
-			int len, Average streamRate) throws IOException,
-			InterruptedException {
-		ByteBuffer buffer = ByteBuffer.wrap(buff, offset, len); // TODO Need
-																// tunning
-		sc.write(buffer);
-		int writeLen = 0;
-		while (buffer.hasRemaining()) {
-			Thread.sleep(50);
-			writeLen = sc.write(buffer);
-			streamRate.addValue(writeLen);
-		}
-	}
 
-	private int computePieceBufferSize(String hashCode, int pieceSize,
-			Average streamRate) {
 
-		long rate = streamRate.getAverage();
-		try {
-			long downRate = libTorrent.getTorrentDownloadRate(hashCode,
-					true);
-			rate = rate > 0 ? (rate + downRate) / 2 : downRate;
-		} catch (TorrentException e) {
-			e.printStackTrace();
-		}
-
-		int buffer_secs = DEFAULT_BUFFER_SECS;
-
-		long buffer_bytes = (buffer_secs * rate);
-
-		int pieces_to_buffer = (int) (buffer_bytes / pieceSize);
-
-		if (pieces_to_buffer < DEFAULT_MIN_PIECES_TO_BUFFER) {
-
-			pieces_to_buffer = DEFAULT_MIN_PIECES_TO_BUFFER;
-		}
-		return pieces_to_buffer;
-	}
 
 	public void stop() {
 		streaming = false;
@@ -622,7 +458,18 @@ public class HttpHandler implements Runnable{
 		} catch (IOException e) {
 		}
 	}
+	
+	public boolean isStreaming() {
+		return streaming;
+	}
 
+	SocketChannel getSocketChannel() {
+		return mySocket.getChannel();
+	}
+	
+	NanoHTTPD getHttpd() {
+		return httpd;
+	}
 	// ==================================================
 	// API parts
 	// ==================================================
@@ -657,6 +504,10 @@ public class HttpHandler implements Runnable{
 				index = Integer.parseInt(file);
 			} else {
 				index = libTorrent.getBestStreamableFile(hashCode);
+			}
+			if (index == -1) {
+				sendMessage(HttpStatus.HTTP_NOTFOUND, "Error 404, file not found.");
+				return null;
 			}
 			FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
 			File f = new File(rootDir, entries[index].getPath());

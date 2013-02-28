@@ -139,7 +139,7 @@ public class NanoHTTPD {
 	private Thread acceptor;
 	private ExecutorService workers;
 	private final File rootDir;
-	LibTorrent libTorrent;
+	private LibTorrent libTorrent;
 	private List<HttpHandler> sessions;
 	private volatile boolean serving;
 
