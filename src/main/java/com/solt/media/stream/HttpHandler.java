@@ -154,7 +154,7 @@ public class HttpHandler implements Runnable{
 	private String getTorrentInfo(String hashCode) {
 		StringBuilder info = new StringBuilder();
 		info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
-		info.append("<tr><td>index<td>state<td>progress\n");
+		info.append("<tr><td>index<td>state<td>progress<td>status bar\n");
 		try {
 			PartialPieceInfo[] pieces = libTorrent.getPieceDownloadQueue(hashCode);
 			if (pieces != null) {
@@ -162,6 +162,7 @@ public class HttpHandler implements Runnable{
 				for (int i = 0; i < pieces.length; ++i) {
 					info.append("<tr><td>").append(pieces[i].getPieceIdx())
 						.append("<td>").append(pieces[i].getPieceState())
+						.append("<td>").append(pieces[i].getDownloadedBytes())
 						.append("<td>").append(StringUtils.progressPiece(pieces[i]))
 						.append("\n");
 				}
