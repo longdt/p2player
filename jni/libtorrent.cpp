@@ -1151,7 +1151,8 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 			boost::shared_lock< boost::shared_mutex > lock(access);
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
-				libtorrent::read_piece_alert* alrt = pTorrentInfo->piece_queue.pop(pieceIdx);
+				bool is_remove = false;
+				libtorrent::read_piece_alert* alrt = pTorrentInfo->piece_queue.pop(pieceIdx, is_remove);
 				if (!alrt) {
 					//try pop alert from session to get read_piece_alert
 					boost::mutex::scoped_lock l(alert_mutex);
@@ -1174,7 +1175,9 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 					//copy data
 					result = solt::copyPieceData(env, alrt, buffer);
 				}
-				delete alrt;
+				if (is_remove) {
+					delete alrt;
+				}
 			}
 		}
 	} catch (...) {
@@ -1748,6 +1751,53 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 		} catch (...) {
 		}
 	}
+	return result;
+}
+
+ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getPieceState
+(JNIEnv *env, jobject obj, jstring hashCode, jint fromIdx, jint len, jbyteArray states) {
+	jint result = -1;
+	HASH_ASSERT(env, hashCode, result);
+	libtorrent::sha1_hash hash;
+	solt::JStringToHash(env, hash, hashCode);
+	TorrentInfo* pTorrentInfo = NULL;
+	jbyte *pState = env->GetByteArrayElements(states, NULL);
+	try {
+		if (gSessionState) {
+			boost::shared_lock< boost::shared_mutex > lock(access);
+			pTorrentInfo = GetTorrentInfo(env, hash);
+			if (pTorrentInfo) {
+				libtorrent::torrent_handle* pTorrent = &(pTorrentInfo->handle);
+				libtorrent::torrent_status s = pTorrent->status(libtorrent::torrent_handle::query_pieces);
+				if (s.state != libtorrent::torrent_status::seeding
+						&& pTorrent->has_metadata()) {
+					if (!s.pieces.empty()) {
+						char const* bytes = s.pieces.bytes();
+						int i = s.pieces.size() / 8 - fromIdx;
+						if (len > i) {
+							len = i;
+						}
+						memcpy(pState, bytes + fromIdx, len);
+						result = len;
+					}
+				} else if (s.state == libtorrent::torrent_status::seeding
+						&& pTorrent->has_metadata()) {
+					memset(pState, 0xff, len);
+					result = len;
+				}
+			}
+		}
+	} catch (...) {
+		LOG_ERR("Exception: failed to get first piece incomplete");
+		try {
+			boost::unique_lock< boost::shared_mutex > lock(access);
+			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
+				delete pTorrentInfo;
+			}
+		} catch (...) {
+		}
+	}
+	env->ReleaseByteArrayElements(states, pState, 0);
 	return result;
 }
 

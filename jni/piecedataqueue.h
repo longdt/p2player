@@ -30,7 +30,7 @@ public:
 
 	read_piece_alert* push(int p, read_piece_alert* alrt);
 
-	read_piece_alert* pop(int p);
+	read_piece_alert* pop(int p, bool &is_remove);
 
 	void clear();
 

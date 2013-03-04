@@ -327,6 +327,14 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getFirstPieceIncomple
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
+ * Method:    getPieceState
+ * Signature: (Ljava/lang/String;II[B)I
+ */
+JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getPieceState
+  (JNIEnv *, jobject, jstring, jint, jint, jbyteArray);
+
+/*
+ * Class:     com_solt_libtorrent_LibTorrent
  * Method:    setPiecePriority
  * Signature: (Ljava/lang/String;II)V
  */
