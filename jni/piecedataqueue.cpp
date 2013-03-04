@@ -6,7 +6,7 @@
  */
 
 #include "piecedataqueue.h"
-
+#include "jniutils.h"
 namespace solt {
 
 piece_data_queue::piece_data_queue() {
@@ -51,12 +51,13 @@ read_piece_alert* piece_data_queue::push(int p, read_piece_alert* alrt) {
 	return old;
 }
 
-read_piece_alert* piece_data_queue::pop(int p) {
+read_piece_alert* piece_data_queue::pop(int p, bool &is_remove) {
 #ifdef STD_C++_11
 	std::unordered_map<int, int>::iterator it;
 #else
 	std::map<int, int>::iterator it;
 #endif
+	is_remove = false;
 	read_piece_alert* result = NULL;
 	boost::mutex::scoped_lock l(mutex);
 	std::map<int, read_piece_alert*>::iterator iter =
@@ -64,9 +65,12 @@ read_piece_alert* piece_data_queue::pop(int p) {
 	if (iter != queue.end()) {
 		result = iter->second;
 		it = piece_flag.find(p);
-		if (it->second == 1) {
+		if (it == piece_flag.end()) {
+			LOG_ERR("error missing set read piece");
+		} else if (it->second == 1) {
 			piece_flag.erase(it);
 			queue.erase(iter);
+			is_remove = true;
 		} else {
 			it->second = it->second - 1;
 		}

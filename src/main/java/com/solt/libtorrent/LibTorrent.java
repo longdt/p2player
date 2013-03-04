@@ -129,7 +129,7 @@ public class LibTorrent {
 	
 	static {
 		loadLibraryFromJar();
-		String[] extensions = new String[] {"mp3", "mp4", "ogv", "flv", "mov", "mkv", "avi", "asf", "wmv"};
+		String[] extensions = new String[] {"mp3", "mp4", "ogv", "flv", "mov", "mkv", "avi", "asf", "wmv", "divx"};
 		mediaExts.addAll(Arrays.asList(extensions));
 	}
 	
@@ -310,7 +310,6 @@ public class LibTorrent {
 	public native String addAsyncMagnetUri(String magnetLink, int storageMode,
 			int flags);
 
-	// TODO implement
 	public native boolean saveResumeData();
 
 	// -----------------------------------------------------------------------------
@@ -647,6 +646,20 @@ public class LibTorrent {
 	 */
 	public native int getFirstPieceIncomplete(String hashCode, long offset)
 			throws TorrentException;
+	
+	public boolean getPieceState(PiecesState state) throws TorrentException {
+		return getPieceState(state.getHashCode(), state.getStateIdx(), state.getStateLen(), state.getStates()) > 0;
+	}
+	
+	/**
+	 * get piece's states from a given fromIdx to <i>len</i>. Return len of state.
+	 * @param hashCode
+	 * @param fromIdx
+	 * @param len
+	 * @param state
+	 * @return
+	 */
+	private native int getPieceState(String hashCode, int fromIdx, int len, byte[] state);
 
 	/**
 	 * <p>
