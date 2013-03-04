@@ -8,6 +8,7 @@ import java.util.TreeMap;
 
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
+import com.solt.libtorrent.PiecesState;
 import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.Average;
 
@@ -69,6 +70,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		long bonusTime = 10000;
 		boolean isWait = false;
 		long speed = 0;
+		PiecesState pState = new PiecesState(hashCode);
 		while (handler.isStreaming() && pending > 0
 				&& !Thread.currentThread().isInterrupted()) {
 			if (state != 4 && state != 5 && state != 3) {
@@ -88,7 +90,10 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 				if (incompleteIdx > lastDLP) {
 					lastDLP = incompleteIdx;
 				}
-				numSet = incompleteIdx + PIECE_BUFFER_SIZE - lastDLP;
+				pState.setFromIdx(incompleteIdx);
+				pState.setLength(PIECE_BUFFER_SIZE, false);
+				libTorrent.getPieceState(pState);
+				numSet = incompleteIdx + PIECE_BUFFER_SIZE - lastDLP + pState.getNumDone();
 				if (numSet > 0) {
 					// System.err.println("set deadline: [" + lastSet + ", "
 					// + (lastSet + numSet) + ")");
