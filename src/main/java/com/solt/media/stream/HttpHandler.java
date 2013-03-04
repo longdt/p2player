@@ -65,6 +65,7 @@ public class HttpHandler implements Runnable{
 				+ "mp3		audio/mpeg " + "m3u		audio/mpeg-url "
 				+ "mp4		video/mp4 " + "avi		video/avi " + "ogv		video/ogg "
 				+ "flv		video/x-flv " + "wmv		video/x-ms-wmv "
+				+ "divx		video/divx "
 				+ "mov		video/quicktime " + "asf		video/x-ms-asf "
 				+ "swf		application/x-shockwave-flash "
 				+ "js			application/javascript " + "pdf		application/pdf "
@@ -404,7 +405,7 @@ public class HttpHandler implements Runnable{
 		} catch (Exception e) {
 			// System.err.println("close stream: " +
 			// response.getTransferOffset() + " due: " + e.getMessage());
-			e.printStackTrace();
+			//e.printStackTrace();
 		} finally {
 			if (pw != null) {
 				pw.close();
