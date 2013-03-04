@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import com.solt.libtorrent.LibTorrent;
+import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.Average;
 
@@ -44,10 +45,6 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	@Override
 	public void stream() throws Exception {
 		Average streamRate = Average.getInstance(1000, 20);
-		// serveFile()
-		// TODO transfer data when downloading torrent
-
-		// int PIECE_BUFFER_SIZE = 300 * 1024 * 30 / pieceSize;
 		long timeToWait = (pieceSize * 10000l) / (300 * 1024);
 		transferOffset += libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
@@ -71,6 +68,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		int state = 0;
 		long bonusTime = 10000;
 		boolean isWait = false;
+		long speed = 0;
 		while (handler.isStreaming() && pending > 0
 				&& !Thread.currentThread().isInterrupted()) {
 			if (state != 4 && state != 5 && state != 3) {
@@ -98,23 +96,40 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 					lastDLP = setDeadline(lastDLP, numSet);
 					setPriority(lastDLP + 1, 15);
 				}
+				
 				//cancel slow piece
-				if (currCancelPiece != incompleteIdx) {
-					bonusTime = pieceSize * 1000l/ (libTorrent.getTorrentDownloadRate(hashCode, true) + 1024);
-					timeToWait = bonusTime * 10;
-					if (bonusTime < 3000) {
-						bonusTime = 3000;
-					}
-				}
 				Entry<Integer, Long> entry = dlPieces
 						.floorEntry(incompleteIdx);
 				if (entry == null) {
 					System.err.println("ERROR set deadline");
-				} else if (entry.getValue() + timeToWait + (incompleteIdx - entry.getKey()) * bonusTime < currentTime) {
-					currCancelPiece = incompleteIdx;
-					libTorrent.cancelTorrentPiece(hashCode, currCancelPiece);
-					timeToWait = currentTime + bonusTime; //wait bonus time
 				}
+				if (speed < 50000) {
+					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
+					bonusTime = pieceSize * 1000l/ (speed + 1024);
+					timeToWait = bonusTime * 3;
+					if (bonusTime < 3000) {
+						bonusTime = 3000;
+					}
+				}
+				
+				if (currCancelPiece != incompleteIdx) {
+					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
+					bonusTime = pieceSize * 1000l/ (speed + 1024);
+					timeToWait = bonusTime * 3;
+					if (bonusTime < 3000) {
+						bonusTime = 3000;
+					}
+					if (entry.getValue() + timeToWait + (incompleteIdx - entry.getKey()) * bonusTime < currentTime) {
+						currCancelPiece = incompleteIdx;
+						libTorrent.cancelTorrentPiece(hashCode, currCancelPiece);
+						timeToWait = currentTime + bonusTime; //wait bonus time
+					}
+				} else if (timeToWait < currentTime) {
+					libTorrent.cancelTorrentPiece(hashCode, currCancelPiece);
+					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (libTorrent.getTorrentDownloadRate(hashCode, true) + 1024);
+					timeToWait = currentTime + bonusTime * 2 + 2000; //wait bonus time
+				}
+	
 				//stop tracking downloaded deadline piece
 				if (dlPieces.firstKey() < entry.getKey()) {
 					dlPieces.remove(dlPieces.firstKey());
@@ -157,6 +172,19 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 			++streamPiece;
 		}
 
+	}
+
+	private long getPieceRemain(int currCancelPiece) throws TorrentException {
+		PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, currCancelPiece);
+		if (info == null) {
+			return pieceSize;
+		}
+		int[] blocks = info.getBlocks();
+		long totalBytes = 0;
+		for (int i = 0; i < info.getNumBlocks(); ++i) {
+			totalBytes += blocks[i * 4 + 1];
+		}
+		return (pieceSize - totalBytes);
 	}
 
 	private int setDeadline(int fromIndex, int count) throws TorrentException {
