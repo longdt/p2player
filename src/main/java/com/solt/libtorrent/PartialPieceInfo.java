@@ -39,4 +39,12 @@ public class PartialPieceInfo {
 	public int[] getBlocks() {
 		return blocks;
 	}
+	
+	public int getDownloadedBytes() {
+		int totalBytes = 0;
+		for (int i = 0; i < numBlocks; ++i) {
+			totalBytes += blocks[i * 4 + 1];
+		}
+		return totalBytes;
+	}
 }

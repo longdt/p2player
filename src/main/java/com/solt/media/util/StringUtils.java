@@ -733,9 +733,7 @@ public class StringUtils {
 	public static String progressPiece(PartialPieceInfo info) {
 		StringBuilder builder = new StringBuilder();
 		int[] blocks = info.getBlocks();
-		int totalBytes = 0;
 		for (int i = 0; i < info.getNumBlocks(); ++i) {
-			totalBytes += blocks[i * 4 + 1];
 			int state = blocks[i * 4];
 			if (state == 3) {
 				builder.append('#');
@@ -749,7 +747,6 @@ public class StringUtils {
 				builder.append(' ');
 			}
 		}
-		builder.append('\t').append(totalBytes);
 		return builder.toString();
 	}
 }
