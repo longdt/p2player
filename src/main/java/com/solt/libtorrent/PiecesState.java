@@ -7,6 +7,11 @@ public class PiecesState {
 	private byte[] states;
 	private int stateLen;
 	private int stateIdx;
+	private int mark;
+	
+	public PiecesState(String hashCode) {
+		this.hashCode = hashCode;
+	}
 	
 	public PiecesState(String hashCode, int fromIdx, int len) {
 		this.hashCode = hashCode;
@@ -31,8 +36,12 @@ public class PiecesState {
 	}
 
 	public void setFromIdx(int fromIdx) {
+		if (fromIdx < 0) {
+			return;
+		}
 		this.fromIdx = fromIdx;
-		stateIdx = fromIdx / 8;
+		stateIdx = fromIdx >> 3;
+		mark = 0xff >> (fromIdx & 7);
 	}
 
 	public int getLenght() {
@@ -42,7 +51,7 @@ public class PiecesState {
 	public void setLength(int len, boolean force) {
 		if (len <= 0)
 			return;
-		stateLen = (len + 7) / 8;
+		stateLen = (len + 7) >> 3;
 		if (states == null || stateLen > states.length || force) {
 			states = new byte[stateLen];
 		}
@@ -50,7 +59,18 @@ public class PiecesState {
 	}
 
 	public boolean isDone(int index) {
-		return (states[index / 8 - stateIdx] & (0x80 >> (index & 7))) != 0;
+		return (states[index >> 3 - stateIdx] & (0x80 >> (index & 7))) != 0;
+	}
+	
+	public int getNumDone() {
+		int counter = 0;
+		int idx = 0;
+		states[0] = (byte) (states[0] & mark);
+		for (int i = 0; i < stateLen; ++i) {
+			idx = states[i] >= 0 ? states[i] : (256 + states[i]);
+			counter += BitsSetTable256[idx];
+		}
+		return counter;
 	}
 
 	public String getHashCode() {
@@ -66,6 +86,14 @@ public class PiecesState {
 		for (int n = fromIdx + len; i < n && isDone(i); ++i) {
 		}
 		return i;
+	}
+	
+	private static byte[] BitsSetTable256 = new byte[256];
+	static {
+		BitsSetTable256[0] = 0;
+		for (int i = 0; i < 256; i++) {
+			BitsSetTable256[i] = (byte)((i & 1) + BitsSetTable256[i / 2]);
+		}
 	}
 
 }
