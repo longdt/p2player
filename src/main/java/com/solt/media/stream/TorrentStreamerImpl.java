@@ -68,7 +68,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		int currCancelPiece = -1;
 		int state = 0;
 		long bonusTime = 10000;
-		boolean isWait = false;
+		boolean wait = false;
 		long speed = 0;
 		PiecesState pState = new PiecesState(hashCode);
 		while (handler.isStreaming() && pending > 0
@@ -77,7 +77,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 				state = libTorrent.getTorrentState(hashCode);
 			}
 			int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode, pieceSize,
-					streamRate, isWait);
+					streamRate, wait);
 			incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode,
 					transferOffset);
 			
@@ -145,11 +145,11 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 					System.err.println("wait for libtorrent download data...");
 					Thread.sleep(500);
 					checkEOF(schannel, readBuffer);
-					isWait = true;
+					wait = true;
 					continue;
 				}
 			}
-			isWait = false;
+			wait = false;
 			//read piece data
 			if (setRead != streamPiece) {
 				setRead = streamPiece;
@@ -222,14 +222,14 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	}
 
 	private int computePieceBufferSize(String hashCode, int pieceSize,
-			Average streamRate, boolean isWait) {
+			Average streamRate, boolean wait) {
 
 		long rate = streamRate.getAverage();
 		try {
 			long downRate = libTorrent.getTorrentDownloadRate(hashCode, true);
-			if (!isWait && rate < downRate) {
+			if (!wait && rate < downRate) {
 				rate = (long) (rate + rate * 0.2);
-			} else if (isWait) {
+			} else if (wait) {
 				rate = (long) (downRate * 0.2);
 			}
 		} catch (TorrentException e) {
