@@ -7,7 +7,7 @@ public class PiecesState {
 	private byte[] states;
 	private int stateLen;
 	private int stateIdx;
-	private int mark;
+	private byte mark;
 	
 	public PiecesState(String hashCode) {
 		this.hashCode = hashCode;
@@ -41,7 +41,7 @@ public class PiecesState {
 		}
 		this.fromIdx = fromIdx;
 		stateIdx = fromIdx >> 3;
-		mark = 0xff >> (fromIdx & 7);
+		mark = (byte) (0xff >>> (fromIdx & 7));
 	}
 
 	public int getLenght() {
