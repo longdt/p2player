@@ -11,6 +11,7 @@
 #include "libtorrent/extensions.hpp"
 #include "com_solt_libtorrent_LibTorrent.h"
 #include "jniutils.h"
+#include "libtorrent/peer_connection.hpp"
 
 namespace solt {
 
@@ -47,11 +48,27 @@ private:
 		for (int i = 0; i < num_blocks_in_piece; ++i) {
 			const piece_picker::block_info& info = iter->info[i];
 			if (info.state == piece_picker::block_info::state_requested) {
-				picker.abort_download(piece_block(piece_idx, i));
+				if (!is_downloading(piece_idx, i, info)) {
+					picker.abort_download(piece_block(piece_idx, i));
+				}
 				--counter;
 				if (counter == 0) break;
 			}
 		}
+	}
+	/*
+	 * Only call this method on blocks in request state.
+	 */
+	bool is_downloading(int piece_idx, int block_idx, const piece_picker::block_info& info) {
+		policy::peer* p = static_cast<policy::peer*>(info.peer);
+		if (p->connection) {
+			boost::optional<piece_block_progress> pbp
+				= p->connection->downloading_piece_progress();
+			if (pbp && pbp->piece_index == piece_idx && pbp->block_index == block_idx && pbp->bytes_downloaded > 0) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	torrent& m_torrent;

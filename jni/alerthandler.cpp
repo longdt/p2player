@@ -68,7 +68,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
 			if (pTorrentInfo) {
 				pTorrentInfo->handle = p->handle;
-#ifdef START_ON_ADD
+#ifdef SOLT_TORRENT_START_ON_ADD
 				if (p->handle.is_paused()) {
 					p->handle.resume();
 				}

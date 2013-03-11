@@ -15,14 +15,11 @@ piece_data_queue::piece_data_queue() {
 }
 
 piece_data_queue::~piece_data_queue() {
-	boost::mutex::scoped_lock l(mutex);
-	for (std::map<int, read_piece_alert*>::iterator it = queue.begin(), end = queue.end(); it != end; ++it) {
-		delete it->second;
-	}
+	clear();
 }
 
 bool piece_data_queue::set_read(int p) {
-#ifdef STD_C++_11
+#ifdef SOLT_TORRENT_STD_CPLUSPLUS_11
 	std::unordered_map<int, int>::iterator it;
 #else
 	std::map<int, int>::iterator it;
@@ -52,7 +49,7 @@ read_piece_alert* piece_data_queue::push(int p, read_piece_alert* alrt) {
 }
 
 read_piece_alert* piece_data_queue::pop(int p, bool &is_remove) {
-#ifdef STD_C++_11
+#ifdef SOLT_TORRENT_STD_CPLUSPLUS_11
 	std::unordered_map<int, int>::iterator it;
 #else
 	std::map<int, int>::iterator it;
@@ -84,6 +81,7 @@ void piece_data_queue::clear() {
 		delete it->second;
 	}
 	queue.clear();
+	piece_flag.clear();
 }
 
 } /* namespace solt */

@@ -373,7 +373,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrent(
 					th->piece_priority(0, 7);
 					int last_piece = t->num_pieces() - 1;
 					th->piece_priority(last_piece, 7);
-#ifdef START_ON_ADD
+#ifdef SOLT_TORRENT_START_ON_ADD
 					if (th->is_paused()) {
 						th->resume();
 					}
@@ -458,7 +458,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addMagnetUri(
 							"failed to add torrent: %s\n", errorMessage.c_str());
 				} else {
 					th->piece_priority(0, 7);
-#ifdef START_ON_ADD
+#ifdef SOLT_TORRENT_START_ON_ADD
 					if (th->is_paused()) {
 						th->resume();
 					}

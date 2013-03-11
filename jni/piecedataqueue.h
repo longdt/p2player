@@ -9,7 +9,7 @@
 #define PIECEDATAQUEUE_H_
 #include <boost/thread/mutex.hpp>
 #include "libtorrent/alert_types.hpp"
-#ifdef STD_C++_11
+#ifdef SOLT_TORRENT_STD_CPLUSPLUS_11
 #include <unordered_map>
 #endif
 namespace solt {
@@ -17,7 +17,7 @@ using namespace libtorrent;
 class piece_data_queue {
 private:
 	std::map<int, read_piece_alert*> queue;
-#ifdef STD_C++_11
+#ifdef SOLT_TORRENT_STD_CPLUSPLUS_11
 	std::unordered_map<int, int> piece_flag;
 #else
 	std::map<int, int> piece_flag;
