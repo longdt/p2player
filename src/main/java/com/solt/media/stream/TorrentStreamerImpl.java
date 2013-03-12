@@ -99,7 +99,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 					// + (lastSet + numSet) + ")");
 					dlPieces.put(lastDLP, currentTime);
 					lastDLP = setDeadline(lastDLP, numSet);
-					setPriority(lastDLP + 1, 15);
+					//setPriority(lastDLP + 1, 15);
 				}
 				
 				//cancel slow piece
@@ -130,7 +130,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 						timeToWait = currentTime + bonusTime; //wait bonus time
 					}
 				} else if (timeToWait < currentTime) {
-					libTorrent.cancelTorrentPiece(hashCode, currCancelPiece);
+					libTorrent.cancelTorrentPiece(hashCode, currCancelPiece, true);
 					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (libTorrent.getTorrentDownloadRate(hashCode, true) + 1024);
 					timeToWait = currentTime + bonusTime * 2 + 2000; //wait bonus time
 				}
@@ -230,7 +230,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 			if (!wait && rate < downRate) {
 				rate = (long) (rate + rate * 0.2);
 			} else if (wait) {
-				rate = (long) (downRate * 0.2);
+				rate = (long) (downRate * 1.2);
 			}
 		} catch (TorrentException e) {
 			e.printStackTrace();

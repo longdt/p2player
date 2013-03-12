@@ -778,8 +778,13 @@ public class LibTorrent {
 		return null;
 	}
 
-	public native void cancelTorrentPiece(String hashCode, int pieceIdx)
+	public native void cancelTorrentPiece(String hashCode, int pieceIdx, boolean force)
 			throws TorrentException;
+	
+	public void cancelTorrentPiece(String hashCode, int pieceIdx)
+			throws TorrentException {
+		cancelTorrentPiece(hashCode, pieceIdx, false);
+	}
 
 	// -----------------------------------------------------------------------------
 	// TODO test implementation already synchronize

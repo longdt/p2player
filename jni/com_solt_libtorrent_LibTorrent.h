@@ -392,10 +392,10 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_clearPiecesDeadline
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    cancelTorrentPiece
- * Signature: (Ljava/lang/String;I)V
+ * Signature: (Ljava/lang/String;IZ)V
  */
 JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_cancelTorrentPiece
-  (JNIEnv *, jobject, jstring, jint);
+  (JNIEnv *, jobject, jstring, jint, jboolean);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent

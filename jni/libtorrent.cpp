@@ -1985,7 +1985,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 }
 
  JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_cancelTorrentPiece
- 	 (JNIEnv *env, jobject obj, jstring hashCode, jint pieceIdx) {
+ 	 (JNIEnv *env, jobject obj, jstring hashCode, jint pieceIdx, jboolean force) {
 	 HASH_ASSERT(env, hashCode, RETURN_VOID);
 	libtorrent::sha1_hash hash;
 	solt::JStringToHash(env, hash, hashCode);
@@ -1995,7 +1995,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 			boost::shared_lock< boost::shared_mutex > lock(access);
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
-				pTorrentInfo->cancel_piece_tasks.push(pieceIdx);
+				pTorrentInfo->cancel_piece_tasks.push(cancel_piece(pieceIdx, force));
 			}
 		}
 	} catch (...) {
