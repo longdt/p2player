@@ -10,6 +10,13 @@
 #include "concurrentqueue.h"
 #include "piecedataqueue.h"
 
+struct cancel_piece {
+	int index;
+	bool force;
+	cancel_piece(): index(-1), force(false) {}
+	cancel_piece(int index, bool force): index(index), force(force) {}
+};
+
 class TorrentInfo {
 public:
 	libtorrent::torrent_handle handle;
@@ -20,7 +27,7 @@ public:
 
 	mutable boost::mutex cont_piece_mutex;
 
-	solt::concurrent_queue<int> cancel_piece_tasks;
+	solt::concurrent_queue<cancel_piece> cancel_piece_tasks;
 
 	solt::piece_data_queue piece_queue;
 
