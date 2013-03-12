@@ -130,6 +130,7 @@ public class TorrentManager {
 				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
+				libTorrent.setShareMode(hashCode, false);
 				Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
 				if (existFile == null) {
 					FileUtils.copyFile(torrentFile, new File(torrentsDir,
@@ -158,6 +159,7 @@ public class TorrentManager {
 				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
+				libTorrent.setShareMode(hashCode, false);
 				Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
 				if (existFile == null) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION));
@@ -182,6 +184,7 @@ public class TorrentManager {
 				libTorrent.resumeTorrent(hashCode);
 				libTorrent.setAutoManaged(hashCode, false);
 				libTorrent.setUploadMode(hashCode, false);
+				libTorrent.setShareMode(hashCode, false);
 				Boolean existFile = torrents.put(hashCode, MAGNET_FILE);
 				if (existFile == null) {
 					//TODO save magnet link
