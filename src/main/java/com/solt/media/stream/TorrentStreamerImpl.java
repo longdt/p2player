@@ -56,7 +56,8 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		int transferPieceIdx = streamPiece;
 		int transferPieceOffset = (int) (torrentOffset - transferPieceIdx
 				* pieceSize);
-		if (transferOffset > 0 && transferOffset / (float) (transferOffset + pending) < 0.8) {
+		float seekPoint = transferOffset / (float) (transferOffset + pending);
+		if (seekPoint > 0.1 && seekPoint < 0.85) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
 		}
