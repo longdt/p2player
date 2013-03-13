@@ -15,6 +15,7 @@
 #include "jniutils.h"
 #include "alerthandler.h"
 #include "torrentinfo.h"
+#include "config.hpp"
 
 using solt::torrent_alert_handler;
 using namespace libtorrent;
