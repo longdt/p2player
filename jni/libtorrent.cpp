@@ -1967,7 +1967,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 				libtorrent::torrent_handle* pTorrent = &pTorrentInfo->handle;
 				LOG_DEBUG(
 						"clear piece deadline torrent name %s", pTorrent->name().c_str());
-#ifdef LIBTORRENT_CUSTOME
+#ifdef SOLT_TORRENT_CLEAR_PIECE_DEADLINE
 				pTorrent->clear_pieces_deadline();
 #endif
 			}
