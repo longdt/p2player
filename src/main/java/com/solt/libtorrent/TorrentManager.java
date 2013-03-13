@@ -52,7 +52,7 @@ public class TorrentManager {
 	private void loadAsyncExistTorrents() {
 		String hashCode = null;
 		String magnet = null;
-		int flags = LibTorrent.FLAG_OVERRIDE_RESUME_DATA | LibTorrent.FLAG_SHARE_MODE;
+		int flags = LibTorrent.FLAG_OVERRIDE_RESUME_DATA;// | LibTorrent.FLAG_SHARE_MODE;
 		for (File torrent : torrentsDir.listFiles()) {
 			if (torrent.isDirectory()) {
 				continue;
