@@ -13,6 +13,7 @@ import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.Average;
 
 public class TorrentStreamerImpl implements TorrentStreamer {
+	private static final StreamManager manager = new StreamManager();
 	private static int DEFAULT_BUFFER_SECS = 60;
 	private static int DEFAULT_MIN_PIECES_TO_BUFFER = 5;
 	private HttpHandler handler;
@@ -34,10 +35,11 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		this.pending = dataLength;
 		this.transferOffset = transferOffset;
 		this.libTorrent = handler.getHttpd().getLibTorrent();
-		this.schannel = handler.getSocketChannel();
 		pieceSize = libTorrent.getPieceSize(hashCode, false);
 		pieceNum = libTorrent.getPieceNum(hashCode);
+		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
+		manager.putSync(hashCode, this);
 	}
 
 	/* (non-Javadoc)
@@ -47,16 +49,16 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	public void stream() throws Exception {
 		Average streamRate = Average.getInstance(1000, 20);
 		long timeToWait = (pieceSize * 10000l) / (300 * 1024);
-		transferOffset += libTorrent.getTorrentFiles(hashCode)[index]
+		long torrentOffset = transferOffset + libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
-		int streamPiece = (int) (transferOffset / pieceSize);
+		int streamPiece = (int) (torrentOffset / pieceSize);
 		int setRead = -1;
 		int transferPieceIdx = streamPiece;
-		int transferPieceOffset = (int) (transferOffset - transferPieceIdx
+		int transferPieceOffset = (int) (torrentOffset - transferPieceIdx
 				* pieceSize);
-		if (transferOffset > 0) {
+		if (transferOffset > 0 && transferOffset / (float) (transferOffset + pending) < 0.8) {
 			// TODO clear piece deadline
-			// libTorrent.clearPiecesDeadline(hashCode);
+			libTorrent.clearPiecesDeadline(hashCode);
 		}
 
 		int lastDLP = streamPiece;
@@ -79,7 +81,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 			int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode, pieceSize,
 					streamRate, wait);
 			incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode,
-					transferOffset);
+					torrentOffset);
 			
 			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
 			if (state != 4 && state != 5

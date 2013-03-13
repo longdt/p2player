@@ -22,6 +22,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
+import org.apache.log4j.Logger;
+
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
@@ -45,6 +47,7 @@ public class HttpHandler implements Runnable{
 	
 	private static final String DOWN_TORRENT_LINK = "http://localhost/";
 
+	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
 	private File rootDir;
 	private LibTorrent libTorrent;
@@ -404,8 +407,7 @@ public class HttpHandler implements Runnable{
 				pw.print(msg);
 			}
 		} catch (Exception e) {
-			// System.err.println("close stream: " +
-			// response.getTransferOffset() + " due: " + e.getMessage());
+			logger.debug("close stream: " +  req.getTransferOffset() + " due: " + e.getMessage());
 			//e.printStackTrace();
 		} finally {
 			if (pw != null) {
@@ -587,7 +589,7 @@ public class HttpHandler implements Runnable{
 					res.setHeader("ETag", etag);
 				}
 			}
-
+			logger.debug("serve request torrent: " + hashCode + " from " + res.getTransferOffset() + " to consume " + res.getDataLength() + " with method: " + request.getMethod());
 		} catch (NumberFormatException e) {
 			sendMessage(HttpStatus.HTTP_NOTFOUND, "Error 404, file not found.");
 		} catch (IOException ioe) {
