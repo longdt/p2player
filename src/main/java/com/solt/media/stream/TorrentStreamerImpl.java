@@ -41,6 +41,15 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		schannel.configureBlocking(false);
 		manager.putSync(hashCode, this);
 	}
+	
+	public static boolean isSeek(long transOffset, long dataLength) {
+		float seekPoint = transOffset / (float) (transOffset + dataLength);
+		return transOffset > (8 * 1024 * 1024) || seekPoint > 0.1 && !isRequestMetadata(dataLength);
+	}
+	
+	public static boolean isRequestMetadata(long dataLength) {
+		return dataLength > 30000 && dataLength < 50000;
+	}
 
 	/* (non-Javadoc)
 	 * @see com.solt.media.stream.TorrentStreamer#stream()
@@ -56,8 +65,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		int transferPieceIdx = streamPiece;
 		int transferPieceOffset = (int) (torrentOffset - transferPieceIdx
 				* pieceSize);
-		float seekPoint = transferOffset / (float) (transferOffset + pending);
-		if (seekPoint > 0.1 && seekPoint < 0.85) {
+		if (isSeek(transferOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, torrentOffset) == streamPiece)) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
 		}
