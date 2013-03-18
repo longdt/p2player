@@ -153,7 +153,7 @@ public class SystemProperties {
 		}
 	}
 
-	public static File getTorrentsDir() {
+	public synchronized static File getTorrentsDir() {
 		if (torrentsDir == null) {
 			torrentsDir = new File(getMetaDataPath() + TORRENTS_DIRECTORY);
 			if (!torrentsDir.isDirectory()) {
