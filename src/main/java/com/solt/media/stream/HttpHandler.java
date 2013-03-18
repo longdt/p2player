@@ -13,14 +13,11 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TimeZone;
 
 import org.apache.log4j.Logger;
 
@@ -78,15 +75,6 @@ public class HttpHandler implements Runnable{
 				+ "class		application/octet-stream ");
 		while (st.hasMoreTokens())
 			theMimeTypes.put(st.nextToken(), st.nextToken());
-	}
-	/**
-	 * GMT date formatter
-	 */
-	private static java.text.SimpleDateFormat gmtFrmt;
-	static {
-		gmtFrmt = new java.text.SimpleDateFormat(
-				"E, d MMM yyyy HH:mm:ss 'GMT'", Locale.US);
-		gmtFrmt.setTimeZone(TimeZone.getTimeZone("GMT"));
 	}
 	
 	public HttpHandler(Socket s, NanoHTTPD httpd) {
@@ -339,7 +327,6 @@ public class HttpHandler implements Runnable{
 			PrintWriter pw = new PrintWriter(mySocket.getOutputStream());
 			pw.print("HTTP/1.0 " + status + " \r\n");
 			pw.print("Content-Type: " + mimeType + "\r\n");
-			pw.print("Date: " + gmtFrmt.format(new Date()) + "\r\n");
 			pw.print("Accept-Ranges: bytes\r\n");
 			pw.print("\r\n");
 			pw.flush();
@@ -377,9 +364,6 @@ public class HttpHandler implements Runnable{
 
 			if (mime != null)
 				pw.print("Content-Type: " + mime + "\r\n");
-
-			if (header == null || header.get("Date") == null)
-				pw.print("Date: " + gmtFrmt.format(new Date()) + "\r\n");
 
 			if (header != null) {
 				for (Entry<String, String> entry : header.entrySet()) {
