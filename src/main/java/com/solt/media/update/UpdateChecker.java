@@ -64,6 +64,10 @@ public class UpdateChecker implements Runnable {
 			String hashFile = null;
 			do {
 				content = (JSONObject) parseJSON(updateUrl);
+				if (content == null) {
+					Thread.sleep(INTERVAL);
+					continue;
+				}
 				version = (String) content.get(VERSION_FIELD);
 				hash = (String) content.get(MD5_FIELD);
 				if (version != null && Constants.compareVersions(version, Constants.VERSION) > 0) {
@@ -106,6 +110,13 @@ public class UpdateChecker implements Runnable {
 			return JSONValue.parse(reader);
 		} catch (IOException e) {
 			
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+				}
+			}
 		}
 		return null;
 	}
