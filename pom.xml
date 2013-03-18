@@ -40,5 +40,10 @@
   		<artifactId>json-simple</artifactId>
   		<version>1.1.1</version>
   	</dependency>
+  	<dependency>
+  		<groupId>com.solt.mediaplayer</groupId>
+  		<artifactId>vlcplayer</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  	</dependency>
   </dependencies>
 </project>
