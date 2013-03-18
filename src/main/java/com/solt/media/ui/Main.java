@@ -23,7 +23,7 @@ import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
 import com.solt.media.update.UpdateChecker;
 import com.solt.media.util.Constants;
-import com.solt.mediaplayer.mplayer.swt.Player;
+import com.solt.mediaplayer.vlc.swt.Player;
 
 public class Main {
 	protected Shell shell;
