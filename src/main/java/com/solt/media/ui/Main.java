@@ -85,6 +85,8 @@ public class Main {
 				display.sleep();
 			}
 		}
+		SWTResourceManager.dispose();
+		display.dispose();
 	}
 	
 	public void requestShutdown() {
@@ -101,7 +103,6 @@ public class Main {
 			return;
 		}
 		torrManager.shutdown();
-		SWTResourceManager.dispose();
 		try {
 			ConfigurationManager.getInstance().save();
 			updater.stop();
