@@ -4,7 +4,12 @@
 -libraryjars 'C:\Program Files\Java\jre7\lib\rt.jar'
 -libraryjars mediaplayer_lib\log4j-1.2.17.jar
 -libraryjars mediaplayer_lib\swt-3.7.2-win32-win32-x86.jar
--libraryjars mediaplayer_lib\mplayer-0.0.1-SNAPSHOT.jar
+-libraryjars mediaplayer_lib\hamcrest-core-1.1.jar
+-libraryjars mediaplayer_lib\jna-3.4.0.jar
+-libraryjars mediaplayer_lib\json-simple-1.1.1.jar
+-libraryjars mediaplayer_lib\junit-4.10.jar
+-libraryjars mediaplayer_lib\platform-3.4.0.jar
+-libraryjars mediaplayer_lib\vlcj-2.1.0.jar
 
 
 
@@ -22,6 +27,10 @@
 
 -keep class com.solt.libtorrent.FileEntry {
     <init>(...);
+}
+
+-keep class com.solt.mediaplayer.util.AESemaphore {
+    <methods>;
 }
 
 # Keep - Applications. Keep all application classes, along with their 'main'
@@ -112,6 +121,18 @@
     public static double hypot(double,double);
     public static double expm1(double);
     public static double log1p(double);
+}
+
+# Remove debugging - All logging API calls. Remove all invocations of the
+# logging API whose return values are not used.
+-assumenosideeffects public class java.util.logging.* {
+    <methods>;
+}
+
+# Remove debugging - All Log4j API calls. Remove all invocations of the
+# Log4j API whose return values are not used.
+-assumenosideeffects public class org.apache.log4j.** {
+    <methods>;
 }
 
 # Remove - Number method calls. Remove all invocations of Number
@@ -337,16 +358,4 @@
     public int length();
     public java.lang.String substring(int);
     public java.lang.String substring(int,int);
-}
-
-# Remove debugging - All logging API calls. Remove all invocations of the
-# logging API whose return values are not used.
--assumenosideeffects public class java.util.logging.* {
-    <methods>;
-}
-
-# Remove debugging - All Log4j API calls. Remove all invocations of the
-# Log4j API whose return values are not used.
--assumenosideeffects public class org.apache.log4j.** {
-    <methods>;
 }
