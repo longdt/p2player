@@ -120,19 +120,19 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 				if (entry == null) {
 					System.err.println("ERROR set deadline");
 				}
-				if (speed < 50000 && currCancelPiece != incompleteIdx) {
-					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
-					bonusTime = pieceSize * 1000l/ (speed + 1024);
-					timeToWait = bonusTime * 3;
-					if (bonusTime < 3000) {
-						bonusTime = 3000;
-					}
-				}
+//				if (speed < 50000 && currCancelPiece != incompleteIdx) {
+//					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
+//					bonusTime = pieceSize * 1000l/ (speed + 1024);
+//					timeToWait = bonusTime * 3;
+//					if (bonusTime < 3000) {
+//						bonusTime = 3000;
+//					}
+//				}
 				
 				if (currCancelPiece != incompleteIdx) {
 					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
 					bonusTime = pieceSize * 1000l/ (speed + 1024);
-					timeToWait = bonusTime * 3;
+					timeToWait = bonusTime * 3 + 3000;
 					if (bonusTime < 3000) {
 						bonusTime = 3000;
 					}
@@ -144,7 +144,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 					}
 				} else {
 					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (libTorrent.getTorrentDownloadRate(hashCode, true) + 1024);
-					timeToWait = bonusTime * 2 + 2000; //wait bonus time
+					timeToWait = bonusTime * 3 + 3000; //wait bonus time
 					if (cancelTime + timeToWait < currentTime) {
 						libTorrent.cancelTorrentPiece(hashCode, currCancelPiece, true);
 						cancelTime = currentTime;
