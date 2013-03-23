@@ -118,7 +118,7 @@ TorrentInfo* GetTorrentInfo(JNIEnv *env, libtorrent::sha1_hash &hash) {
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		JNIEnv *env, jobject obj, jint ListenPort, jstring SavePath,
 		jint UploadLimit, jint DownloadLimit) {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	boost::unique_lock< boost::shared_mutex > lock(access);
 	try {
 		solt::JniToStdString(env, &gDefaultSave, SavePath);
@@ -200,9 +200,10 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		gSession_del(false);
 		gSessionState = false;
 	}
-	if (!gSessionState)
+	if (!gSessionState) {
 		LOG_ERR("LibTorrent.SetSession SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
+		result = JNI_FALSE;
+	}
 	return result;
 }
 //-----------------------------------------------------------------------------
@@ -223,7 +224,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setProxy(
 		JNIEnv *env, jobject obj, jint Type, jstring HostName, jint Port,
 		jstring UserName, jstring Password) {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	int type = Type;
 	std::string hostName;
 	solt::JniToStdString(env, &hostName, HostName);
@@ -255,16 +256,17 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setProxy(
 		LOG_ERR("Exception: failed to set proxy");
 		gSessionState = false;
 	}
-	if (!gSessionState)
+	if (!gSessionState) {
 		LOG_ERR("LibTorrent.SetProxy SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
+		result = JNI_FALSE;
+	}
 	return result;
 }
 //-----------------------------------------------------------------------------
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSessionOptions(
 		JNIEnv *env, jobject obj, jboolean DHT, jboolean LSD, jboolean UPNP,
 		jboolean NATPMP) {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	boost::unique_lock< boost::shared_mutex > lock(access);
 	try {
 		if (gSessionState) {
@@ -293,9 +295,10 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSessionOptions
 		LOG_ERR("Exception: failed to set session options");
 		gSessionState = false;
 	}
-	if (!gSessionState)
+	if (!gSessionState) {
 		LOG_ERR("LibTorrent.SetSessionOptions SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
+		result = JNI_FALSE;
+	}
 	return result;
 }
 //-----------------------------------------------------------------------------
@@ -626,43 +629,45 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncMagnetUri(
 //-----------------------------------------------------------------------------
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseSession(
 		JNIEnv *, jobject) {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	boost::unique_lock< boost::shared_mutex > lock(access);
 	try {
 		if (gSessionState) {
 			gSession->pause();
 			bool paused = gSession->is_paused();
-			if (paused)
-				result = JNI_TRUE;
+			if (!paused)
+				result = JNI_FALSE;
 		}
 	} catch (...) {
 		LOG_ERR("Exception: failed to pause session");
 		gSessionState = false;
 	}
-	if (!gSessionState)
+	if (!gSessionState) {
 		LOG_ERR("LibTorrent.PauseSession SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
+		result = JNI_FALSE;
+	}
 	return result;
 }
 //-----------------------------------------------------------------------------
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeSession(
 		JNIEnv *, jobject) {
-	jboolean result = JNI_FALSE;
+	jboolean result = JNI_TRUE;
 	boost::unique_lock< boost::shared_mutex > lock(access);
 	try {
 		if (gSessionState) {
 			gSession->resume();
 			bool paused = gSession->is_paused();
-			if (!paused)
-				result = JNI_TRUE;
+			if (paused)
+				result = JNI_FALSE;
 		}
 	} catch (...) {
 		LOG_ERR("Exception: failed to resume session");
 		gSessionState = false;
 	}
-	if (!gSessionState)
+	if (!gSessionState) {
 		LOG_ERR("LibTorrent.ResumeSession SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
+		result = JNI_FALSE;
+	}
 	return result;
 }
 
@@ -754,14 +759,13 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession(
 			env->DeleteGlobalRef(fileEntry);
 			fileEntry = NULL;
 			fileEntryInit = NULL;
+			gSessionState = false;
+			result = JNI_TRUE;
 		}
 	} catch (...) {
 		LOG_ERR("Exception: failed to abort session");
 		gSessionState = false;
 	}
-	if (!gSessionState)
-		LOG_ERR("LibTorrent.AbortSession SessionState==false");
-	gSessionState == true ? result = JNI_TRUE : result = JNI_FALSE;
 	return result;
 }
 //-----------------------------------------------------------------------------
