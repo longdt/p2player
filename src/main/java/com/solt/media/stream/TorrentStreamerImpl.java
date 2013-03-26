@@ -24,7 +24,6 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	private LibTorrent libTorrent;
 	private SocketChannel schannel;
 	private int pieceSize;
-	private int pieceNum;
 
 	public TorrentStreamerImpl(HttpHandler handler, String hashCode, int index,
 			long dataLength, long transferOffset) throws TorrentException,
@@ -36,7 +35,6 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		this.transferOffset = transferOffset;
 		this.libTorrent = handler.getHttpd().getLibTorrent();
 		pieceSize = libTorrent.getPieceSize(hashCode, false);
-		pieceNum = libTorrent.getPieceNum(hashCode);
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
 		manager.putSync(hashCode, this);
@@ -59,6 +57,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		long torrentOffset = transferOffset + libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
 		int streamPiece = (int) (torrentOffset / pieceSize);
+		int endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
 		int setRead = -1;
 		int transferPieceIdx = streamPiece;
 		int transferPieceOffset = (int) (torrentOffset - transferPieceIdx
@@ -110,7 +109,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 					// System.err.println("set deadline: [" + lastSet + ", "
 					// + (lastSet + numSet) + ")");
 					dlPieces.put(lastDLP, currentTime);
-					lastDLP = setDeadline(lastDLP, numSet);
+					lastDLP = setDeadline(lastDLP, numSet, endPiece);
 					//setPriority(lastDLP + 1, 15);
 				}
 				
@@ -203,13 +202,13 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		return (pieceSize - info.getDownloadedBytes());
 	}
 
-	private int setDeadline(int fromIndex, int count) throws TorrentException {
+	private int setDeadline(int fromIndex, int count, int endIndex) throws TorrentException {
 		if (count == 0) {
 			return fromIndex;
 		}
 		int n = fromIndex + count;
-		if (n > pieceNum) {
-			n = pieceNum;
+		if (n > endIndex) {
+			n = endIndex;
 		}
 		int i = 0;
 		for (; fromIndex < n; ++fromIndex, ++i) {
@@ -218,13 +217,13 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		return (fromIndex - 1);
 	}
 	
-	private int setPriority(int index, int count) throws TorrentException {
+	private int setPriority(int index, int count, int endIndex) throws TorrentException {
 		if (count == 0) {
 			return index;
 		}
 		int n = index + count;
-		if (n > pieceNum) {
-			n = pieceNum;
+		if (n > endIndex) {
+			n = endIndex;
 		}
 		for (; index < n; ++index) {
 			libTorrent.setPiecePriority(hashCode, index, 7);
