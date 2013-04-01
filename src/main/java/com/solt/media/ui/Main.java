@@ -11,6 +11,9 @@ import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
@@ -23,10 +26,14 @@ import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
 import com.solt.media.update.UpdateChecker;
 import com.solt.media.util.Constants;
+import com.solt.mediaplayer.vlc.remote.MediaPlaybackState;
+import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
 public class Main {
 	protected Shell shell;
+	protected Shell playerShell;
+	private Player player;
 	private boolean minimize;
 	private TorrentManager torrManager;
 	private UpdateChecker updater;
@@ -76,11 +83,18 @@ public class Main {
 		initUpdater();
 		Display display = Display.getDefault();
 		createContents();
+		createPlayer();
+        Runtime.getRuntime().addShutdownHook(new Thread("Shutdowner") {
+            @Override
+            public void run() {
+                requestShutdown();
+            }
+        });
 		if (!minimize) {
 			shell.open();
 			shell.layout();
 		}
-		while (!shell.isDisposed()) {
+		while (!shell.isDisposed() || !playerShell.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
 			}
@@ -89,10 +103,47 @@ public class Main {
 		display.dispose();
 	}
 	
+	private void createPlayer() {
+		playerShell = new Shell();
+		playerShell.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
+		playerShell.setLocation(200, 200);
+		playerShell.setSize(720, 480);
+
+		playerShell.setText("Loading...");
+		playerShell.setLayout(new FillLayout());
+		player = new Player(playerShell);
+
+		player.setAutoResize(true);
+
+		player.addStateListener(new StateListener() {
+
+			public void stateChanged(MediaPlaybackState newState) {
+				if (newState == MediaPlaybackState.Closed) {
+					playerShell.getDisplay().asyncExec(new Runnable() {
+
+						public void run() {
+							playerShell.close();
+
+						}
+					});
+				}
+			}
+		});
+		playerShell.addShellListener(new ShellAdapter() {
+			@Override
+			public void shellClosed(ShellEvent e) {
+				e.doit = false;
+				player.stop();
+				playerShell.setVisible(false);
+			}
+		});
+	}
+
 	public void requestShutdown() {
 		torrManager.cancelStream();
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
+		    	playerShell.dispose();
 		    	shell.dispose();
 		    }
 		});
@@ -135,10 +186,10 @@ public class Main {
 						url = torrManager.addTorrent(torrentFile);
 					}
 					if (url != null) {
-						Shell mplayer = new Shell();
-						mplayer.setText(url);
+						playerShell.setVisible(true);
+						playerShell.forceFocus();
 						try {
-							Player.play(mplayer, url);
+							player.open(url, true);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
@@ -163,9 +214,13 @@ public class Main {
 							url = torrManager.addTorrent(new URL(link));
 					}
 					if (url != null) {
-						Shell mplayer = new Shell();
-						mplayer.setText(url);
-						Player.play(mplayer, url);
+						playerShell.setVisible(true);
+						playerShell.forceFocus();
+						try {
+							player.open(url, true);
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
 	
 					}
 				} catch (Exception e1) {
