@@ -36,6 +36,7 @@ public class Main {
 	private boolean minimize;
 	private TorrentManager torrManager;
 	private UpdateChecker updater;
+	private boolean running;
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */
@@ -47,6 +48,7 @@ public class Main {
 	public Main() {
 		torrManager = TorrentManager.getInstance();
 		minimize = true;
+		running = true;
 	}
 	
 	private void initUpdater() {
@@ -116,6 +118,7 @@ public class Main {
 
 		shell.setText("Loading...");
 		shell.setLayout(new FillLayout());
+		shell.setImage(SWTResourceManager.getImage(Main.class, "/logo.png"));
 		player = new Player(shell);
 
 		player.setAutoResize(true);
@@ -144,13 +147,16 @@ public class Main {
 		});
 	}
 
-	public void requestShutdown() {
-		torrManager.cancelStream();
-		Display.getDefault().asyncExec(new Runnable() {
-		    public void run() {
-		    	shell.dispose();
-		    }
-		});
+	public synchronized void requestShutdown() {
+		if (running) {
+			running = false;
+			torrManager.cancelStream();
+			Display.getDefault().asyncExec(new Runnable() {
+			    public void run() {
+			    	shell.dispose();
+			    }
+			});
+		}
 	}
 	
 	private void exit() {
