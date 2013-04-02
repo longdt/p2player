@@ -32,7 +32,6 @@ import com.solt.mediaplayer.vlc.swt.Player;
 
 public class Main {
 	protected Shell shell;
-	protected Shell playerShell;
 	private Player player;
 	private boolean minimize;
 	private TorrentManager torrManager;
@@ -94,7 +93,7 @@ public class Main {
 			shell.open();
 			shell.layout();
 		}
-		while (!shell.isDisposed() || !playerShell.isDisposed()) {
+		while (!shell.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
 			}
@@ -104,14 +103,13 @@ public class Main {
 	}
 	
 	private void createPlayer() {
-		playerShell = new Shell();
-		playerShell.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
-		playerShell.setLocation(200, 200);
-		playerShell.setSize(720, 480);
+		shell.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
+		shell.setLocation(200, 200);
+		shell.setSize(720, 480);
 
-		playerShell.setText("Loading...");
-		playerShell.setLayout(new FillLayout());
-		player = new Player(playerShell);
+		shell.setText("Loading...");
+		shell.setLayout(new FillLayout());
+		player = new Player(shell);
 
 		player.setAutoResize(true);
 
@@ -119,22 +117,22 @@ public class Main {
 
 			public void stateChanged(MediaPlaybackState newState) {
 				if (newState == MediaPlaybackState.Closed) {
-					playerShell.getDisplay().asyncExec(new Runnable() {
+					shell.getDisplay().asyncExec(new Runnable() {
 
 						public void run() {
-							playerShell.close();
+							shell.close();
 
 						}
 					});
 				}
 			}
 		});
-		playerShell.addShellListener(new ShellAdapter() {
+		shell.addShellListener(new ShellAdapter() {
 			@Override
 			public void shellClosed(ShellEvent e) {
 				e.doit = false;
 				player.stop();
-				playerShell.setVisible(false);
+				shell.setVisible(false);
 			}
 		});
 	}
@@ -143,7 +141,6 @@ public class Main {
 		torrManager.cancelStream();
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
-		    	playerShell.dispose();
 		    	shell.dispose();
 		    }
 		});
@@ -186,8 +183,8 @@ public class Main {
 						url = torrManager.addTorrent(torrentFile);
 					}
 					if (url != null) {
-						playerShell.setVisible(true);
-						playerShell.forceFocus();
+						shell.setVisible(true);
+						shell.forceFocus();
 						try {
 							player.open(url, true);
 						} catch (Exception e1) {
@@ -214,8 +211,8 @@ public class Main {
 							url = torrManager.addTorrent(new URL(link));
 					}
 					if (url != null) {
-						playerShell.setVisible(true);
-						playerShell.forceFocus();
+						shell.setVisible(true);
+						shell.forceFocus();
 						try {
 							player.open(url, true);
 						} catch (Exception e1) {
