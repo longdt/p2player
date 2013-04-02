@@ -82,7 +82,6 @@ public class Main {
 		initUpdater();
 		Display display = Display.getDefault();
 		createContents();
-		createPlayer();
         Runtime.getRuntime().addShutdownHook(new Thread("Shutdowner") {
             @Override
             public void run() {
@@ -102,7 +101,15 @@ public class Main {
 		display.dispose();
 	}
 	
-	private void createPlayer() {
+	public synchronized void play(String url) {
+		initPlayer();
+		player.open(url, true);
+	}
+	
+	private synchronized void initPlayer() {
+		if (player != null) {
+			return;
+		}
 		shell.setBackground(Display.getCurrent().getSystemColor(SWT.COLOR_BLACK));
 		shell.setLocation(200, 200);
 		shell.setSize(720, 480);
@@ -166,7 +173,6 @@ public class Main {
 	 */
 	protected void createContents() {
 		shell = new Shell();
-		shell.setText("SWT Application");
 		
 		final Menu menu = new Menu(shell, SWT.POP_UP);
 		shell.setMenu(menu);
@@ -186,7 +192,7 @@ public class Main {
 						shell.setVisible(true);
 						shell.forceFocus();
 						try {
-							player.open(url, true);
+							play(url);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
@@ -214,7 +220,7 @@ public class Main {
 						shell.setVisible(true);
 						shell.forceFocus();
 						try {
-							player.open(url, true);
+							play(url);
 						} catch (Exception e1) {
 							e1.printStackTrace();
 						}
