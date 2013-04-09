@@ -2,12 +2,14 @@ package com.solt.media.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -17,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -240,22 +241,36 @@ public class FileUtils {
 	}
 
 	public static String getStringContent(File file) {
-		Scanner in = null;
+		try {
+			return getStringContent(new FileInputStream(file));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static String getStringContent(InputStream is) {
+		BufferedReader in = null;
 		StringBuilder result = new StringBuilder();
 		try {
-			in = new Scanner(file);
-			while (in.hasNextLine()) {
-				result.append(in.nextLine()).append('\n');
+			in = new BufferedReader(new InputStreamReader(is));
+			String line = null;
+			while ((line = in.readLine()) != null) {
+				result.append(line).append('\n');
 			}
 			if (result.length() > 0) {
 				result.deleteCharAt(result.length() - 1);
 			}
 			return result.toString();
-		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			if (in != null) {
-				in.close();
+				try {
+					in.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		return null;
