@@ -8,8 +8,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
-import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -18,6 +19,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.log4j.Logger;
 
@@ -27,6 +30,7 @@ import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PieceInfoComparator;
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
+import com.solt.media.util.FileUtils;
 import com.solt.media.util.StringUtils;
 
 public class HttpHandler implements Runnable{
@@ -39,13 +43,18 @@ public class HttpHandler implements Runnable{
 	public static final String ACTION_DEL = "/del";
 
 	public static final String PARAM_HASHCODE = "hashcode";
-
-	private static final String PARAM_FILE = "file";
 	
-	private static final String DOWN_TORRENT_LINK = "http://localhost/";
+	public static final String PARAM_MOVIEID = "movieId";
+
+	public static final String PARAM_FILE = "file";
+	
+	private static final String DOWN_TORRENT_LINK = "http://localhost:9000/api/";
 
 	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
+	private static final ConcurrentMap<Long, String> movies = new ConcurrentHashMap<Long, String>();
+
+
 	private File rootDir;
 	private LibTorrent libTorrent;
 	private NanoHTTPD httpd;
@@ -99,7 +108,13 @@ public class HttpHandler implements Runnable{
 								+ ioe.getMessage());
 			} catch (Throwable t) {
 			}
-		} catch (InterruptedException ie) {
+		} catch (URISyntaxException e) {
+			try {
+				sendMessage(HttpStatus.HTTP_BADREQUEST, e.getMessage());
+			} catch (InterruptedException e1) {
+			}
+		}
+		catch (InterruptedException ie) {
 			// Thrown by sendError, ignore and exit the thread.
 		} finally {
 			stop();
@@ -108,7 +123,7 @@ public class HttpHandler implements Runnable{
 	}
 
 	private void serveRequest(HttpRequest request)
-			throws InterruptedException, MalformedURLException {
+			throws InterruptedException, IOException, URISyntaxException {
 		String uri = request.getUri();
 		String hashCode = request.getParam(PARAM_HASHCODE);
 		if (uri.equals(ACTION_STREAM) && hashCode != null) {
@@ -118,13 +133,21 @@ public class HttpHandler implements Runnable{
 			String view = hashCode != null? getTorrentInfo(hashCode) : listTorrents();
 			sendMessage(HttpStatus.HTTP_OK, NanoHTTPD.MIME_HTML, view);
 		} else if (uri.equals(ACTION_ADD)) {
+			long movieId = Long.parseLong(request.getParam(PARAM_MOVIEID));
+			boolean file = Boolean.parseBoolean(request.getParam(PARAM_FILE));
 			TorrentManager manager = TorrentManager.getInstance();
-			String mediaUrl = manager.getMediaUrl(hashCode);
+			String mediaUrl = movies.get(movieId);
 			if (mediaUrl == null) {
-				URL url = new URL(DOWN_TORRENT_LINK + hashCode + ".torrent");
-				mediaUrl = manager.addTorrent(url);
+				URL url = new URL(DOWN_TORRENT_LINK + movieId);
+				if (file) {
+					mediaUrl = manager.addTorrent(url);
+				} else {
+					String magnet = FileUtils.getStringContent(url.openStream());
+					mediaUrl = manager.addTorrent(new URI(magnet));
+				}
 			}
 			if (mediaUrl != null) {
+				movies.put(movieId, mediaUrl);
 				sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 			} else {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "false");

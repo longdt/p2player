@@ -30,7 +30,7 @@ import com.solt.mediaplayer.vlc.remote.MediaPlaybackState;
 import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
-public class Main {
+public class Main implements MediaPlayer {
 	protected Shell shell;
 	private Player player;
 	private boolean minimize;
@@ -75,8 +75,13 @@ public class Main {
 	 * @throws MalformedURLException 
 	 */
 	public void open(String[] args) throws MalformedURLException {
-		if (args.length > 0 && args[0].startsWith(Constants.PROTOCOL + "://")) {
-			TorrentManager.requestAddTorrent(args[0].substring(Constants.PROTOCOL.length() + 3));
+		if (args.length > 0) {
+			String link = args[0];
+			if (link.startsWith(Constants.PROTOCOL + "://tor")) {
+				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), true);
+			} else if (link.startsWith(Constants.PROTOCOL + "://mag")) {
+				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), false);
+			}
 		}
 		if (torrManager == null) {
 			return;
@@ -103,9 +108,15 @@ public class Main {
 		display.dispose();
 	}
 	
-	public synchronized void play(String url) {
-		initPlayer();
-		player.open(url, true);
+	public synchronized void play(final String url) {
+		Display.getDefault().asyncExec(new Runnable() {
+		    public void run() {
+				shell.setVisible(true);
+				shell.forceFocus();
+				initPlayer();
+				player.open(url, true);
+		    }
+		});
 	}
 	
 	private synchronized void initPlayer() {
@@ -195,8 +206,6 @@ public class Main {
 						url = torrManager.addTorrent(torrentFile);
 					}
 					if (url != null) {
-						shell.setVisible(true);
-						shell.forceFocus();
 						try {
 							play(url);
 						} catch (Exception e1) {
@@ -223,8 +232,6 @@ public class Main {
 							url = torrManager.addTorrent(new URL(link));
 					}
 					if (url != null) {
-						shell.setVisible(true);
-						shell.forceFocus();
 						try {
 							play(url);
 						} catch (Exception e1) {
