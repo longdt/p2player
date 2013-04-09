@@ -148,6 +148,7 @@ public class HttpHandler implements Runnable{
 			}
 			if (mediaUrl != null) {
 				movies.put(movieId, mediaUrl);
+				TorrentManager.player.play(mediaUrl);
 				sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 			} else {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "false");
