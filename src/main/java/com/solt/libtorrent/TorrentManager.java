@@ -17,11 +17,13 @@ import com.solt.libtorrent.policy.CachePolicyFactory;
 import com.solt.media.config.ConfigurationManager;
 import com.solt.media.stream.HttpHandler;
 import com.solt.media.stream.NanoHTTPD;
+import com.solt.media.ui.MediaPlayer;
 import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.SystemProperties;
 
 public class TorrentManager {
+	public static MediaPlayer player;
 	private static final Logger logger = Logger.getLogger(TorrentManager.class);
 	private static final int HTTPD_PORT = 18080;
 	private static final Boolean TORRENT_FILE = true;
@@ -262,5 +264,9 @@ public class TorrentManager {
 				}
 			}
 		}
+	}
+
+	public void setMediaPlayer(MediaPlayer player) {
+		TorrentManager.player = player;
 	}
 }

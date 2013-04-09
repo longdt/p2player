@@ -70,11 +70,7 @@ public class Main implements MediaPlayer {
 		}
 	}
 
-	/**
-	 * Open the window.
-	 * @throws MalformedURLException 
-	 */
-	public void open(String[] args) throws MalformedURLException {
+	private void requestPlay(String[] args) throws MalformedURLException {
 		if (args.length > 0) {
 			String link = args[0];
 			if (link.startsWith(Constants.PROTOCOL + "://tor")) {
@@ -83,12 +79,21 @@ public class Main implements MediaPlayer {
 				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), false);
 			}
 		}
+	}
+	/**
+	 * Open the window.
+	 * @throws MalformedURLException 
+	 */
+	public void open(String[] args) throws MalformedURLException {
 		if (torrManager == null) {
+			requestPlay(args);
 			return;
 		}
 		initUpdater();
 		Display display = Display.getDefault();
 		createContents();
+		torrManager.setMediaPlayer(this);
+		requestPlay(args);
         Runtime.getRuntime().addShutdownHook(new Thread("Shutdowner") {
             @Override
             public void run() {
