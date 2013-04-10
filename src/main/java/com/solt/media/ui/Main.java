@@ -40,7 +40,7 @@ public class Main implements MediaPlayer {
 	/**
 	 * @wbp.nonvisual location=103,199
 	 */
-	private final TrayItem trtmMediaPlayer = new TrayItem(Display.getDefault().getSystemTray(), SWT.NONE);
+	private TrayItem trtmMediaPlayer;
 	
 	/**
 	 * 
@@ -73,6 +73,9 @@ public class Main implements MediaPlayer {
 	private void requestPlay(String[] args) throws MalformedURLException {
 		if (args.length > 0) {
 			String link = args[0];
+			if (link.charAt(link.length() - 1) == '/') {
+				link = link.substring(0, link.length() - 1);
+			}
 			if (link.startsWith(Constants.PROTOCOL + "://tor")) {
 				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), true);
 			} else if (link.startsWith(Constants.PROTOCOL + "://mag")) {
@@ -190,6 +193,7 @@ public class Main implements MediaPlayer {
 	 * Create contents of the window.
 	 */
 	protected void createContents() {
+		trtmMediaPlayer = new TrayItem(Display.getDefault().getSystemTray(), SWT.NONE);
 		shell = new Shell();
 		
 		final Menu menu = new Menu(shell, SWT.POP_UP);
