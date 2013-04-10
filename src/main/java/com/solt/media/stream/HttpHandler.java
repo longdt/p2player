@@ -48,7 +48,7 @@ public class HttpHandler implements Runnable{
 
 	public static final String PARAM_FILE = "file";
 	
-	private static final String DOWN_TORRENT_LINK = "http://localhost:9000/api/";
+	private static final String DOWN_TORRENT_LINK = "http://112.72.96.18/api/";
 
 	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();

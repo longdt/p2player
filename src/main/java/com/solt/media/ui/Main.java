@@ -100,10 +100,6 @@ public class Main implements MediaPlayer {
                 requestShutdown();
             }
         });
-		if (!minimize) {
-			shell.open();
-			shell.layout();
-		}
 		while (!shell.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
@@ -198,6 +194,49 @@ public class Main implements MediaPlayer {
 		
 		final Menu menu = new Menu(shell, SWT.POP_UP);
 		shell.setMenu(menu);
+		if (!minimize) {
+			createOpenMenu(menu);
+		}
+		MenuItem mntmAbout = new MenuItem(menu, SWT.NONE);
+		mntmAbout.addSelectionListener(new SelectionAdapter() {
+			private AboutWindow about;
+			private volatile boolean opening;
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (!opening) {
+					about = new AboutWindow(shell);
+					opening = true;
+					about.open();
+					opening = false;
+				} else {
+					about.forceFocus();
+				}
+			}
+		});
+		mntmAbout.setText("About");
+		
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem mntmExit = new MenuItem(menu, SWT.NONE);
+		mntmExit.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				requestShutdown();
+			}
+		});
+		mntmExit.setText("Exit");
+		trtmMediaPlayer.setImage(SWTResourceManager.getImage(Main.class, "/mediaplayer.ico"));
+		
+		trtmMediaPlayer.setToolTipText("Media Player");
+		trtmMediaPlayer.addMenuDetectListener(new MenuDetectListener() {
+			public void menuDetected(MenuDetectEvent e) {
+				menu.setVisible(true);
+			}
+		});
+
+	}
+	
+	private void createOpenMenu(Menu menu) {
 		MenuItem mntmOpenFile = new MenuItem(menu, SWT.NONE);
 		mntmOpenFile.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -251,42 +290,5 @@ public class Main implements MediaPlayer {
 			}
 		});
 		mntmOpenLink.setText("Open Link");
-		MenuItem mntmAbout = new MenuItem(menu, SWT.NONE);
-		mntmAbout.addSelectionListener(new SelectionAdapter() {
-			private AboutWindow about;
-			private volatile boolean opening;
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (!opening) {
-					about = new AboutWindow(shell);
-					opening = true;
-					about.open();
-					opening = false;
-				} else {
-					about.forceFocus();
-				}
-			}
-		});
-		mntmAbout.setText("About");
-		
-		new MenuItem(menu, SWT.SEPARATOR);
-		
-		MenuItem mntmExit = new MenuItem(menu, SWT.NONE);
-		mntmExit.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				requestShutdown();
-			}
-		});
-		mntmExit.setText("Exit");
-		trtmMediaPlayer.setImage(SWTResourceManager.getImage(Main.class, "/mediaplayer.ico"));
-		
-		trtmMediaPlayer.setToolTipText("Media Player");
-		trtmMediaPlayer.addMenuDetectListener(new MenuDetectListener() {
-			public void menuDetected(MenuDetectEvent e) {
-				menu.setVisible(true);
-			}
-		});
-
 	}
 }
