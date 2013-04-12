@@ -224,6 +224,13 @@ public class TorrentManager {
 	
 	public void cancelStream() {
 		httpd.cancelStream();
+		try {
+			if (currentStream != null) {
+				libTorrent.setUploadMode(currentStream, true);
+			}
+		} catch (TorrentException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void shutdown() {
