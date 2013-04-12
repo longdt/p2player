@@ -377,7 +377,7 @@ public class LibTorrent {
 	 * @return true if successful and false if otherwise
 	 * @throws TorrentException
 	 */
-	public native boolean pauseTorrent(String hashCode) throws TorrentException;
+	public native void pauseTorrent(String hashCode) throws TorrentException;
 
 	// -----------------------------------------------------------------------------
 	/**
@@ -387,7 +387,7 @@ public class LibTorrent {
 	 * @return true if successful and false if otherwise
 	 * @throws TorrentException
 	 */
-	public native boolean resumeTorrent(String hashCode)
+	public native void resumeTorrent(String hashCode)
 			throws TorrentException;
 
 	// -----------------------------------------------------------------------------
