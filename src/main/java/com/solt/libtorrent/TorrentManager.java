@@ -41,12 +41,13 @@ public class TorrentManager {
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
 		torrents = new LinkedHashMap<String, Boolean>();
-		libTorrent = new LibTorrent();
 		File root = new File(wwwRoot);
-		httpd = new NanoHTTPD(HTTPD_PORT, root, libTorrent);
+		httpd = new NanoHTTPD(HTTPD_PORT, root);
+		libTorrent = new LibTorrent();
 		libTorrent.setSession(port, root, 0, 0);
 		libTorrent.setSessionOptions(true, true, true, true);
 		loadAsyncExistTorrents();
+		httpd.setLibTorrent(libTorrent);
 	}
 
 	/**
