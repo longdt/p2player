@@ -130,13 +130,13 @@ public class TorrentManager {
 		try {
 			libTorrent.setAutoManaged(hashCode, false);
 			libTorrent.setUploadMode(hashCode, false);
-			libTorrent.setShareMode(hashCode, false);
+//			libTorrent.setShareMode(hashCode, false);
 			libTorrent.resumeTorrent(hashCode);
 			if (currentStream == null) {
 				currentStream = hashCode;
 			} else if (!hashCode.equals(currentStream)) {
-				libTorrent.setUploadMode(hashCode, true);
-				libTorrent.setShareMode(hashCode, true);
+				libTorrent.setUploadMode(currentStream, true);
+//				libTorrent.setShareMode(currentStream, true);
 				currentStream = hashCode;
 			}
 		} catch (TorrentException e) {
@@ -231,7 +231,7 @@ public class TorrentManager {
 		if (currentStream != null) {
 			try {
 				libTorrent.setUploadMode(currentStream, true);
-				libTorrent.setShareMode(currentStream, true);
+//				libTorrent.setShareMode(currentStream, true);
 			} catch (TorrentException e) {
 				e.printStackTrace();
 			}
