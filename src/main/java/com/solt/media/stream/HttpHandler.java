@@ -52,8 +52,6 @@ public class HttpHandler implements Runnable{
 
 	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
-	private static final ConcurrentMap<Long, String> movies = new ConcurrentHashMap<Long, String>();
-
 
 	private File rootDir;
 	private LibTorrent libTorrent;
@@ -136,18 +134,15 @@ public class HttpHandler implements Runnable{
 			long movieId = Long.parseLong(request.getParam(PARAM_MOVIEID));
 			boolean file = Boolean.parseBoolean(request.getParam(PARAM_FILE));
 			TorrentManager manager = TorrentManager.getInstance();
-			String mediaUrl = movies.get(movieId);
-			if (mediaUrl == null) {
-				URL url = new URL(DOWN_TORRENT_LINK + movieId);
-				if (file) {
-					mediaUrl = manager.addTorrent(url);
-				} else {
-					String magnet = FileUtils.getStringContent(url.openStream());
-					mediaUrl = manager.addTorrent(new URI(magnet));
-				}
+			String mediaUrl = null;
+			URL url = new URL(DOWN_TORRENT_LINK + movieId);
+			if (file) {
+				mediaUrl = manager.addTorrent(url);
+			} else {
+				String magnet = FileUtils.getStringContent(url.openStream());
+				mediaUrl = manager.addTorrent(new URI(magnet));
 			}
 			if (mediaUrl != null) {
-				movies.put(movieId, mediaUrl);
 				TorrentManager.player.play(mediaUrl);
 				sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 			} else {
