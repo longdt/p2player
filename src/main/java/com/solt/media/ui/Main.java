@@ -157,6 +157,7 @@ public class Main implements MediaPlayer {
 			public void shellClosed(ShellEvent e) {
 				e.doit = false;
 				player.stop();
+				torrManager.cancelStream();
 				shell.setVisible(false);
 			}
 		});
