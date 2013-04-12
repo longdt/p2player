@@ -30,6 +30,9 @@ public class NanoHTTPD {
 	// Socket & server code
 	// ==================================================
 
+	public NanoHTTPD(int port, File wwwroot) throws IOException {
+		this(port, wwwroot, null);
+	}
 	/**
 	 * Starts a HTTP server to given port.
 	 * <p>
@@ -111,8 +114,12 @@ public class NanoHTTPD {
 	}
 
 	
-	LibTorrent getLibTorrent() {
+	public LibTorrent getLibTorrent() {
 		return libTorrent;
+	}
+	
+	public void setLibTorrent(LibTorrent libtorrent) {
+		this.libTorrent = libtorrent;
 	}
 	
 	File getRootDir() {
