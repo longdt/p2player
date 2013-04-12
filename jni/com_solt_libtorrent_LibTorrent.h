@@ -130,7 +130,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_removeTorrent
  * Method:    pauseTorrent
  * Signature: (Ljava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent
+JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent
   (JNIEnv *, jobject, jstring);
 
 /*
@@ -138,7 +138,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent
  * Method:    resumeTorrent
  * Signature: (Ljava/lang/String;)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent
+JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent
   (JNIEnv *, jobject, jstring);
 
 /*

@@ -866,10 +866,9 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_removeTorrent(
 	return result;
 }
 //-----------------------------------------------------------------------------
-JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
+JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
 		JNIEnv *env, jobject obj, jstring hashCode) {
-	jboolean result = JNI_FALSE;
-	HASH_ASSERT(env, hashCode, result);
+	HASH_ASSERT(env, hashCode, RETURN_VOID);
 	libtorrent::sha1_hash hash;
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
@@ -880,11 +879,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
 			if (pTorrentInfo) {
 				libtorrent::torrent_handle* pTorrent = &pTorrentInfo->handle;
 				LOG_DEBUG("Pause torrent name %s", pTorrent->name().c_str());
-				pTorrent->auto_managed(false);
 				pTorrent->pause();
-				bool paused = pTorrent->is_paused();
-				if (paused)
-					result = JNI_TRUE;
 			}
 		}
 	} catch (...) {
@@ -897,13 +892,11 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
 		} catch (...) {
 		}
 	}
-	return result;
 }
 //-----------------------------------------------------------------------------
-JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
+JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
 		JNIEnv *env, jobject obj, jstring hashCode) {
-	jboolean result = JNI_FALSE;
-	HASH_ASSERT(env, hashCode, result);
+	HASH_ASSERT(env, hashCode, RETURN_VOID);
 	libtorrent::sha1_hash hash;
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
@@ -915,10 +908,6 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
 				libtorrent::torrent_handle* pTorrent = &pTorrentInfo->handle;
 				LOG_DEBUG("Resume torrent name %s", pTorrent->name().c_str());
 				pTorrent->resume();
-				pTorrent->auto_managed(true);
-				bool paused = pTorrent->is_paused();
-				if (!paused)
-					result = JNI_TRUE;
 			}
 		}
 	} catch (...) {
@@ -931,7 +920,6 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
 		} catch (...) {
 		}
 	}
-	return result;
 }
 //-----------------------------------------------------------------------------
 JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgress(
