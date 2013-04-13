@@ -142,7 +142,11 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 						timeToWait = bonusTime + 1000; //wait bonus time
 					}
 				} else {
-					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (libTorrent.getTorrentDownloadRate(hashCode, true) + 1024);
+					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
+					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (speed + 1024);
+					if (speed > 500000 && bonusTime < 1000) {
+						bonusTime += 1000;
+					}
 					timeToWait = bonusTime * 3 + 3000; //wait bonus time
 					if (cancelTime + timeToWait < currentTime) {
 						libTorrent.cancelTorrentPiece(hashCode, currCancelPiece, true);
