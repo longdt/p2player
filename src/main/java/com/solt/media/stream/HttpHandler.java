@@ -506,17 +506,33 @@ public class HttpHandler implements Runnable{
 		try {
 			String hashCode = request.getParam(PARAM_HASHCODE);
 			String file = request.getParam(PARAM_FILE);
-			int index = 0;
+			int index = -1;
+			FileEntry[] entries = null;
 			if (file != null) {
 				index = Integer.parseInt(file);
 			} else {
-				index = libTorrent.getBestStreamableFile(hashCode);
+				do {
+					entries = libTorrent.getTorrentFiles(hashCode);
+					if (entries == null) {
+						Thread.sleep(1000);
+					} else {
+						break;
+					}
+				} while (!libTorrent.isUploadMode(hashCode));
+				if (entries != null) {
+					long maxSize = 0;
+					for (int i = 0; i < entries.length; ++i) {
+						if (FileUtils.isStreamable(entries[i]) && entries[i].getSize() > maxSize) {
+							maxSize = entries[i].getSize();
+							index = i;
+						}
+					}
+				}
 			}
 			if (index == -1) {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "Error 404, file not found.");
 				return null;
 			}
-			FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
 			File f = new File(rootDir, entries[index].getPath());
 
 			// Get MIME type from file name extension, if possible
