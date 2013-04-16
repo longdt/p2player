@@ -1,16 +1,16 @@
--injars mediaplayer.jar
--outjars mediaplayer_proguarded.jar
+-injars build\mediaplayer_org.jar
+-outjars build\mediaplayer.jar
 
 -libraryjars 'C:\Program Files\Java\jre7\lib\rt.jar'
--libraryjars mediaplayer_lib\log4j-1.2.17.jar
--libraryjars mediaplayer_lib\swt-3.7.2-win32-win32-x86.jar
--libraryjars mediaplayer_lib\hamcrest-core-1.1.jar
--libraryjars mediaplayer_lib\jna-3.5.1.jar
--libraryjars mediaplayer_lib\json-simple-1.1.1.jar
--libraryjars mediaplayer_lib\junit-4.10.jar
--libraryjars mediaplayer_lib\platform-3.5.1.jar
--libraryjars mediaplayer_lib\vlcj-2.2.0.jar
--libraryjars mediaplayer_lib\vlcplayer-0.0.1-SNAPSHOT.jar
+-libraryjars build\mediaplayer_lib\log4j-1.2.17.jar
+-libraryjars build\mediaplayer_lib\swt-3.7.2-win32-win32-x86.jar
+-libraryjars build\mediaplayer_lib\hamcrest-core-1.1.jar
+-libraryjars build\mediaplayer_lib\jna-3.5.1.jar
+-libraryjars build\mediaplayer_lib\json-simple-1.1.1.jar
+-libraryjars build\mediaplayer_lib\junit-4.10.jar
+-libraryjars build\mediaplayer_lib\platform-3.5.1.jar
+-libraryjars build\mediaplayer_lib\vlcj-2.2.0.jar
+-libraryjars build\mediaplayer_lib\vlcplayer-0.0.1-SNAPSHOT.jar
 
 
 
