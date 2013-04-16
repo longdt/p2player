@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 public class Constants {
 
-	public static String VERSION = "1.0.BETA";
+	public static String VERSION = "1.0.BETA1";
 	public static final String DEFAULT_ENCODING = "UTF8";
 	public static final String BYTE_ENCODING = "ISO-8859-1";
 	public static Charset BYTE_CHARSET;
