@@ -28,7 +28,7 @@ public class TorrentManager {
 	private static final int HTTPD_PORT = 18080;
 	private static final Boolean TORRENT_FILE = true;
 	private static final Boolean MAGNET_FILE = false;
-	private static String currentStream;
+	private String currentStream;
 	private LibTorrent libTorrent;
 	private NanoHTTPD httpd;
 	private LinkedHashMap<String, Boolean> torrents;
@@ -206,12 +206,24 @@ public class TorrentManager {
 		return null;
 	}
 	
+	public int getTorrentState(String hashCode) throws TorrentException {
+		return libTorrent.getTorrentState(hashCode);
+	}
+	
+	public int getTorrentDownloadRate(String hashCode) throws TorrentException {
+		return libTorrent.getTorrentDownloadRate(hashCode, true);
+	}
+	
 	public String getMediaUrl(String hashCode) {
 		if (contains(hashCode)) {
 			return "http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_STREAM
 					+ "?" + HttpHandler.PARAM_HASHCODE + "=" + hashCode;
 		}
 		return null;
+	}
+	
+	public String getCurrentStream() {
+		return currentStream;
 	}
 
 	public Set<String> getTorrents() {

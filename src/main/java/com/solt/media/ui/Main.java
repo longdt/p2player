@@ -149,6 +149,25 @@ public class Main implements MediaPlayer {
 
 						}
 					});
+				} else if (newState == MediaPlaybackState.Buffering) {
+					String hashCode = torrManager.getCurrentStream();
+					try {
+						int state = torrManager.getTorrentState(hashCode);
+						String status = "";
+						String rate = "";
+						if (state == 1) {
+							status = "Checking file";
+						} else if (state == 2) {
+							status = "Loading metadata";
+						} else if (state == 3) {
+							status = "Buffering";
+							rate = "Download rate: " + (torrManager.getTorrentDownloadRate(hashCode) / 1024) + "KB/s";
+						}
+						player.buffering(status, rate, "");
+					} catch (Exception e) {
+					}
+				} else if (newState == MediaPlaybackState.Continue) {
+					player.resume();
 				}
 			}
 		});
