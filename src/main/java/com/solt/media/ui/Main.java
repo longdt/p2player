@@ -115,8 +115,8 @@ public class Main implements MediaPlayer {
 	public synchronized void play(final String url) {
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
-				shell.setVisible(true);
-				shell.forceFocus();
+		    	shell.setVisible(true);
+				shell.forceActive();
 				initPlayer();
 				player.open(url, true);
 		    }
