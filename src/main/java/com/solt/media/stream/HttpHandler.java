@@ -152,6 +152,7 @@ public class HttpHandler implements Runnable{
 					File temp = new File(subConn.getHeaderField(HEADER_FILENAME));
 					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
 						subFile = temp.getAbsolutePath();
+						temp.deleteOnExit();
 					} else {
 						temp.delete();
 					}
