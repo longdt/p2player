@@ -36,33 +36,11 @@ import java.util.regex.Pattern;
 public class Constants {
 
 	public static String VERSION = "1.0.BETA1";
-	public static final String DEFAULT_ENCODING = "UTF8";
-	public static final String BYTE_ENCODING = "ISO-8859-1";
-	public static Charset BYTE_CHARSET;
-	public static Charset DEFAULT_CHARSET;
 	public static long TRANSFER_BYTES_PAYED_THRESHOLD = 52428800;
 	public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
-	public static String UPDATE_URL = "http://localhost/update.json";
-	static {
-		try {
-			BYTE_CHARSET = Charset.forName(Constants.BYTE_ENCODING);
-			DEFAULT_CHARSET = Charset.forName(Constants.DEFAULT_ENCODING);
-		} catch (Throwable e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static final Locale LOCALE_ENGLISH = new Locale("en", "");
-
-	public static final String INFINITY_STRING = "\u221E"; // "oo";pa
-	public static final int CRAPPY_INFINITY_AS_INT = 365 * 24 * 3600; // seconds
-																		// (365days)
-	public static final long CRAPPY_INFINITE_AS_LONG = 10000 * 365 * 24 * 3600; // seconds
-																				// (10k
-																				// years)
-
-	public static boolean DOWNLOAD_SOURCES_PRETEND_COMPLETE = false;
-
+	public static String UPDATE_URL = "http://sharephim.vn/api/update.json";
+	public static final String DOWN_TORRENT_LINK = "http://sharephim.vn/api/movie/";
+	public static final String DOWN_SUB_LINK = "http://sharephim.vn/api/sub/";
 	public static String APP_NAME = "MediaPlayer";
 	public static String PROTOCOL = "mdp";
 	
@@ -89,8 +67,6 @@ public class Constants {
 			.equalsIgnoreCase("Windows ME");
 	public static final boolean isWindows9598ME = isWindows95 || isWindows98
 			|| isWindowsME;
-
-	public static boolean isSafeMode = false;
 
 	public static final boolean isWindows = OSName.toLowerCase().startsWith(
 			"windows");
@@ -243,104 +219,4 @@ public class Constants {
 
 	public static final String DOWNLOAD_DIRECTORY = ".mediacache";
 
-	/**
-	 * Gets the current version, or if a CVS version, the one on which it is
-	 * based
-	 * 
-	 * @return
-	 */
-
-	public static String getBaseVersion() {
-		return (getBaseVersion(VERSION));
-	}
-
-	public static String getBaseVersion(String version) {
-		int p1 = version.indexOf("_"); // _CVS or _Bnn
-
-		if (p1 == -1) {
-
-			return (version);
-		}
-
-		return (version.substring(0, p1));
-	}
-
-	/**
-	 * compare two version strings of form n.n.n.n (e.g. 1.2.3.4)
-	 * 
-	 * @param version_1
-	 * @param version_2
-	 * @return -ve -> version_1 lower, 0 = same, +ve -> version_1 higher
-	 */
-
-	public static int compareVersions(String version_1, String version_2) {
-		try {
-			if (version_1.startsWith(".")) {
-				version_1 = "0" + version_1;
-			}
-			if (version_2.startsWith(".")) {
-				version_2 = "0" + version_2;
-			}
-
-			version_1 = version_1.replaceAll("[^0-9.]", ".");
-			version_2 = version_2.replaceAll("[^0-9.]", ".");
-
-			StringTokenizer tok1 = new StringTokenizer(version_1, ".");
-			StringTokenizer tok2 = new StringTokenizer(version_2, ".");
-
-			while (true) {
-				if (tok1.hasMoreTokens() && tok2.hasMoreTokens()) {
-
-					int i1 = Integer.parseInt(tok1.nextToken());
-					int i2 = Integer.parseInt(tok2.nextToken());
-
-					if (i1 != i2) {
-
-						return (i1 - i2);
-					}
-				} else if (tok1.hasMoreTokens()) {
-					int i1 = Integer.parseInt(tok1.nextToken());
-					if (i1 != 0) {
-						return (1);
-					}
-				} else if (tok2.hasMoreTokens()) {
-					int i2 = Integer.parseInt(tok2.nextToken());
-					if (i2 != 0) {
-						return (-1);
-					}
-				} else {
-					return (0);
-				}
-			}
-		} catch (Throwable e) {
-			e.printStackTrace();
-			return (0);
-		}
-	}
-
-	public static boolean isValidVersionFormat(String version) {
-		if (version == null || version.length() == 0) {
-			return (false);
-		}
-		for (int i = 0; i < version.length(); i++) {
-			char c = version.charAt(i);
-			if (!(Character.isDigit(c) || c == '.')) {
-				return (false);
-			}
-		}
-
-		if (version.startsWith(".") || version.endsWith(".")
-				|| version.indexOf("..") != -1) {
-			return (false);
-		}
-		return (true);
-	}
-
-	public static void main(String[] args) {
-		System.out.println(compareVersions("3.0.0.1018", "3.0.0.0"));
-		System.out.println(compareVersions("3.0.0.0_B1", "3.0.0.0"));
-		System.out.println(compareVersions("3.0.0.0", "3.0.0.0_B1"));
-		System.out.println(compareVersions("3.0.0.0_B1", "3.0.0.0_B4"));
-		System.out.println(compareVersions("3.0.0.0..B1", "3.0.0.0_B4"));
-	}
 }
