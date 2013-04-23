@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -123,6 +124,15 @@ public class FileUtils {
 		try {
 			return copyFile(is, new FileOutputStream(target));
 		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	public static boolean copyFile(URL file, File target) {
+		try {
+			return FileUtils.copyFile(file.openStream(), target);
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return false;

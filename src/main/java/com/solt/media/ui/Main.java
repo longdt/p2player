@@ -76,10 +76,15 @@ public class Main implements MediaPlayer {
 			if (link.charAt(link.length() - 1) == '/') {
 				link = link.substring(0, link.length() - 1);
 			}
+			boolean sub = false;
+			if (link.charAt(link.length() - 1) == 's') {
+				link = link.substring(0, link.length() - 1);
+				sub = true;
+			}
 			if (link.startsWith(Constants.PROTOCOL + "://tor")) {
-				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), true);
+				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), true, sub);
 			} else if (link.startsWith(Constants.PROTOCOL + "://mag")) {
-				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), false);
+				TorrentManager.requestAddTorrent(link.substring(Constants.PROTOCOL.length() + 6), false, sub);
 			}
 		}
 	}
@@ -112,15 +117,19 @@ public class Main implements MediaPlayer {
 		display.dispose();
 	}
 	
-	public synchronized void play(final String url) {
+	public synchronized void play(final String url, final String subFile) {
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
 		    	shell.setVisible(true);
 				shell.forceActive();
 				initPlayer();
-				player.open(url, true);
+				player.open(url, subFile, true);
 		    }
 		});
+	}
+	
+	public void play(final String url) {
+		play(url, null);
 	}
 	
 	private synchronized void initPlayer() {

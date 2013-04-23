@@ -12,6 +12,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,8 +20,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import org.apache.log4j.Logger;
 
@@ -30,6 +29,7 @@ import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PieceInfoComparator;
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
+import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.StringUtils;
 
@@ -48,7 +48,9 @@ public class HttpHandler implements Runnable{
 
 	public static final String PARAM_FILE = "file";
 	
-	private static final String DOWN_TORRENT_LINK = "http://112.72.96.18/api/";
+	public static final String PARAM_SUB = "sub";
+
+	private static final String HEADER_FILENAME = "filename";
 
 	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
@@ -133,9 +135,10 @@ public class HttpHandler implements Runnable{
 		} else if (uri.equals(ACTION_ADD)) {
 			long movieId = Long.parseLong(request.getParam(PARAM_MOVIEID));
 			boolean file = Boolean.parseBoolean(request.getParam(PARAM_FILE));
+			boolean sub = Boolean.parseBoolean(request.getParam(PARAM_SUB));
 			TorrentManager manager = TorrentManager.getInstance();
 			String mediaUrl = null;
-			URL url = new URL(DOWN_TORRENT_LINK + movieId);
+			URL url = new URL(Constants.DOWN_TORRENT_LINK + movieId);
 			if (file) {
 				mediaUrl = manager.addTorrent(url);
 			} else {
@@ -143,7 +146,17 @@ public class HttpHandler implements Runnable{
 				mediaUrl = manager.addTorrent(new URI(magnet));
 			}
 			if (mediaUrl != null) {
-				TorrentManager.player.play(mediaUrl);
+				String subFile = null;
+				if (sub) {
+					URLConnection subConn = new URL(Constants.DOWN_SUB_LINK + movieId).openConnection();
+					File temp = new File(subConn.getHeaderField(HEADER_FILENAME));
+					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
+						subFile = temp.getAbsolutePath();
+					} else {
+						temp.delete();
+					}
+				}
+				TorrentManager.player.play(mediaUrl, subFile);
 				sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 			} else {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "false");
