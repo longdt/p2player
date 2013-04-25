@@ -32,6 +32,7 @@ import com.solt.libtorrent.TorrentManager;
 import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.StringUtils;
+import com.solt.media.util.SystemProperties;
 
 public class HttpHandler implements Runnable{
 	public static final String ACTION_STREAM = "/stream";
@@ -155,7 +156,7 @@ public class HttpHandler implements Runnable{
 						sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 						return;
 					}
-					File temp = new File(fileName);
+					File temp = new File(SystemProperties.getMetaDataPath(), fileName);
 					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
 						subFile = temp.getAbsolutePath();
 						temp.deleteOnExit();
