@@ -201,7 +201,7 @@ public class HttpHandler implements Runnable{
 		StringBuilder info = new StringBuilder();
 		Set<String> torrents = TorrentManager.getInstance().getTorrents();
 		info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
-		info.append("<tr><td>hashcode<td>state<td>progress<td>downloaded<td>download rate<td>name<td>upload mode<td>auto manage\n");
+		info.append("<tr><td>hashcode<td>state<td>progress<td>downloaded<td>download rate<td>name<td>upload mode<td>share mode<td>auto manage\n");
 		try {
 			for (String hashCode : torrents) {
 				info.append("<tr><td>").append(hashCode)
@@ -211,6 +211,7 @@ public class HttpHandler implements Runnable{
 						.append("<td>").append(libTorrent.getTorrentDownloadRate(hashCode, true))
 						.append("<td>").append(libTorrent.getTorrentName(hashCode))
 						.append("<td>").append(libTorrent.isUploadMode(hashCode))
+						.append("<td>").append(libTorrent.isShareMode(hashCode))
 						.append("<td>").append(libTorrent.isAutoManaged(hashCode))
 						.append('\n');
 			}
