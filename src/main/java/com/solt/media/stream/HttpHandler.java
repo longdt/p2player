@@ -149,7 +149,13 @@ public class HttpHandler implements Runnable{
 				String subFile = null;
 				if (sub) {
 					URLConnection subConn = new URL(Constants.DOWN_SUB_LINK + movieId).openConnection();
-					File temp = new File(subConn.getHeaderField(HEADER_FILENAME));
+					String fileName = subConn.getHeaderField(HEADER_FILENAME);
+					if (fileName == null) {
+						TorrentManager.player.play(mediaUrl, subFile);
+						sendMessage(HttpStatus.HTTP_OK, mediaUrl);
+						return;
+					}
+					File temp = new File(fileName);
 					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
 						subFile = temp.getAbsolutePath();
 						temp.deleteOnExit();
