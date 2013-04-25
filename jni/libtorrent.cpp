@@ -154,7 +154,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 			std::string("router.bitcomet.com"), 6881));
 
 		libtorrent::session_settings settings;
-		settings.user_agent = "hdplayer/" LIBTORRENT_VERSION;
+		settings.user_agent = "mdplayer/" LIBTORRENT_VERSION;
 		settings.active_downloads = 20;
 		settings.active_seeds = 20;
 		settings.active_limit = 20;

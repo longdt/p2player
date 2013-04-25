@@ -56,7 +56,7 @@ public class TorrentManager {
 	private void loadAsyncExistTorrents() {
 		String hashCode = null;
 		String magnet = null;
-		int flags = LibTorrent.FLAG_UPLOAD_MODE;// | LibTorrent.FLAG_SHARE_MODE;
+		int flags = LibTorrent.FLAG_AUTO_MANAGED | LibTorrent.FLAG_SHARE_MODE;
 		for (File torrent : torrentsDir.listFiles()) {
 			if (torrent.isDirectory()) {
 				continue;
@@ -128,15 +128,15 @@ public class TorrentManager {
 
 	private void initStream(String hashCode) {
 		try {
-			libTorrent.setAutoManaged(hashCode, false);
-			libTorrent.setUploadMode(hashCode, false);
-//			libTorrent.setShareMode(hashCode, false);
+//			libTorrent.setAutoManaged(hashCode, false);
+//			libTorrent.setUploadMode(hashCode, false);
+			libTorrent.setShareMode(hashCode, false);
 			libTorrent.resumeTorrent(hashCode);
 			if (currentStream == null) {
 				currentStream = hashCode;
 			} else if (!hashCode.equals(currentStream)) {
-				libTorrent.setUploadMode(currentStream, true);
-//				libTorrent.setShareMode(currentStream, true);
+//				libTorrent.setUploadMode(currentStream, true);
+				libTorrent.setShareMode(currentStream, true);
 				currentStream = hashCode;
 			}
 		} catch (TorrentException e) {
@@ -146,7 +146,7 @@ public class TorrentManager {
 
 	public synchronized String addTorrent(File torrentFile) {
 		String hashCode = libTorrent.addTorrent(
-				torrentFile.getAbsolutePath(), 0, 0);
+				torrentFile.getAbsolutePath(), 0, LibTorrent.FLAG_AUTO_MANAGED);
 		if (hashCode != null) {
 			initStream(hashCode);
 			Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
@@ -169,7 +169,7 @@ public class TorrentManager {
 		try {
 			FileUtils.copyFile(url.openStream(), torrentFile);
 			String hashCode = libTorrent.addTorrent(
-					torrentFile.getAbsolutePath(), 0, 0);
+					torrentFile.getAbsolutePath(), 0, LibTorrent.FLAG_AUTO_MANAGED);
 			if (hashCode != null) {
 				initStream(hashCode);
 				Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
@@ -190,7 +190,7 @@ public class TorrentManager {
 	
 	public synchronized String addTorrent(URI magnetUri) {
 		String hashCode = libTorrent.addMagnetUri(
-				magnetUri.toString(), 0, 0);
+				magnetUri.toString(), 0, LibTorrent.FLAG_AUTO_MANAGED);
 		if (hashCode != null) {
 			initStream(hashCode);
 			Boolean existFile = torrents.put(hashCode, MAGNET_FILE);
@@ -238,7 +238,8 @@ public class TorrentManager {
 		httpd.cancelStream();
 		try {
 			if (currentStream != null) {
-				libTorrent.setUploadMode(currentStream, true);
+//				libTorrent.setUploadMode(currentStream, true);
+				libTorrent.setShareMode(currentStream, true);
 			}
 		} catch (TorrentException e) {
 			e.printStackTrace();
@@ -249,8 +250,8 @@ public class TorrentManager {
 		long start = System.nanoTime();
 		if (currentStream != null) {
 			try {
-				libTorrent.setUploadMode(currentStream, true);
-//				libTorrent.setShareMode(currentStream, true);
+//				libTorrent.setUploadMode(currentStream, true);
+				libTorrent.setShareMode(currentStream, true);
 			} catch (TorrentException e) {
 				e.printStackTrace();
 			}
