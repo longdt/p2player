@@ -1,10 +1,10 @@
 package com.solt.libtorrent;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashMap;
@@ -276,20 +276,23 @@ public class TorrentManager {
 	}
 
 	/**
+	 * asynchronize request add torrent
 	 * @param string
 	 * @throws MalformedURLException 
 	 */
 	public static void requestAddTorrent(String movieId, boolean file, boolean sub) throws MalformedURLException {
-		URL url = new URL("http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_ADD + "?" + HttpHandler.PARAM_MOVIEID + "=" + movieId + "&" + HttpHandler.PARAM_FILE +"=" + file + "&" + HttpHandler.PARAM_SUB + "=" + sub);
-		BufferedReader in = null;
+		Socket socket = null;
 		try {
-			in = new BufferedReader(new InputStreamReader( url.openStream()));
-			System.out.println(in.readLine());
+			socket = new Socket("127.0.0.1", HTTPD_PORT);
+			PrintWriter writer = new PrintWriter(socket.getOutputStream());
+			writer.println("GET " + HttpHandler.ACTION_ADD + "?" + HttpHandler.PARAM_MOVIEID + "=" + movieId + "&" + HttpHandler.PARAM_FILE +"=" + file + "&" + HttpHandler.PARAM_SUB + "=" + sub + " HTTP/1.0");
+			writer.println();
+			writer.close();
 		} catch (IOException e) {
 		} finally {
-			if (in != null) {
+			if (socket != null) {
 				try {
-					in.close();
+					socket.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
