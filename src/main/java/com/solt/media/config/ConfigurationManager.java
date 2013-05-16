@@ -30,6 +30,10 @@ public class ConfigurationManager {
 	public static final String TORRENT_FILE_DIR = "torrent.file.dir";
 
 	public static final String TORRENT_CACHE_AMOUNT = "torrent.cache.amount";
+	
+	public static final String SESSION_DOWNLOAD_LIMIT = "session.download.limit";
+	
+	public static final String SESSION_UPLOAD_LIMIT = "session.upload.limit";
 
 	private Properties props;
 	private static ConfigurationManager conf = new ConfigurationManager();

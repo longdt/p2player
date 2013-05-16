@@ -142,7 +142,7 @@ public class Main implements MediaPlayer {
 
 		shell.setText("Loading...");
 		shell.setLayout(new FillLayout());
-		shell.setImage(SWTResourceManager.getImage(Main.class, "/logo.png"));
+		shell.setImage(SWTResourceManager.getImage(Main.class, "/logoIcon.png"));
 		player = new Player(shell);
 
 		player.setAutoResize(true);

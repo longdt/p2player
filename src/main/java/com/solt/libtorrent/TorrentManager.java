@@ -44,7 +44,10 @@ public class TorrentManager {
 		File root = new File(wwwRoot);
 		httpd = new NanoHTTPD(HTTPD_PORT, root);
 		libTorrent = new LibTorrent();
-		libTorrent.setSession(port, root, 100 * 1024, 0);
+		ConfigurationManager conf = ConfigurationManager.getInstance();
+		int upload = conf.getInt(ConfigurationManager.SESSION_UPLOAD_LIMIT, 100 * 1024);
+		int download = conf.getInt(ConfigurationManager.SESSION_DOWNLOAD_LIMIT, 1024 * 1024);
+		libTorrent.setSession(port, root, upload, download);
 		libTorrent.setSessionOptions(true, true, true, true);
 		loadAsyncExistTorrents();
 		httpd.setLibTorrent(libTorrent);
