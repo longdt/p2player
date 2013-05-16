@@ -190,6 +190,16 @@ public class FileUtils {
 		return null;
 	}
 
+	public static String getHash(String hasher, File file) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance(hasher);
+			return hash(digest, file);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	private static String hash(MessageDigest digest, File file) {
 		BufferedInputStream in = null;
 		try {
