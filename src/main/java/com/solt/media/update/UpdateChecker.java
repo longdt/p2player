@@ -20,6 +20,7 @@ import com.solt.media.util.Constants;
 import com.solt.media.util.Downloader;
 import com.solt.media.util.FileUtils;
 import com.solt.media.util.MultipartDownloader;
+import com.solt.media.util.SingleDownloader;
 
 /**
  * @author ThienLong
@@ -78,7 +79,7 @@ public class UpdateChecker implements Runnable {
 				if (version != null && compareVersions(version, Constants.VERSION) > 0) {
 					link = (String) content.get(LINK_FIELD);
 					if (downloader == null) {
-						downloader = new MultipartDownloader(NUM_PART);
+						downloader = new SingleDownloader();
 					}
 					URL file = new URL(updateUrl, link);
 					
