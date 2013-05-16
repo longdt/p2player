@@ -30,7 +30,9 @@ public class UpdateChecker implements Runnable {
 	private static final int COMPLETE = 1;
 	private static final int INTERVAL = 10 * 60000;
 	private static final String VERSION_FIELD = "version";
-	private static final String MD5_FIELD = "md5";
+	private static final String HASHER_FIELD = "hasher";
+	private static final String LINK_FIELD = "link";
+	private static final String CHECKSUM_FIELD = "checksum";
 	private static final int NUM_PART = 4;
 	private Thread checker;
 	private Main app;
@@ -61,8 +63,10 @@ public class UpdateChecker implements Runnable {
 			URL updateUrl = new URL(Constants.UPDATE_URL);
 			JSONObject content = null;
 			String version = null;
-			String hash = null;
+			String hasher = null;
 			String hashFile = null;
+			String link = null;
+			String checksum = null;
 			do {
 				content = (JSONObject) parseJSON(updateUrl);
 				if (content == null) {
@@ -70,18 +74,20 @@ public class UpdateChecker implements Runnable {
 					continue;
 				}
 				version = (String) content.get(VERSION_FIELD);
-				hash = (String) content.get(MD5_FIELD);
+				hasher = (String) content.get(HASHER_FIELD);
 				if (version != null && compareVersions(version, Constants.VERSION) > 0) {
+					link = (String) content.get(LINK_FIELD);
 					if (downloader == null) {
 						downloader = new MultipartDownloader(NUM_PART);
 					}
-					URL file = new URL(updateUrl, "setup.exe");
+					URL file = new URL(updateUrl, link);
 					
 					if (!downloader.download(file, temp)) {
 						Thread.sleep(INTERVAL);
 						continue;
 					}
-					if (hash == null || ((hashFile = FileUtils.getMD5Hash(temp)) != null && hash.equalsIgnoreCase(hashFile))) {
+					checksum =  (String) content.get(CHECKSUM_FIELD);
+					if (checksum == null || ((hashFile = FileUtils.getHash(hasher, temp)) != null && checksum.equalsIgnoreCase(hashFile))) {
 						temp.renameTo(target);
 						state = COMPLETE;
 						break;
