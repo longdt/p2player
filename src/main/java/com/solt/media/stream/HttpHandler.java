@@ -42,6 +42,8 @@ public class HttpHandler implements Runnable{
 	public static final String ACTION_ADD = "/add";
 	
 	public static final String ACTION_DEL = "/del";
+	
+	public static final String ACTION_SHUTDOWN = "/shutdown";
 
 	public static final String PARAM_HASHCODE = "hashcode";
 	
@@ -177,6 +179,8 @@ public class HttpHandler implements Runnable{
 			} catch (TorrentException e) {
 				sendMessage(HttpStatus.HTTP_BADREQUEST, "invalid hashcode");
 			}
+		} else if (uri.equals(ACTION_SHUTDOWN)) {
+			TorrentManager.player.requestShutdown();
 		} else {
 			sendMessage(HttpStatus.HTTP_BADREQUEST, "invalid uri");
 		}
