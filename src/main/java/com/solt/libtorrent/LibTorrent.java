@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 
 public class LibTorrent {
@@ -123,7 +124,7 @@ public class LibTorrent {
 	public static final int DEFAULT_FLAGS = FLAG_UPDATE_SUBSCRIBE
 			| FLAG_AUTO_MANAGED | FLAG_PAUSED | FLAG_APPLY_IP_FILTER;
 
-	private static final String LIBTORRENT_DLL = "libtorrent.dll";
+	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : "libtorrent.dll";
 	
 	static {
 		loadLibraryFromJar();
