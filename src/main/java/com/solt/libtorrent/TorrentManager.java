@@ -37,11 +37,12 @@ public class TorrentManager {
 	private static TorrentManager instance;
 	private boolean processAlerts;
 	private Thread alertsService;
+	private File root;
 
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
 		torrents = new LinkedHashMap<String, Boolean>();
-		File root = new File(wwwRoot);
+		root = new File(wwwRoot);
 		httpd = new NanoHTTPD(HTTPD_PORT, root);
 		libTorrent = new LibTorrent();
 		ConfigurationManager conf = ConfigurationManager.getInstance();
@@ -146,6 +147,31 @@ public class TorrentManager {
 			e.printStackTrace();
 		}
 	}
+	
+	private String getMediaResource(String hashCode) {
+		try {
+			int state = libTorrent.getTorrentState(hashCode);
+			if (state == 4 || state == 5) {
+				FileEntry[] entries = libTorrent.getTorrentFiles(hashCode);
+				long maxSize = 0;
+				int index = -1;
+				for (int i = 0; i < entries.length; ++i) {
+					if (FileUtils.isStreamable(entries[i]) && entries[i].getSize() > maxSize) {
+						maxSize = entries[i].getSize();
+						index = i;
+					}
+				}
+				if (index == -1) {
+					return null;
+				}
+				File f = new File(root, entries[index].getPath());
+				return f.getAbsolutePath();
+			}
+		} catch (TorrentException e) {
+		}
+		return "http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_STREAM
+				+ "?" + HttpHandler.PARAM_HASHCODE + "=" + hashCode;
+	}
 
 	public synchronized String addTorrent(File torrentFile) {
 		String hashCode = libTorrent.addTorrent(
@@ -161,8 +187,7 @@ public class TorrentManager {
 				FileUtils.copyFile(torrentFile, new File(torrentsDir,
 						hashCode + Constants.TORRENT_FILE_EXTENSION));
 			}
-			return "http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_STREAM
-					+ "?" + HttpHandler.PARAM_HASHCODE + "=" + hashCode;
+			return getMediaResource(hashCode);
 		}
 		return null;
 	}
@@ -182,8 +207,7 @@ public class TorrentManager {
 				} else if (!existFile) {
 					torrentFile.renameTo(new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION));
 				}
-				return "http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_STREAM
-						+ "?" + HttpHandler.PARAM_HASHCODE + "=" + hashCode;
+				return getMediaResource(hashCode);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -203,8 +227,7 @@ public class TorrentManager {
 						hashCode + Constants.MAGNET_FILE_EXTENSION), magnetUri.toString());
 				policy.prepare(hashCode);
 			}
-			return "http://127.0.0.1:" + HTTPD_PORT + HttpHandler.ACTION_STREAM
-					+ "?" + HttpHandler.PARAM_HASHCODE + "=" + hashCode;
+			return getMediaResource(hashCode);
 		}
 		return null;
 	}
