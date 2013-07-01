@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ public class TorrentManager {
 
 	private TorrentManager(int port, String wwwRoot) throws IOException {
 		torrentsDir = SystemProperties.getTorrentsDir();
-		torrents = new LinkedHashMap<String, Boolean>();
+		torrents = new LinkedHashMap<String, Boolean>(16, 0.75f, true);
 		root = new File(wwwRoot);
 		httpd = new NanoHTTPD(HTTPD_PORT, root);
 		libTorrent = new LibTorrent();
@@ -58,24 +59,25 @@ public class TorrentManager {
 	 * 
 	 */
 	private void loadAsyncExistTorrents() {
-		String hashCode = null;
 		String magnet = null;
 		int flags = LibTorrent.FLAG_AUTO_MANAGED | LibTorrent.FLAG_SHARE_MODE;
-		for (File torrent : torrentsDir.listFiles()) {
-			if (torrent.isDirectory()) {
-				continue;
-			}
-			if (torrent.getName().endsWith(Constants.TORRENT_FILE_EXTENSION)) {
+		Collection<String> hashCodes = ConfigurationManager.getInstance().getStringCollection(ConfigurationManager.TORRENT_HASHCODES);
+		for (String hashCode : hashCodes) {
+			File torrent = new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION);
+			if (torrent.isFile()) {
 				hashCode = libTorrent.addAsyncTorrent(torrent.getAbsolutePath(), 0,
 						flags);
 				if (hashCode != null) {
 					torrents.put(hashCode, TORRENT_FILE);
 				}
-			} else if (torrent.getName().endsWith(Constants.MAGNET_FILE_EXTENSION)) {
-				magnet = FileUtils.getStringContent(torrent);
-				hashCode = libTorrent.addAsyncMagnetUri(magnet, 0, flags);
-				if (hashCode != null) {
-					torrents.put(hashCode, MAGNET_FILE);
+			} else {
+				torrent = new File(torrentsDir, hashCode + Constants.MAGNET_FILE_EXTENSION);
+				if (torrent.isFile()) {
+					magnet = FileUtils.getStringContent(torrent);
+					hashCode = libTorrent.addAsyncMagnetUri(magnet, 0, flags);
+					if (hashCode != null) {
+						torrents.put(hashCode, MAGNET_FILE);
+					}
 				}
 			}
 		}
