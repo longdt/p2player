@@ -209,7 +209,9 @@ public class Main implements MediaPlayer {
 		}
 		torrManager.shutdown();
 		try {
-			ConfigurationManager.getInstance().save();
+			ConfigurationManager conf = ConfigurationManager.getInstance();
+			conf.setStrings(ConfigurationManager.TORRENT_HASHCODES, torrManager.getTorrents());
+			conf.save();
 			updater.stop();
 		} catch (IOException e) {
 			e.printStackTrace();
