@@ -158,6 +158,7 @@ public class HttpHandler implements Runnable{
 						sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 						return;
 					}
+					fileName = "sharephim." + FileUtils.getExtension(fileName);
 					File temp = new File(SystemProperties.getMetaDataPath(), fileName);
 					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
 						subFile = temp.getAbsolutePath();

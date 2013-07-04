@@ -314,4 +314,13 @@ public class FileUtils {
 		}
 		return false;
 	}
+	
+	public static String getExtension(String fileName) {
+		int index = fileName.lastIndexOf('.');
+		if (index != -1) {
+			String extension = fileName.substring(index + 1).toLowerCase();
+			return extension;
+		}
+		return null;
+	}
 }
