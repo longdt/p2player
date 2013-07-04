@@ -12,7 +12,7 @@ public class NumberCachePolicy implements CachePolicy {
 	
 	public NumberCachePolicy() {
 		manager = TorrentManager.getInstance();
-		maxNumTorrent = ConfigurationManager.getInstance().getInt(ConfigurationManager.TORRENT_CACHE_AMOUNT, 5);
+		maxNumTorrent = ConfigurationManager.getInstance().getInt(ConfigurationManager.TORRENT_CACHE_AMOUNT, 25);
 	}
 
 	@Override
