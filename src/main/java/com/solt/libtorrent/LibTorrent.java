@@ -452,6 +452,9 @@ public class LibTorrent {
 	 */
 	public native int readTorrentPiece(String hashCode, int pieceIdx,
 			byte[] buffer) throws TorrentException;
+	
+	public native void addTorrentPiece(String hashCode, int pieceIdx,
+			byte[] buffer) throws TorrentException;
 
 	/**
 	 * sets the session-global limits of download rate limits, in bytes per
