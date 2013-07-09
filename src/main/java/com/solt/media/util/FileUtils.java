@@ -323,4 +323,20 @@ public class FileUtils {
 		}
 		return null;
 	}
+
+	public static int copyFile(InputStream is, byte[] data, int offset, int length) {
+		BufferedInputStream in = null;
+		try {
+			in = new BufferedInputStream(is);
+			int pending = length;
+			int len = 0;
+			while (pending > 0 && (len = in.read(data, offset, pending)) != -1) {
+				offset += len;
+				pending = pending - len;
+			}
+			return offset;
+		} catch (IOException e) {
+		}
+		return -1;
+	}
 }

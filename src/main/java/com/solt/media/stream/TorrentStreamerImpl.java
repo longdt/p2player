@@ -20,19 +20,19 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	private String hashCode;
 	private int index;
 	private long pending;
-	private long transferOffset;
+	private long fileOffset;
 	private LibTorrent libTorrent;
 	private SocketChannel schannel;
 	private int pieceSize;
 
 	public TorrentStreamerImpl(HttpHandler handler, String hashCode, int index,
-			long dataLength, long transferOffset) throws TorrentException,
+			long dataLength, long fileOffset) throws TorrentException,
 			IOException {
 		this.handler = handler;
 		this.hashCode = hashCode;
 		this.index = index;
 		this.pending = dataLength;
-		this.transferOffset = transferOffset;
+		this.fileOffset = fileOffset;
 		this.libTorrent = handler.getHttpd().getLibTorrent();
 		pieceSize = libTorrent.getPieceSize(hashCode, false);
 		this.schannel = handler.getSocketChannel();
@@ -54,15 +54,15 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 	 */
 	@Override
 	public void stream() throws Exception {
-		long torrentOffset = transferOffset + libTorrent.getTorrentFiles(hashCode)[index]
+		long torrentOffset = fileOffset + libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
 		int streamPiece = (int) (torrentOffset / pieceSize);
 		int endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
 		int setRead = -1;
-		int transferPieceIdx = streamPiece;
-		int transferPieceOffset = (int) (torrentOffset - transferPieceIdx
+		int startPiece = streamPiece;
+		int startPieceOffset = (int) (torrentOffset - startPiece
 				* pieceSize);
-		if (isSeek(transferOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, torrentOffset) == streamPiece)) {
+		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, torrentOffset) == streamPiece)) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
 		}
@@ -185,7 +185,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 				checkEOF(schannel, readBuffer);
 				continue;
 			}
-			int offset = (streamPiece == transferPieceIdx) ? transferPieceOffset
+			int offset = (streamPiece == startPiece) ? startPieceOffset
 					: 0;
 			len = len - offset;
 			if (len > pending) {
@@ -198,7 +198,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 
 	}
 
-	private long getPieceRemain(int currCancelPiece) throws TorrentException {
+	protected long getPieceRemain(int currCancelPiece) throws TorrentException {
 		PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, currCancelPiece);
 		if (info == null) {
 			return pieceSize;
@@ -206,7 +206,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		return (pieceSize - info.getDownloadedBytes());
 	}
 
-	private int setDeadline(int fromIndex, int count, int endIndex) throws TorrentException {
+	protected int setDeadline(int fromIndex, int count, int endIndex) throws TorrentException {
 		if (count == 0) {
 			return fromIndex;
 		}
@@ -221,7 +221,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		return (fromIndex - 1);
 	}
 	
-	private int setPriority(int index, int count, int endIndex) throws TorrentException {
+	protected int setPriority(int index, int count, int endIndex) throws TorrentException {
 		if (count == 0) {
 			return index;
 		}
