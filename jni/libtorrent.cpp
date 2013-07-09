@@ -1649,7 +1649,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 						boost::mutex::scoped_lock l(pTorrentInfo->cont_piece_mutex);
 						bool inside = pTorrentInfo->pieceTransferIdx <= pieceIdx
 								&& pieceIdx
-										< pTorrentInfo->firstPieceIncompleteIdx;
+										<= pTorrentInfo->firstPieceIncompleteIdx;
 						int i = inside ?
 								pTorrentInfo->firstPieceIncompleteIdx : pieceIdx;
 
