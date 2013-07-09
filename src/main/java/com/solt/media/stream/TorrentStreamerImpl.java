@@ -62,7 +62,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 		int startPiece = streamPiece;
 		int startPieceOffset = (int) (torrentOffset - startPiece
 				* pieceSize);
-		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, torrentOffset) == streamPiece)) {
+		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece)) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
 		}
@@ -90,7 +90,7 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 			int PIECE_BUFFER_SIZE = computePieceBufferSize(hashCode, pieceSize,
 					streamRate, wait);
 			incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode,
-					torrentOffset);
+					streamPiece);
 			
 			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
 			if (state != 4 && state != 5

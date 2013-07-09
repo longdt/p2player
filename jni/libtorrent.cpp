@@ -1019,85 +1019,6 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	return result;
 }
 
-
-
-/*
- * Class:     com_solt_libtorrent_LibTorrent
- * Method:    getTorrentContinuousSize
- * Signature: (Ljava/lang/String;J)J
- */JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentContinuousSize(
-		JNIEnv *env, jobject obj, jstring hashCode, jlong offset) {
-	jlong result = -1;
-	HASH_ASSERT(env, hashCode, result);
-	libtorrent::sha1_hash hash;
-	solt::JStringToHash(env, hash, hashCode);
-	TorrentInfo* pTorrentInfo = NULL;
-	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
-		if (gSessionState) {
-			pTorrentInfo = GetTorrentInfo(env, hash);
-			if (!pTorrentInfo) {
-				return result;
-			}
-			libtorrent::torrent_handle* pTorrent = &(pTorrentInfo->handle);
-			libtorrent::torrent_status s = pTorrent->status(libtorrent::torrent_handle::query_pieces);
-			if (s.state != libtorrent::torrent_status::seeding
-					&& pTorrent->has_metadata()) {
-				if (!s.pieces.empty()) {
-
-					libtorrent::torrent_info const& info =
-							pTorrent->get_torrent_info();
-					int pieceSize = info.piece_length();
-					int pieceIdx = offset / pieceSize;
-					boost::mutex::scoped_lock l(pTorrentInfo->cont_piece_mutex);
-					bool inside = pTorrentInfo->pieceTransferIdx <= pieceIdx
-							&& pieceIdx < pTorrentInfo->firstPieceIncompleteIdx;
-					int i = inside ?
-							pTorrentInfo->firstPieceIncompleteIdx : pieceIdx;
-					int n = s.pieces.size();
-					for (; i < n && s.pieces.get_bit(i); ++i) {
-
-					}LOG_DEBUG(
-							"downloaded piece at %d num_pieces = %d in total = %d", i, s.num_pieces, n);
-					if (i > pieceIdx) {
-						result = (pieceIdx + 1) * pieceSize - offset
-								+ (i - pieceIdx - 1) * pieceSize;
-						//update cont piece idx
-						if (!inside) {
-							pTorrentInfo->pieceTransferIdx = pieceIdx;
-							pTorrentInfo->firstPieceIncompleteIdx = i;
-						} else if (i > pTorrentInfo->firstPieceIncompleteIdx) {
-							LOG_DEBUG( "set new firstPieceIncompleteIdx %d", i);
-							pTorrentInfo->firstPieceIncompleteIdx = i;
-						}
-					}
-				}
-			} else if (s.state == libtorrent::torrent_status::seeding
-					&& pTorrent->has_metadata()) {
-				libtorrent::torrent_info const& info =
-						pTorrent->get_torrent_info();
-				long long bytes_size = info.total_size();
-				if (bytes_size > 0 && bytes_size > offset) {
-					result = bytes_size - offset;
-				}
-			}
-
-		}
-	} catch (...) {
-		LOG_ERR("Exception: failed to progress continuous torrent size");
-		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
-			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
-				delete pTorrentInfo;
-			}
-		} catch (...) {
-		}
-		env->ThrowNew(torrentException,
-							"Exception: failed to progress continuous torrent size");
-	}
-	return result;
-}
-
  JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setTorrentReadPiece
  	 (JNIEnv *env, jobject obj, jstring hashCode, jint pieceIdx) {
 	 if (pieceIdx < 0) return;
@@ -1707,9 +1628,9 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    getFirstPieceIncomplete
- * Signature: (Ljava/lang/String;J)I
+ * Signature: (Ljava/lang/String;I)I
  */JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getFirstPieceIncomplete(
-		JNIEnv *env, jobject obj, jstring hashCode, jlong offset) {
+		JNIEnv *env, jobject obj, jstring hashCode, jint pieceIdx) {
 	jint result = -1;
 	HASH_ASSERT(env, hashCode, result);
 	libtorrent::sha1_hash hash;
@@ -1725,11 +1646,6 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 				if (s.state != libtorrent::torrent_status::seeding
 						&& pTorrent->has_metadata()) {
 					if (!s.pieces.empty()) {
-
-						libtorrent::torrent_info const& info =
-								pTorrent->get_torrent_info();
-						int pieceSize = info.piece_length();
-						int pieceIdx = offset / pieceSize;
 						boost::mutex::scoped_lock l(pTorrentInfo->cont_piece_mutex);
 						bool inside = pTorrentInfo->pieceTransferIdx <= pieceIdx
 								&& pieceIdx

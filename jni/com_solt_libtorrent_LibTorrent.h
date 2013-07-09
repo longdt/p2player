@@ -159,14 +159,6 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
- * Method:    getTorrentContinuousSize
- * Signature: (Ljava/lang/String;J)J
- */
-JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentContinuousSize
-  (JNIEnv *, jobject, jstring, jlong);
-
-/*
- * Class:     com_solt_libtorrent_LibTorrent
  * Method:    setTorrentReadPiece
  * Signature: (Ljava/lang/String;I)V
  */
@@ -328,10 +320,10 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getPieceSize
 /*
  * Class:     com_solt_libtorrent_LibTorrent
  * Method:    getFirstPieceIncomplete
- * Signature: (Ljava/lang/String;J)I
+ * Signature: (Ljava/lang/String;I)I
  */
 JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getFirstPieceIncomplete
-  (JNIEnv *, jobject, jstring, jlong);
+  (JNIEnv *, jobject, jstring, jint);
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
