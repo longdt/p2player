@@ -417,16 +417,6 @@ public class LibTorrent {
 			throws TorrentException;
 
 	/**
-	 * get number continuous bytes from a given offset
-	 * 
-	 * @param hashCode
-	 * @param offset
-	 * @return
-	 */
-	public native long getTorrentContinuousSize(String hashCode, long offset)
-			throws TorrentException;
-
-	/**
 	 * set read operation of the specified piece from torrent. You must have
 	 * completed the download of the specified piece before calling this
 	 * function. Note that if you read multiple pieces, the read operations are
@@ -637,14 +627,14 @@ public class LibTorrent {
 			throws TorrentException;
 
 	/**
-	 * get index of first in-completed piece from a given offset
+	 * get index of first in-completed piece from a given piece index
 	 * 
 	 * @param hashCode
 	 * @param offset
 	 * @return index of first in-completed piece
 	 * @throws TorrentException
 	 */
-	public native int getFirstPieceIncomplete(String hashCode, long offset)
+	public native int getFirstPieceIncomplete(String hashCode, int fromPiece)
 			throws TorrentException;
 	
 	public boolean getPieceState(PiecesState state) throws TorrentException {
