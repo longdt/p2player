@@ -478,7 +478,7 @@ public class HttpHandler implements Runnable{
 
 	private void sendTorrentData(String hashCode, int index, long dataLength,
 			long transferOffset) throws Exception {
-		new TorrentStreamerImpl(this, hashCode, index, dataLength, transferOffset).stream();
+		new HyperStreamer(this, hashCode, index, dataLength, transferOffset).stream();
 	}
 
 
