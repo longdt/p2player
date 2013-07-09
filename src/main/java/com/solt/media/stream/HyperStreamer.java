@@ -170,8 +170,12 @@ public class HyperStreamer implements TorrentStreamer {
 					Thread.sleep(500);
 					checkEOF(schannel, readBuffer);
 					wait = true;
+					//use TDataHelper for fast stream
 					Result result = helper.retrievePiece(streamPiece, buff);
 					if (result.getState() != Result.ERROR) {
+						if (result.getState() == Result.COMPLETE) {
+							libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
+						}
 						int offset = streamPiece == startPiece ? startPieceOffset : 0;
 						int len = result.getLength() - offset;
 						if (len > pending) {

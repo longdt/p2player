@@ -1185,6 +1185,38 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	return result;
  }
 
+ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrentPiece
+  (JNIEnv *env, jobject obj, jstring hashCode, jint pieceIdx, jbyteArray data) {
+	 if (pieceIdx < 0) return;
+	HASH_ASSERT(env, hashCode, RETURN_VOID);
+	libtorrent::sha1_hash hash;
+	solt::JStringToHash(env, hash, hashCode);
+	TorrentInfo* pTorrentInfo = NULL;
+	try {
+		boost::shared_lock< boost::shared_mutex > lock(access);
+		if (gSessionState) {
+			pTorrentInfo = GetTorrentInfo(env, hash);
+			if (pTorrentInfo && pieceIdx < pTorrentInfo->handle.get_torrent_info().num_pieces()) {
+				//add piece data
+				jbyte* pOrgBuffer = env->GetByteArrayElements(data, NULL);
+				pTorrentInfo->handle.add_piece(pieceIdx, (char*)pOrgBuffer);
+				env->ReleaseByteArrayElements(data, pOrgBuffer, 0);
+			}
+		}
+	} catch (...) {
+		LOG_ERR("Exception: failed when add piece's data");
+		try {
+			boost::unique_lock< boost::shared_mutex > lock(access);
+			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
+				delete pTorrentInfo;
+			}
+		} catch (...) {
+		}
+		env->ThrowNew(torrentException,
+							"Exception: failed when add piece's data");
+	}
+ }
+
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
