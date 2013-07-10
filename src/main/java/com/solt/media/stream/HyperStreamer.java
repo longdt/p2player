@@ -41,14 +41,14 @@ public class HyperStreamer implements TorrentStreamer {
 		this.libTorrent = handler.getHttpd().getLibTorrent();
 		long torrentOffset = fileOffset + libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
+		pieceSize = libTorrent.getPieceSize(hashCode, false);
+		buff = new byte[pieceSize];
 		streamPiece = (int) (torrentOffset / pieceSize);
 		endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
 		streamRate = Average.getInstance(1000, 20);
 		startPiece = streamPiece;
 		startPieceOffset = (int) (torrentOffset - startPiece
 				* pieceSize);
-		pieceSize = libTorrent.getPieceSize(hashCode, false);
-		buff = new byte[pieceSize];
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
 		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
@@ -69,6 +69,10 @@ public class HyperStreamer implements TorrentStreamer {
 	@Override
 	public void stream() throws Exception {
 		int setRead = -1;
+		long speed = libTorrent.getTorrentDownloadRate(hashCode, true);
+		if (speed < 200 * 1024 && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece) {
+			tryUseDataHelper();
+		}
 		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece)) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
@@ -86,7 +90,6 @@ public class HyperStreamer implements TorrentStreamer {
 		long timeToWait = 0;
 		long cancelTime = 0;
 		boolean wait = false;
-		long speed = 0;
 		PiecesState pState = new PiecesState(hashCode);
 		while (handler.isStreaming() && pending > 0
 				&& !Thread.currentThread().isInterrupted()) {
