@@ -18,26 +18,37 @@ public class HyperStreamer implements TorrentStreamer {
 	private static int DEFAULT_MIN_PIECES_TO_BUFFER = 5;
 	private HttpHandler handler;
 	private String hashCode;
-	private int index;
 	private long pending;
 	private long fileOffset;
 	private LibTorrent libTorrent;
 	private SocketChannel schannel;
 	private int pieceSize;
-	private int lastPieceSize;
 	private TDataHelper helper;
+	private int streamPiece;
+	private int endPiece;
+	private Average streamRate;
+	private int startPiece;
+	private int startPieceOffset;
+	private byte[] buff;
 
 	public HyperStreamer(HttpHandler handler, String hashCode, int index,
 			long dataLength, long fileOffset) throws TorrentException,
 			IOException {
 		this.handler = handler;
 		this.hashCode = hashCode;
-		this.index = index;
 		this.pending = dataLength;
 		this.fileOffset = fileOffset;
 		this.libTorrent = handler.getHttpd().getLibTorrent();
+		long torrentOffset = fileOffset + libTorrent.getTorrentFiles(hashCode)[index]
+				.getOffset();
+		streamPiece = (int) (torrentOffset / pieceSize);
+		endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
+		streamRate = Average.getInstance(1000, 20);
+		startPiece = streamPiece;
+		startPieceOffset = (int) (torrentOffset - startPiece
+				* pieceSize);
 		pieceSize = libTorrent.getPieceSize(hashCode, false);
-		lastPieceSize = libTorrent.getPieceSize(hashCode, true);
+		buff = new byte[pieceSize];
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
 		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
@@ -57,17 +68,7 @@ public class HyperStreamer implements TorrentStreamer {
 	 */
 	@Override
 	public void stream() throws Exception {
-		long torrentOffset = fileOffset + libTorrent.getTorrentFiles(hashCode)[index]
-				.getOffset();
-		int streamPiece = (int) (torrentOffset / pieceSize);
-		int endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
 		int setRead = -1;
-		Average streamRate = Average.getInstance(1000, 20);
-		int startPiece = streamPiece;
-		int startPieceOffset = (int) (torrentOffset - startPiece
-				* pieceSize);
-		byte[] buff = new byte[pieceSize];
-		
 		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece)) {
 			// TODO clear piece deadline
 			libTorrent.clearPiecesDeadline(hashCode);
@@ -171,20 +172,7 @@ public class HyperStreamer implements TorrentStreamer {
 					checkEOF(schannel, readBuffer);
 					wait = true;
 					//use TDataHelper for fast stream
-					Result result = helper.retrievePiece(streamPiece, buff);
-					if (result.getState() != Result.ERROR) {
-						if (result.getState() == Result.COMPLETE) {
-							libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
-						}
-						int offset = streamPiece == startPiece ? startPieceOffset : 0;
-						int len = result.getLength() - offset;
-						if (len > pending) {
-							len = (int) pending;
-						}
-						writeData(schannel, buff, offset, len, streamRate);
-						pending -= len;
-						++streamPiece;
-					}
+					tryUseDataHelper();
 					continue;
 				}
 			}
@@ -216,6 +204,23 @@ public class HyperStreamer implements TorrentStreamer {
 			++streamPiece;
 		}
 
+	}
+
+	private void tryUseDataHelper() throws TorrentException, IOException, InterruptedException {
+		Result result = helper.retrievePiece(streamPiece, buff);
+		if (result.getState() != Result.ERROR) {
+			if (result.getState() == Result.COMPLETE) {
+				libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
+			}
+			int offset = streamPiece == startPiece ? startPieceOffset : 0;
+			int len = result.getLength() - offset;
+			if (len > pending) {
+				len = (int) pending;
+			}
+			writeData(schannel, buff, offset, len, streamRate);
+			pending -= len;
+			++streamPiece;
+		}
 	}
 
 	protected long getPieceRemain(int currCancelPiece) throws TorrentException {
