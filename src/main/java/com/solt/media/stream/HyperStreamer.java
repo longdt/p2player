@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Map.Entry;
+import java.util.BitSet;
 import java.util.TreeMap;
 
 import com.solt.libtorrent.LibTorrent;
@@ -30,6 +31,7 @@ public class HyperStreamer implements TorrentStreamer {
 	private int startPiece;
 	private int startPieceOffset;
 	private byte[] buff;
+	private BitSet helpedPieces;
 
 	public HyperStreamer(HttpHandler handler, String hashCode, int index,
 			long dataLength, long fileOffset) throws TorrentException,
@@ -52,6 +54,7 @@ public class HyperStreamer implements TorrentStreamer {
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
 		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
+		helpedPieces = new BitSet(libTorrent.getPieceNum(hashCode));
 	}
 	
 	public static boolean isSeek(long transOffset, long dataLength) {
@@ -101,7 +104,7 @@ public class HyperStreamer implements TorrentStreamer {
 			incompleteIdx = libTorrent.getFirstPieceIncomplete(hashCode,
 					streamPiece);
 			
-			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
+//			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
 			if (state != 4 && state != 5
 					&& streamPiece + PIECE_BUFFER_SIZE > incompleteIdx) {
 				//set deadline
@@ -137,8 +140,8 @@ public class HyperStreamer implements TorrentStreamer {
 //					}
 //				}
 				
+				speed = libTorrent.getTorrentDownloadRate(hashCode, true);
 				if (currCancelPiece != incompleteIdx) {
-					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
 					bonusTime = pieceSize * 1000l/ (speed + 1024);
 					timeToWait = bonusTime * 3 + 3000;
 					if (bonusTime < 3000) {
@@ -151,7 +154,6 @@ public class HyperStreamer implements TorrentStreamer {
 						timeToWait = bonusTime + 1000; //wait bonus time
 					}
 				} else {
-					speed = libTorrent.getTorrentDownloadRate(hashCode, true);
 					bonusTime = getPieceRemain(currCancelPiece) * 1000l / (speed + 1024);
 					if (speed > 500000 && bonusTime < 1000) {
 						bonusTime += 1000;
@@ -170,12 +172,14 @@ public class HyperStreamer implements TorrentStreamer {
 				
 				//wait for download piece
 				if (streamPiece == incompleteIdx) {
-					System.err.println("wait for libtorrent download data...");
+					System.err.println("wait " + streamPiece);
 					Thread.sleep(500);
 					checkEOF(schannel, readBuffer);
 					wait = true;
 					//use TDataHelper for fast stream
-					tryUseDataHelper();
+					if (needDataHelp(pState, speed)) {
+						tryUseDataHelper();
+					}
 					continue;
 				}
 			}
@@ -209,11 +213,33 @@ public class HyperStreamer implements TorrentStreamer {
 
 	}
 
+	private boolean needDataHelp(PiecesState state, long speed) throws TorrentException {
+		if (speed > 300 * 1024) {
+			return false;
+		}
+		if (state.getNumDone() / (float) state.getLenght() < 0.3f) {
+			int last = state.getLastIncomplete();
+			if (helpedPieces.get(last)) {
+				last = state.getLastIncomplete(helpedPieces.previousClearBit(last));
+			}
+			System.err.println("helper: " + last);
+			Result result = helper.retrievePiece(last, buff);
+			if (result.getState() == Result.COMPLETE) {
+				libTorrent.addTorrentPiece(hashCode, last, buff);
+				helpedPieces.set(last);
+			}
+		}
+		long remainBytes = getPieceRemain(streamPiece);
+		return (remainBytes / (float)pieceSize > 0.7f) && (speed < 150 * 1024);
+	}
+
 	private void tryUseDataHelper() throws TorrentException, IOException, InterruptedException {
+		System.err.println("helper: " + streamPiece);
 		Result result = helper.retrievePiece(streamPiece, buff);
 		if (result.getState() != Result.ERROR) {
 			if (result.getState() == Result.COMPLETE) {
 				libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
+				helpedPieces.set(streamPiece);
 			}
 			int offset = streamPiece == startPiece ? startPieceOffset : 0;
 			int len = result.getLength() - offset;
