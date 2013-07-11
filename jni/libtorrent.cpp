@@ -158,7 +158,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		settings.active_downloads = 20;
 		settings.active_seeds = 20;
 		settings.active_limit = 20;
-//		settings.prioritize_partial_pieces = true;
+		settings.prioritize_partial_pieces = true;
 		settings.initial_picker_threshold = 0;
 		gSession->set_settings(settings);
 		int uploadLimit = UploadLimit;

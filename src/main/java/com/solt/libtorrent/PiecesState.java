@@ -108,6 +108,13 @@ public class PiecesState {
 		return i;
 	}
 	
+	public int getLastIncomplete(int fromIdx) {
+		int i = fromIdx;
+		for (; i <= this.fromIdx && isDone(i); --i) {
+		}
+		return i;
+	}
+	
 	private static byte[] BitsSetTable256 = new byte[256];
 	static {
 		BitsSetTable256[0] = 0;
