@@ -1711,7 +1711,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 						&& pTorrent->has_metadata()) {
 					if (!s.pieces.empty()) {
 						char const* bytes = s.pieces.bytes();
-						int i = s.pieces.size() / 8 - fromIdx;
+						int i = (s.pieces.size() + 7) >> 3 - fromIdx;
 						if (len > i) {
 							len = i;
 						}

@@ -58,10 +58,19 @@ public class PiecesState {
 		this.len = len;
 	}
 
+	/**
+	 * check whether a given piece index is done. Note index must be in range <i>[fromIdx</i>, <i>fromIdx + len)</i>
+	 * @param index
+	 * @return
+	 */
 	public boolean isDone(int index) {
 		return (states[index >> 3 - stateIdx] & (0x80 >> (index & 7))) != 0;
 	}
 	
+	/**
+	 * get number piece was done
+	 * @return
+	 */
 	public int getNumDone() {
 		int counter = 0;
 		int idx = 0;
@@ -81,9 +90,20 @@ public class PiecesState {
 		this.hashCode = hashCode;
 	}
 	
+	/**
+	 * get first incomplete piece from <i>fromIdx</i>
+	 * @return
+	 */
 	public int getFirstIncomplete() {
 		int i = fromIdx;
 		for (int n = fromIdx + len; i < n && isDone(i); ++i) {
+		}
+		return i;
+	}
+	
+	public int getLastIncomplete() {
+		int i = fromIdx + len - 1;
+		for (; i <= fromIdx && isDone(i); --i) {
 		}
 		return i;
 	}
