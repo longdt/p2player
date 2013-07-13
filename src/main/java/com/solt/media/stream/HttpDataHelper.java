@@ -9,10 +9,13 @@ import java.net.URL;
 
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
+import com.solt.libtorrent.PartialPieceInfo;
+import com.solt.libtorrent.PartialPieceInfo.BlockState;
 import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.FileUtils;
 
 public class HttpDataHelper implements TDataHelper {
+	private static final String STORE_HELPER_URL = "http://stream.sharephim.vn:443/";
 	private LibTorrent libTorrent;
 	private String hashCode;
 	private long fileOffset;
@@ -42,7 +45,7 @@ public class HttpDataHelper implements TDataHelper {
 					* pieceSize);
 			endPiece = (int) ((torrentOffset + fileLength) / pieceSize) + 1;
 			String path = entries[item].getPath().replace('\\', '/');
-			url = new URL("http://127.0.0.1:8080/" + path);
+			url = new URL(STORE_HELPER_URL + path);
 			URI uri = new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(), url.getPath(), url.getQuery(), url.getRef());
 			url = new URL(uri.toASCIIString());
 		} catch (MalformedURLException e) {
@@ -100,5 +103,65 @@ public class HttpDataHelper implements TDataHelper {
 	@Override
 	public int getPiece(int pieceIdx, byte[] data) throws IOException {
 		return -1;
+	}
+
+	@Override
+	public boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException {
+		if (pieceIdx < startPiece || pieceIdx > endPiece) {
+			return false;
+		}
+		
+		long startBytes = pieceIdx * pieceSize - itemOffset;
+		long endBytes = startBytes + pieceSize;
+		if (startBytes < 0 || endBytes > itemLength) {
+			return false;
+		}
+		PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, pieceIdx);
+		if (info == null) {
+			return retrieveData(startBytes, endBytes, data, 0);
+		}
+		int start = 0;
+		int end = 0;
+		boolean isReq = false;
+		for (int i = 0; i < info.getNumBlocks(); ++i) {
+			if (info.getBlockState(i) <= BlockState.WRITING) {
+				end = end + info.getBlockSize(i);
+				isReq = true;
+			} else if (isReq) {
+				if (retrieveData(start + startBytes, end + startBytes, data, start)) {
+					end += info.getBlockSize(i);
+					start = end;
+					isReq = false;
+				} else {
+					return false;
+				}
+			} else {
+				start += info.getBlockSize(i);
+				end = start;
+			}
+		}
+		if (isReq) {
+			return retrieveData(start + startBytes, end + startBytes, data, start);
+		}
+		return true;
+	}
+
+	private boolean retrieveData(long startBytes, long endBytes, byte[] data,
+			int offset) {
+		HttpURLConnection conn = null;
+		try {
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestProperty("Range", "bytes=" + startBytes + "-" + (endBytes - 1));
+			conn.connect();
+			int len = FileUtils.copyFile(conn.getInputStream(), data, offset, (int)(endBytes - startBytes));
+			return  len > 0;
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (conn != null) {
+				conn.disconnect();
+			}
+		}
+		return false;
 	}
 }
