@@ -4,7 +4,10 @@ public class PartialPieceInfo {
 	int pieceIdx;
 	int numBlocks;
 	int pieceState;
-	int[]	blocks;
+	/**
+	 * block: [state, bytes_progress, block_size, num_peers]
+	 */
+	int[]	blocks; 
 	PartialPieceInfo(int pieceIdx, int pieceState, int numBlocks, int[] blocks) {
 		this.pieceIdx = pieceIdx;
 		this.numBlocks = numBlocks;
@@ -46,5 +49,20 @@ public class PartialPieceInfo {
 			totalBytes += blocks[i * 4 + 1];
 		}
 		return totalBytes;
+	}
+	
+	public int getBlockState(int index) {
+		return blocks[index * 4];
+	}
+	
+	public int getBlockSize(int index) {
+		return blocks[index * 4 + 2];
+	}
+	
+	public static class BlockState {
+		public static final int NONE = 0;
+		public static final int REQUESTED = 1;
+		public static final int WRITING = 2;
+		public static final int FINISHED = 3;
 	}
 }
