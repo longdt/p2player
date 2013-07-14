@@ -73,8 +73,8 @@ public class HyperStreamer implements TorrentStreamer {
 	public void stream() throws Exception {
 		int setRead = -1;
 		long speed = libTorrent.getTorrentDownloadRate(hashCode, true);
-		if (speed < 200 * 1024 && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece) {
-			tryUseDataHelper();
+		if (speed < 300 * 1024 && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece) {
+			tryUseDataHelperV1();
 		}
 		if (isSeek(fileOffset, pending) || (isRequestMetadata(pending) && libTorrent.getFirstPieceIncomplete(hashCode, streamPiece) == streamPiece)) {
 			// TODO clear piece deadline
@@ -178,7 +178,9 @@ public class HyperStreamer implements TorrentStreamer {
 					wait = true;
 					//use TDataHelper for fast stream
 					if (needDataHelp(pState, speed)) {
-						tryUseDataHelper();
+						tryUseDataHelperV1();
+					} else {
+						tryUseDataHelperV1();
 					}
 					continue;
 				}
@@ -222,9 +224,8 @@ public class HyperStreamer implements TorrentStreamer {
 			if (helpedPieces.get(last)) {
 				last = state.getLastIncomplete(helpedPieces.previousClearBit(last));
 			}
-			System.err.println("helper: " + last);
-			Result result = helper.retrievePiece(last, buff);
-			if (result.getState() == Result.COMPLETE) {
+			if (last > streamPiece && helper.getPieceRemain(last, buff)) {
+				System.err.println("needDataHelp: " + last);
 				libTorrent.addTorrentPiece(hashCode, last, buff);
 				helpedPieces.set(last);
 			}
@@ -234,9 +235,12 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 
 	private void tryUseDataHelper() throws TorrentException, IOException, InterruptedException {
-		System.err.println("helper: " + streamPiece);
+		if (helpedPieces.get(streamPiece)) {
+			return;
+		}
 		Result result = helper.retrievePiece(streamPiece, buff);
 		if (result.getState() != Result.ERROR) {
+			System.err.println("helper: " + streamPiece);
 			if (result.getState() == Result.COMPLETE) {
 				libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
 				helpedPieces.set(streamPiece);
@@ -249,6 +253,19 @@ public class HyperStreamer implements TorrentStreamer {
 			writeData(schannel, buff, offset, len, streamRate);
 			pending -= len;
 			++streamPiece;
+		}
+	}
+	
+	private void tryUseDataHelperV1() throws TorrentException, IOException, InterruptedException {
+		if (helpedPieces.get(streamPiece)) {
+			return;
+		}
+		if (helper.getPieceRemain(streamPiece, buff)) {
+			System.err.println("helper V1: " + streamPiece);
+			libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
+			helpedPieces.set(streamPiece);
+		} else {
+			tryUseDataHelper();
 		}
 	}
 

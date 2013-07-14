@@ -124,7 +124,7 @@ public class HttpDataHelper implements TDataHelper {
 		int end = 0;
 		boolean isReq = false;
 		for (int i = 0; i < info.getNumBlocks(); ++i) {
-			if (info.getBlockState(i) <= BlockState.WRITING) {
+			if (info.getBlockState(i) < BlockState.WRITING) {
 				end = end + info.getBlockSize(i);
 				isReq = true;
 			} else if (isReq) {
