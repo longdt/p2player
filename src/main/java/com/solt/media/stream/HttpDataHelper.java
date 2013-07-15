@@ -16,6 +16,7 @@ import com.solt.media.util.FileUtils;
 
 public class HttpDataHelper implements TDataHelper {
 	private static final String STORE_HELPER_URL = "http://stream.sharephim.vn:443/";
+	private static final int MAX_ERROR_COUNTER = 10;
 	private LibTorrent libTorrent;
 	private String hashCode;
 	private long fileOffset;
@@ -27,6 +28,7 @@ public class HttpDataHelper implements TDataHelper {
 	private int startPieceOffset;
 	private int endPiece;
 	private int pieceSize;
+	private int errCnt;
 	private URL url;
 	
 	public HttpDataHelper(LibTorrent libTorrent, String hashCode, int item, long fileOffset, long fileLength) {
@@ -65,7 +67,7 @@ public class HttpDataHelper implements TDataHelper {
 	 */
 	@Override
 	public Result retrievePiece(int pieceIdx, byte[] data) {
-		if (pieceIdx < startPiece || pieceIdx > endPiece) {
+		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER) {
 			return Result.ERROR_RESULT;
 		}
 		
@@ -92,6 +94,7 @@ public class HttpDataHelper implements TDataHelper {
 			return  len > 0 ? new Result(state, len) : Result.ERROR_RESULT;
 		} catch (IOException e) {
 			e.printStackTrace();
+			++errCnt;
 		} finally {
 			if (conn != null) {
 				conn.disconnect();
@@ -107,7 +110,7 @@ public class HttpDataHelper implements TDataHelper {
 
 	@Override
 	public boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException {
-		if (pieceIdx < startPiece || pieceIdx > endPiece) {
+		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER) {
 			return false;
 		}
 		
@@ -157,6 +160,7 @@ public class HttpDataHelper implements TDataHelper {
 			return  len > 0;
 		} catch (IOException e) {
 			e.printStackTrace();
+			++errCnt;
 		} finally {
 			if (conn != null) {
 				conn.disconnect();
