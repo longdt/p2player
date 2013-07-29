@@ -30,7 +30,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 		{
 			char msg[256];
 			snprintf(msg, sizeof(msg), "ERROR. could not load certificate %s: %s\n", cert.c_str(), ec.message().c_str());
-			if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+			LOG_ERR("[%s] %s\n", time_now_string(), msg);
 			return true;
 		}
 		stat_file(priv, &st, ec);
@@ -38,13 +38,13 @@ bool torrent_alert_handler::handle(const alert* a) {
 		{
 			char msg[256];
 			snprintf(msg, sizeof(msg), "ERROR. could not load private key %s: %s\n", priv.c_str(), ec.message().c_str());
-			if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+			LOG_ERR("[%s] %s\n", time_now_string(), msg);
 			return true;
 		}
 
 		char msg[256];
 		snprintf(msg, sizeof(msg), "loaded certificate %s and key %s\n", cert.c_str(), priv.c_str());
-		if (g_log_file) fprintf(g_log_file, "[%s] %s\n", time_now_string(), msg);
+		LOG_ERR("[%s] %s\n", time_now_string(), msg);
 
 		h.set_ssl_certificate(cert, priv, "certificates/dhparams.pem", "1234");
 		h.resume();
