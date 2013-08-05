@@ -14,6 +14,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
@@ -25,12 +26,14 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
 import com.solt.media.update.UpdateChecker;
+import com.solt.media.update.UpdateChecker.ErrorCode;
+import com.solt.media.update.UpdateListener;
 import com.solt.media.util.Constants;
 import com.solt.mediaplayer.vlc.remote.MediaPlaybackState;
 import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
-public class Main implements MediaPlayer {
+public class Main implements MediaPlayer, UpdateListener {
 	protected Shell shell;
 	private Player player;
 	private boolean minimize;
@@ -325,5 +328,20 @@ public class Main implements MediaPlayer {
 			}
 		});
 		mntmOpenLink.setText("Open Link");
+	}
+
+	@Override
+	public boolean newVersionAvairable() {
+		return true;
+	}
+
+	@Override
+	public void downloadCompleted(File file) {
+		Program.launch(file.getAbsolutePath());
+		requestShutdown();
+	}
+
+	@Override
+	public void downloadFailed(ErrorCode error) {
 	}
 }

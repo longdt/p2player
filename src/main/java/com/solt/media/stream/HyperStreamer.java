@@ -177,9 +177,8 @@ public class HyperStreamer implements TorrentStreamer {
 					checkEOF(schannel, readBuffer);
 					wait = true;
 					//use TDataHelper for fast stream
-					if (needDataHelp(pState, speed)) {
-						tryUseDataHelperV1();
-					} else {
+					needDataHelp(pState, speed);
+					if (streamPiece == libTorrent.getFirstPieceIncomplete(hashCode, streamPiece)) {
 						tryUseDataHelperV1();
 					}
 					continue;

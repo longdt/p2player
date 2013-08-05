@@ -36,13 +36,13 @@ public class UpdateChecker implements Runnable {
 	private static final String CHECKSUM_FIELD = "checksum";
 	private static final int NUM_PART = 4;
 	private Thread checker;
-	private Main app;
+	private UpdateListener listener;
 	/**
 	 * 
 	 */
-	public UpdateChecker(Main app) {
+	public UpdateChecker(UpdateListener listener) {
 		checker = new Thread(this, "UpdateChecker");
-		this.app = app;
+		this.listener = listener;
 	}
 	
 	public void start() {
@@ -76,7 +76,8 @@ public class UpdateChecker implements Runnable {
 				}
 				version = (String) content.get(VERSION_FIELD);
 				hasher = (String) content.get(HASHER_FIELD);
-				if (version != null && compareVersions(version, Constants.VERSION) > 0) {
+				boolean newVersion = version != null && compareVersions(version, Constants.VERSION) > 0;
+				if (newVersion && listener != null && listener.newVersionAvairable()) {
 					link = (String) content.get(LINK_FIELD);
 					if (downloader == null) {
 						downloader = new SingleDownloader();
@@ -84,6 +85,7 @@ public class UpdateChecker implements Runnable {
 					URL file = new URL(updateUrl, link);
 					
 					if (!downloader.download(file, temp)) {
+						listener.downloadFailed(ErrorCode.NETWORK_ERROR);
 						Thread.sleep(INTERVAL);
 						continue;
 					}
@@ -93,6 +95,7 @@ public class UpdateChecker implements Runnable {
 						state = COMPLETE;
 						break;
 					}
+					listener.downloadFailed(ErrorCode.CORRUPT_DATA);
 				}
 				Thread.sleep(INTERVAL);
 			} while (true);
@@ -105,9 +108,8 @@ public class UpdateChecker implements Runnable {
 				downloader.shutdown();
 			}
 		}
-		if (state == COMPLETE) {
-			Program.launch(target.getAbsolutePath());
-			app.requestShutdown();
+		if (state == COMPLETE && listener != null) {
+			listener.downloadCompleted(target);
 		}
 	}
 	
@@ -225,6 +227,10 @@ public class UpdateChecker implements Runnable {
 			return (false);
 		}
 		return (true);
+	}
+	
+	public static enum ErrorCode {
+		NETWORK_ERROR, CORRUPT_DATA
 	}
 
 }
