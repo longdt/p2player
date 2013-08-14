@@ -285,4 +285,8 @@ public class TorrentStreamerImpl implements TorrentStreamer {
 			streamRate.addValue(writeLen);
 		}
 	}
+
+	@Override
+	public void close() {		
+	}
 }

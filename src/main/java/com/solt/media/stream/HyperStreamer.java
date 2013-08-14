@@ -11,7 +11,10 @@ import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PiecesState;
 import com.solt.libtorrent.TorrentException;
-import com.solt.media.stream.TDataHelper.Result;
+import com.solt.media.stream.helper.HttpDataHelper;
+import com.solt.media.stream.helper.MdDataHelper;
+import com.solt.media.stream.helper.TDataHelper;
+import com.solt.media.stream.helper.TDataHelper.Result;
 import com.solt.media.util.Average;
 
 public class HyperStreamer implements TorrentStreamer {
@@ -33,7 +36,7 @@ public class HyperStreamer implements TorrentStreamer {
 	private byte[] buff;
 	private BitSet helpedPieces;
 
-	public HyperStreamer(HttpHandler handler, String hashCode, int index,
+	public HyperStreamer(HttpHandler handler, long movieId, String hashCode, int index,
 			long dataLength, long fileOffset) throws TorrentException,
 			IOException {
 		this.handler = handler;
@@ -54,6 +57,7 @@ public class HyperStreamer implements TorrentStreamer {
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
 		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
+//		helper = new MdDataHelper(libTorrent, hashCode, movieId, index);
 		helpedPieces = new BitSet(libTorrent.getPieceNum(hashCode));
 	}
 	
@@ -244,8 +248,8 @@ public class HyperStreamer implements TorrentStreamer {
 				libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
 				helpedPieces.set(streamPiece);
 			}
-			int offset = streamPiece == startPiece ? startPieceOffset : 0;
-			int len = result.getLength() - offset;
+			int offset = result.getOffset();
+			int len = result.getLength();
 			if (len > pending) {
 				len = (int) pending;
 			}
@@ -354,5 +358,10 @@ public class HyperStreamer implements TorrentStreamer {
 			writeLen = sc.write(buffer);
 			streamRate.addValue(writeLen);
 		}
+	}
+
+	@Override
+	public void close() {
+		helper.close();
 	}
 }

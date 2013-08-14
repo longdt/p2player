@@ -149,6 +149,10 @@ public class HttpHandler implements Runnable{
 				mediaUrl = manager.addTorrent(new URI(magnet));
 			}
 			if (mediaUrl != null) {
+				//FIXME cheat insert param movieId
+				if (mediaUrl.startsWith("http://")) {
+					mediaUrl = mediaUrl + "&" + PARAM_MOVIEID + "=" + movieId;
+				}
 				String subFile = null;
 				if (sub) {
 					URLConnection subConn = new URL(Constants.DOWN_SUB_LINK + movieId).openConnection();
@@ -430,7 +434,7 @@ public class HttpHandler implements Runnable{
 					File f = new File(rootDir, entries[req.getIndex()].getPath());
 					sendFileData(out, f, req.getDataLength(), req.getTransferOffset());
 				} else {
-					sendTorrentData(hashCode, req.getIndex(), req.getDataLength(),
+					sendTorrentData(req.getMovieId(), hashCode, req.getIndex(), req.getDataLength(),
 							req.getTransferOffset());
 				}
 			} else if (msg != null) {
@@ -476,9 +480,11 @@ public class HttpHandler implements Runnable{
 		}
 	}
 
-	private void sendTorrentData(String hashCode, int index, long dataLength,
+	private void sendTorrentData(long movieId, String hashCode, int index, long dataLength,
 			long transferOffset) throws Exception {
-		new HyperStreamer(this, hashCode, index, dataLength, transferOffset).stream();
+		TorrentStreamer streamer = new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset);
+		streamer.stream();
+		streamer.close();
 	}
 
 
@@ -533,6 +539,7 @@ public class HttpHandler implements Runnable{
 		try {
 			String hashCode = request.getParam(PARAM_HASHCODE);
 			String file = request.getParam(PARAM_FILE);
+			long movieId = Long.parseLong(request.getParam(PARAM_MOVIEID));
 			int index = -1;
 			FileEntry[] entries = null;
 			if (file != null) {
@@ -616,7 +623,7 @@ public class HttpHandler implements Runnable{
 						res = new TorrentRequest(HttpStatus.HTTP_PARTIALCONTENT, mime,
 								null);
 					} else {
-						res = new TorrentRequest(HttpStatus.HTTP_PARTIALCONTENT, mime,
+						res = new TorrentRequest(HttpStatus.HTTP_PARTIALCONTENT, mime, movieId,
 								hashCode, index, startFrom, dataLen);
 					}
 					res.setHeader("Content-Length", "" + dataLen);
@@ -630,7 +637,7 @@ public class HttpHandler implements Runnable{
 				else {
 					res = request.getMethod() == HttpRequest.METHOD_HEAD ? new TorrentRequest(
 							HttpStatus.HTTP_OK, mime, null) : new TorrentRequest(
-							HttpStatus.HTTP_OK, mime, hashCode, index, 0, fileLen);
+							HttpStatus.HTTP_OK, mime, movieId, hashCode, index, 0, fileLen);
 					res.setHeader("Content-Length", "" + fileLen);
 					res.setHeader("ETag", etag);
 				}
