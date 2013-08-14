@@ -1,4 +1,4 @@
-package com.solt.media.stream;
+package com.solt.media.stream.helper;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -91,7 +91,7 @@ public class HttpDataHelper implements TDataHelper {
 			conn.setRequestProperty("Range", "bytes=" + startBytes + "-" + (endBytes - 1));
 			conn.connect();
 			int len = FileUtils.copyFile(conn.getInputStream(), data, offset, (int)(endBytes - startBytes));
-			return  len > 0 ? new Result(state, len) : Result.ERROR_RESULT;
+			return  len > 0 ? new Result(state, offset, len) : Result.ERROR_RESULT;
 		} catch (IOException e) {
 			e.printStackTrace();
 			++errCnt;
@@ -101,11 +101,6 @@ public class HttpDataHelper implements TDataHelper {
 			}
 		}
 		return Result.ERROR_RESULT;
-	}
-
-	@Override
-	public int getPiece(int pieceIdx, byte[] data) throws IOException {
-		return -1;
 	}
 
 	@Override
@@ -167,5 +162,9 @@ public class HttpDataHelper implements TDataHelper {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void close() {
 	}
 }

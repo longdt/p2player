@@ -324,6 +324,13 @@ public class FileUtils {
 		return null;
 	}
 
+	/**
+	 * @param is
+	 * @param data
+	 * @param offset
+	 * @param length
+	 * @return length
+	 */
 	public static int copyFile(InputStream is, byte[] data, int offset, int length) {
 		BufferedInputStream in = null;
 		try {
@@ -334,7 +341,7 @@ public class FileUtils {
 				offset += len;
 				pending = pending - len;
 			}
-			return offset;
+			return length - pending;
 		} catch (IOException e) {
 		}
 		return -1;

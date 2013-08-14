@@ -16,6 +16,8 @@ public class TorrentRequest {
 	private String mimeType;
 
 	private long dataLength;
+	
+	private long movieId;
 
 	private String hashCode;
 	
@@ -32,11 +34,12 @@ public class TorrentRequest {
 	/**
 	 * Basic constructor.
 	 */
-	public TorrentRequest(String status, String mimeType, String hashCode, int index,
+	public TorrentRequest(String status, String mimeType, long movieId, String hashCode, int index,
 			long transferOffset, long dataLength) {
 		this.status = status;
 		this.mimeType = mimeType;
 		this.hashCode = hashCode;
+		this.movieId = movieId;
 		this.index = index;
 		this.transferOffset = transferOffset;
 		this.dataLength = dataLength;
@@ -105,6 +108,10 @@ public class TorrentRequest {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+	
+	public long getMovieId() {
+		return movieId;
 	}
 
 	/**
