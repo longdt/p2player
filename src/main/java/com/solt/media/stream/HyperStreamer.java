@@ -56,8 +56,8 @@ public class HyperStreamer implements TorrentStreamer {
 				* pieceSize);
 		this.schannel = handler.getSocketChannel();
 		schannel.configureBlocking(false);
-		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
-//		helper = new MdDataHelper(libTorrent, hashCode, movieId, index);
+//		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
+		helper = new MdDataHelper(libTorrent, hashCode, movieId, index);
 		helpedPieces = new BitSet(libTorrent.getPieceNum(hashCode));
 	}
 	
