@@ -1,23 +1,16 @@
 package com.solt.media.stream.helper;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
-import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.PartialPieceInfo.BlockState;
-import com.solt.media.stream.helper.TDataHelper.Result;
-import com.solt.media.util.FileUtils;
+import com.solt.libtorrent.TorrentException;
 
 public class MdDataHelper implements TDataHelper {
-	private static final String HOST = "localhost";// "stream.sharephim.vn";
-	private static final int PORT = 8448;
+	private static final String HOST = "stream.sharephim.vn";
+	private static final int PORT = 443;
 	private static final int MAX_ERROR_COUNTER = 10;
 	private LibTorrent libTorrent;
 	private String hashCode;
@@ -54,7 +47,7 @@ public class MdDataHelper implements TDataHelper {
 	 */
 	@Override
 	public Result retrievePiece(int pieceIdx, byte[] data) {
-		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER) {
+		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER || connector == null) {
 			return Result.ERROR_RESULT;
 		}
 		
@@ -85,7 +78,7 @@ public class MdDataHelper implements TDataHelper {
 
 	@Override
 	public boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException {
-		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER) {
+		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER || connector == null) {
 			return false;
 		}
 		
@@ -129,7 +122,9 @@ public class MdDataHelper implements TDataHelper {
 
 	@Override
 	public void close() {
-		connector.close();
+		if (connector != null) {
+			connector.close();
+		}
 	}
 
 }
