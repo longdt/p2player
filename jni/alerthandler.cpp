@@ -10,6 +10,7 @@
 #include "libtorrent/bencode.hpp"
 #include <map>
 #include "torrentinfo.h"
+#include "config.hpp"
 
 extern std::string gDefaultSave;
 using namespace libtorrent;
@@ -68,6 +69,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
 			if (pTorrentInfo) {
 				pTorrentInfo->handle = p->handle;
+				p->handle.set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
 #ifdef SOLT_TORRENT_START_ON_ADD
 				if (p->handle.is_paused()) {
 					p->handle.resume();
@@ -78,7 +80,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 	}
 	else if (const torrent_finished_alert* p = alert_cast<torrent_finished_alert>(a))
 	{
-		p->handle.set_max_connections(50 / 2);
+		p->handle.set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT / 2);
 
 		// write resume data for the finished torrent
 		// the alert handler for save_resume_data_alert
