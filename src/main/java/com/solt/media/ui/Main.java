@@ -34,6 +34,7 @@ import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
 public class Main implements MediaPlayer, UpdateListener {
+	protected static final String[] TORRENT_EXTENSION = {"*.torrent"};
 	protected Shell shell;
 	private Player player;
 	private boolean minimize;
@@ -50,7 +51,7 @@ public class Main implements MediaPlayer, UpdateListener {
 	 */
 	public Main() {
 		torrManager = TorrentManager.getInstance();
-		minimize = true;
+		minimize = false;
 		running = true;
 	}
 	
@@ -280,6 +281,7 @@ public class Main implements MediaPlayer, UpdateListener {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				FileDialog dialog = new FileDialog(shell, SWT.OPEN);
+				dialog.setFilterExtensions(TORRENT_EXTENSION);
 				String path = dialog.open();
 				if (path != null) {
 					File torrentFile = new File(path);
@@ -303,7 +305,7 @@ public class Main implements MediaPlayer, UpdateListener {
 		mntmOpenLink.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				InputDialog input = new InputDialog(shell, "Enter torrent link", SWT.CLOSE | SWT.TITLE);
+				InputDialog input = new InputDialog(shell, "Enter torrent magnet link or directly http torrent link", SWT.CLOSE | SWT.TITLE);
 				String link = input.open();
 				if (link == null) return;
 				try {
@@ -328,6 +330,16 @@ public class Main implements MediaPlayer, UpdateListener {
 			}
 		});
 		mntmOpenLink.setText("Open Link");
+		
+		MenuItem mntmDir = new MenuItem(menu, SWT.NONE);
+		mntmDir.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String downDir = ConfigurationManager.getInstance().get(ConfigurationManager.TORRENT_DOWNLOAD_DIR);
+				Program.launch(downDir);
+			}
+		});
+		mntmDir.setText("Download Folder");
 	}
 
 	@Override

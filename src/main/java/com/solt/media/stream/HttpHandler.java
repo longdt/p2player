@@ -482,7 +482,8 @@ public class HttpHandler implements Runnable{
 
 	private void sendTorrentData(long movieId, String hashCode, int index, long dataLength,
 			long transferOffset) throws Exception {
-		TorrentStreamer streamer = new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset);
+		TorrentStreamer streamer = movieId != -1 ? new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset)
+				: new TorrentStreamerImpl(this, hashCode, index, dataLength, transferOffset);
 		streamer.stream();
 		streamer.close();
 	}
@@ -539,7 +540,8 @@ public class HttpHandler implements Runnable{
 		try {
 			String hashCode = request.getParam(PARAM_HASHCODE);
 			String file = request.getParam(PARAM_FILE);
-			long movieId = Long.parseLong(request.getParam(PARAM_MOVIEID));
+			String movieIdParam = request.getParam(PARAM_MOVIEID);
+			long movieId = movieIdParam != null ?  Long.parseLong(movieIdParam) : -1;
 			int index = -1;
 			FileEntry[] entries = null;
 			if (file != null) {
