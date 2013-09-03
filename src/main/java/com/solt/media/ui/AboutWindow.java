@@ -14,7 +14,7 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import com.solt.media.util.Constants;
 
 public class AboutWindow extends Dialog {
-	private static final String ABOUT_US = "MediaPlayer: Chương trình xem phim HD\n\nVersion: " + Constants.VERSION + "\n\nBản build r161\n\n(c) Bản quyền thuộc nhóm SOLT" ;
+	private static final String ABOUT_US = "MediaPlayer: Chương trình xem phim HD\n\nVersion: " + Constants.VERSION + "\n\nBản build r165\n\n(c) Bản quyền thuộc nhóm SOLT" ;
 
 	protected Object result;
 	protected Shell shell;
