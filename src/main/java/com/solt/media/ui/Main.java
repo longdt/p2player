@@ -33,7 +33,7 @@ import com.solt.mediaplayer.vlc.remote.MediaPlaybackState;
 import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
-public class Main implements MediaPlayer, UpdateListener {
+public class Main implements MediaPlayer {
 	protected static final String[] TORRENT_EXTENSION = {"*.torrent"};
 	protected Shell shell;
 	private Player player;
@@ -56,7 +56,22 @@ public class Main implements MediaPlayer, UpdateListener {
 	}
 	
 	private void initUpdater() {
-		updater = new UpdateChecker(this);
+		updater = new UpdateChecker(new UpdateListener() {
+			@Override
+			public boolean newVersionAvairable() {
+				return true;
+			}
+
+			@Override
+			public void downloadCompleted(File file) {
+				Program.launch(file.getAbsolutePath());
+				requestShutdown();
+			}
+
+			@Override
+			public void downloadFailed(ErrorCode error) {
+			}
+		});
 		updater.start();
 	}
 
@@ -340,20 +355,5 @@ public class Main implements MediaPlayer, UpdateListener {
 			}
 		});
 		mntmDir.setText("Download Folder");
-	}
-
-	@Override
-	public boolean newVersionAvairable() {
-		return true;
-	}
-
-	@Override
-	public void downloadCompleted(File file) {
-		Program.launch(file.getAbsolutePath());
-		requestShutdown();
-	}
-
-	@Override
-	public void downloadFailed(ErrorCode error) {
 	}
 }
