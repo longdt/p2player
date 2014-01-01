@@ -141,6 +141,7 @@ public class Main implements MediaPlayer {
 		    public void run() {
 		    	shell.setVisible(true);
 				shell.forceActive();
+				shell.forceFocus();
 				initPlayer();
 				player.open(url, subFile, true);
 		    }
@@ -149,6 +150,18 @@ public class Main implements MediaPlayer {
 	
 	public void play(final String url) {
 		play(url, null);
+	}
+	
+	public synchronized void prepare() {
+		Display.getDefault().asyncExec(new Runnable() {
+		    public void run() {
+		    	shell.setVisible(true);
+				shell.forceActive();
+				shell.forceFocus();
+				initPlayer();
+				player.prepare();
+		    }
+		});
 	}
 	
 	private synchronized void initPlayer() {
@@ -179,6 +192,9 @@ public class Main implements MediaPlayer {
 					});
 				} else if (newState == MediaPlaybackState.Buffering) {
 					String hashCode = torrManager.getCurrentStream();
+					if (hashCode == null) {
+						return;
+					}
 					try {
 						int state = torrManager.getTorrentState(hashCode);
 						String status = "";

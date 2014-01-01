@@ -140,6 +140,7 @@ public class HttpHandler implements Runnable{
 			boolean file = Boolean.parseBoolean(request.getParam(PARAM_FILE));
 			boolean sub = Boolean.parseBoolean(request.getParam(PARAM_SUB));
 			TorrentManager manager = TorrentManager.getInstance();
+			TorrentManager.player.prepare();
 			String mediaUrl = null;
 			URL url = new URL(Constants.DOWN_TORRENT_LINK + movieId);
 			if (file) {
