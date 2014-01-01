@@ -1,6 +1,9 @@
 package com.solt.media.ui;
 
 public interface MediaPlayer {
+	
+	public void prepare();
+	
 	public void play(String url, String subFile);
 	
 	public void play(String url);
