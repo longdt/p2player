@@ -136,7 +136,8 @@ public class LibTorrent {
 	private static void loadLibraryFromJar() {
 		AccessController.doPrivileged(new PrivilegedAction<Void>() {
 			public Void run() {
-				File tmpFile = new File(LIBTORRENT_DLL);
+				File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+				File tmpFile = new File(tmpDir, LIBTORRENT_DLL);
 				InputStream in = null;
 				OutputStream out = null;
 				try {
