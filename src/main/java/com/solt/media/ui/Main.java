@@ -29,6 +29,7 @@ import com.solt.media.update.UpdateChecker;
 import com.solt.media.update.UpdateChecker.ErrorCode;
 import com.solt.media.update.UpdateListener;
 import com.solt.media.util.Constants;
+import com.solt.media.util.SystemProperties;
 import com.solt.mediaplayer.vlc.remote.MediaPlaybackState;
 import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
@@ -81,6 +82,7 @@ public class Main implements MediaPlayer {
 	 */
 	public static void main(String[] args) {
 		try {
+			System.setProperty("java.io.tmpdir", SystemProperties.getMetaDataPath());
 			Main window = new Main();
 			window.open(args);
 			window.exit();
