@@ -200,9 +200,10 @@ public class LibTorrent {
 	 * @param uploadLimit
 	 * @param downloadLimit
 	 * @return true if successful and false if otherwise
+	 * @throws IOException 
 	 */
-	public boolean setSession(int listenPort, File defaultSave, int uploadLimit, int downloadLimit) {
-		return setSession(listenPort, defaultSave.getAbsolutePath(), uploadLimit, downloadLimit);
+	public boolean setSession(int listenPort, File defaultSave, int uploadLimit, int downloadLimit) throws IOException {
+		return setSession(listenPort, defaultSave.getCanonicalPath(), uploadLimit, downloadLimit);
 	}
 
 	/**
