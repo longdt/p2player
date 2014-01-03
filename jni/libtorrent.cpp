@@ -25,7 +25,11 @@ using namespace libtorrent;
 
 #define RETURN_VOID
 #define HASH_ASSERT(env, hashJString, valueIfFailed)  \
-if (env->GetStringUTFLength(hashJString) < 40) { \
+if (!hashJString) { \
+	env->ThrowNew(env->FindClass("java/lang/NullPointerException"),	\
+										"Exception: torrent's hashcode must not null"); \
+	return valueIfFailed; \
+} else if (env->GetStringUTFLength(hashJString) < 40) { \
 	env->ThrowNew(torrentException, "Exception: invalid hash code torrent"); \
 	return valueIfFailed; \
 }
@@ -160,7 +164,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		settings.active_limit = 20;
 		settings.prioritize_partial_pieces = true;
 		settings.initial_picker_threshold = 0;
-		settings.connections_limit = 200;
+		settings.connections_limit = SOLT_TORRENT_GLOBAL_MAX_CONNECTION;
 		gSession->set_settings(settings);
 		int uploadLimit = UploadLimit;
 		if (uploadLimit > 0) {
@@ -365,7 +369,6 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrent(
 					break;
 				}
 				torrentParams.storage_mode = storageMode;
-				torrentParams.max_connections = SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT;
 				TorrentInfo *torrent = new TorrentInfo();
 				torrentParams.userdata = &torrent->cancel_piece_tasks;
 				torrent->handle = gSession->add_torrent(torrentParams, ec);
@@ -379,7 +382,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrent(
 					th->piece_priority(0, 7);
 					int last_piece = t->num_pieces() - 1;
 					th->piece_priority(last_piece, 7);
-//					th->set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
+					th->set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
 #ifdef SOLT_TORRENT_START_ON_ADD
 					if (th->is_paused()) {
 						th->resume();
@@ -454,7 +457,6 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addMagnetUri(
 					break;
 				}
 				torrentParams.storage_mode = storageMode;
-				torrentParams.max_connections = SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT;
 				TorrentInfo *torrent = new TorrentInfo();
 				torrentParams.userdata = &torrent->cancel_piece_tasks;
 				torrent->handle = gSession->add_torrent(torrentParams, ec);
@@ -466,7 +468,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addMagnetUri(
 							"failed to add torrent: %s\n", errorMessage.c_str());
 				} else {
 					th->piece_priority(0, 7);
-//					th->set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
+					th->set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
 #ifdef SOLT_TORRENT_START_ON_ADD
 					if (th->is_paused()) {
 						th->resume();
@@ -545,7 +547,6 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncTorrent(
 					break;
 				}
 				torrentParams.storage_mode = storageMode;
-				torrentParams.max_connections = SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT;
 				TorrentInfo *torrent = new TorrentInfo();
 				torrentParams.userdata = &torrent->cancel_piece_tasks;
 				gSession->async_add_torrent(torrentParams);
@@ -617,7 +618,6 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncMagnetUri(
 					break;
 				}
 				torrentParams.storage_mode = storageMode;
-				torrentParams.max_connections = SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT;
 				TorrentInfo *torrent = new TorrentInfo();
 				torrentParams.userdata = &torrent->cancel_piece_tasks;
 				gSession->async_add_torrent(torrentParams);
