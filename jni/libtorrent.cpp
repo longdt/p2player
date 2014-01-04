@@ -157,7 +157,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		gSession->add_dht_router(std::make_pair(
 			std::string("router.bitcomet.com"), 6881));
 
-		libtorrent::session_settings settings;
+		libtorrent::session_settings settings = gSession->settings();
 		settings.user_agent = "mdplayer/" LIBTORRENT_VERSION;
 		settings.active_downloads = 20;
 		settings.active_seeds = 20;
@@ -165,19 +165,23 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		settings.prioritize_partial_pieces = true;
 		settings.initial_picker_threshold = 0;
 		settings.connections_limit = SOLT_TORRENT_GLOBAL_MAX_CONNECTION;
-		gSession->set_settings(settings);
+		if (settings.half_open_limit <= 0 || settings.half_open_limit > SOLT_TORRENT_MAX_HALF_OPEN) {
+			settings.half_open_limit = SOLT_TORRENT_MAX_HALF_OPEN;
+		}
 		int uploadLimit = UploadLimit;
 		if (uploadLimit > 0) {
-			gSession->set_upload_rate_limit(uploadLimit);
+			settings.upload_rate_limit = uploadLimit;
 		} else {
-			gSession->set_upload_rate_limit(0);
+			settings.upload_rate_limit = 0;
 		}
 		int downloadLimit = DownloadLimit;
 		if (downloadLimit > 0) {
-			gSession->set_download_rate_limit(downloadLimit);
+			settings.download_rate_limit = downloadLimit;
 		} else {
-			gSession->set_download_rate_limit(0);
+			settings.download_rate_limit = 0;
 		}
+		gSession->set_settings(settings);
+
 		//add stream plugin
 		gSession->add_extension(&solt::create_stream_plugin);
 		//init partialpieceinfo class and constructor
