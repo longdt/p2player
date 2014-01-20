@@ -186,6 +186,8 @@ public class HyperStreamer implements TorrentStreamer {
 						tryUseDataHelperV1();
 					}
 					continue;
+				} else if (streamPiece + 1 == incompleteIdx) {
+					tryUseDataHelperV1();
 				}
 			}
 			wait = false;
@@ -237,8 +239,8 @@ public class HyperStreamer implements TorrentStreamer {
 		return (remainBytes / (float)pieceSize > 0.7f) && (speed < 150 * 1024);
 	}
 
-	private void tryUseDataHelper() throws TorrentException, IOException, InterruptedException {
-		if (helpedPieces.get(streamPiece)) {
+	private void tryUseDataHelper(boolean force) throws TorrentException, IOException, InterruptedException {
+		if (!force && helpedPieces.get(streamPiece)) {
 			return;
 		}
 		Result result = helper.retrievePiece(streamPiece, buff);
@@ -268,7 +270,7 @@ public class HyperStreamer implements TorrentStreamer {
 			libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
 			helpedPieces.set(streamPiece);
 		} else {
-			tryUseDataHelper();
+			tryUseDataHelper(false);
 		}
 	}
 
