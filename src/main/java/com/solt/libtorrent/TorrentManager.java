@@ -47,7 +47,7 @@ public class TorrentManager {
 		httpd = new NanoHTTPD(HTTPD_PORT, root);
 		libTorrent = new LibTorrent();
 		ConfigurationManager conf = ConfigurationManager.getInstance();
-		int upload = conf.getInt(ConfigurationManager.SESSION_UPLOAD_LIMIT, 100 * 1024);
+		int upload = conf.getInt(ConfigurationManager.SESSION_UPLOAD_LIMIT, 80 * 1024);
 		int download = conf.getInt(ConfigurationManager.SESSION_DOWNLOAD_LIMIT, 1024 * 1024);
 		libTorrent.setSession(port, root, upload, download);
 		libTorrent.setSessionOptions(true, true, true, true);
@@ -134,6 +134,7 @@ public class TorrentManager {
 
 	private void initStream(String hashCode) {
 		try {
+			cancelStream();
 //			libTorrent.setAutoManaged(hashCode, false);
 //			libTorrent.setUploadMode(hashCode, false);
 			libTorrent.setShareMode(hashCode, false);
