@@ -39,7 +39,7 @@ public class DataConnector {
 		this.port = port;
 	}
 
-	public boolean reconnect(boolean initData) {
+	public synchronized boolean reconnect(boolean initData) {
 		try {
 			if (socket != null) {
 				socket.close();
@@ -74,7 +74,7 @@ public class DataConnector {
 		return status == STATUS_OK;
 	}
 
-	public boolean initData(String fileName, long fileId, byte fileNo,
+	public synchronized boolean initData(String fileName, long fileId, byte fileNo,
 			int pieceSize, long fileOffset) throws IOException {
 		this.fileName = fileName;
 		this.fileId = fileId;
@@ -84,7 +84,7 @@ public class DataConnector {
 		return init();
 	}
 
-	public boolean getData(int pieceIdx, int pieceOffset, int length, byte[] data)
+	public synchronized boolean getData(int pieceIdx, int pieceOffset, int length, byte[] data)
 			throws IOException {
 		out.write(GET_DATA);
 		out.writeInt(pieceIdx);
