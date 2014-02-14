@@ -109,6 +109,9 @@ public class PiecesState {
 	}
 	
 	public int getLastIncomplete(int fromIdx) {
+		if (fromIdx < 0) {
+			return -1;
+		}
 		int i = fromIdx;
 		for (; i <= this.fromIdx && isDone(i); --i) {
 		}
