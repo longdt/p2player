@@ -46,7 +46,7 @@ public class MdDataHelper implements TDataHelper {
 	 * @see com.solt.media.stream.TDataHelper#getPieceData(int, byte[])
 	 */
 	@Override
-	public Result retrievePiece(int pieceIdx, byte[] data) {
+	public synchronized Result retrievePiece(int pieceIdx, byte[] data) {
 		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER || connector == null) {
 			return Result.ERROR_RESULT;
 		}
@@ -77,7 +77,7 @@ public class MdDataHelper implements TDataHelper {
 	}
 
 	@Override
-	public boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException {
+	public synchronized boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException {
 		if (pieceIdx < startPiece || pieceIdx > endPiece || errCnt > MAX_ERROR_COUNTER || connector == null) {
 			return false;
 		}

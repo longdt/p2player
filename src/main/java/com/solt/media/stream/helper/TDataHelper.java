@@ -5,10 +5,10 @@ import com.solt.libtorrent.TorrentException;
 public interface TDataHelper {
 
 	/**
-	 * get data of a given pieceIdx. Data will written at offset 0.
+	 * get data of a given pieceIdx. Maybe partial piece (in case start/end piece of file).
 	 * @param pieceIdx
 	 * @param data
-	 * @return 0: partial piece, 1: complete piece, -1 error
+	 * @return {@link Result} object to indicate result of operation
 	 */
 	public abstract Result retrievePiece(int pieceIdx, byte[] data);
 	
