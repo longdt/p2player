@@ -485,8 +485,11 @@ public class HttpHandler implements Runnable{
 			long transferOffset) throws Exception {
 		TorrentStreamer streamer = movieId != -1 ? new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset)
 				: new TorrentStreamerImpl(this, hashCode, index, dataLength, transferOffset);
-		streamer.stream();
-		streamer.close();
+		try {
+			streamer.stream();
+		} finally {
+			streamer.close();
+		}
 	}
 
 
