@@ -63,6 +63,7 @@ public class HttpHandler implements Runnable{
 	private NanoHTTPD httpd;
 	private Socket mySocket;
 	private volatile boolean streaming;
+	private volatile TorrentStreamer streamer;
 	
 
 	/**
@@ -483,7 +484,7 @@ public class HttpHandler implements Runnable{
 
 	private void sendTorrentData(long movieId, String hashCode, int index, long dataLength,
 			long transferOffset) throws Exception {
-		TorrentStreamer streamer = movieId != -1 ? new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset)
+		streamer = movieId != -1 ? new HyperStreamer(this, movieId, hashCode, index, dataLength, transferOffset)
 				: new TorrentStreamerImpl(this, hashCode, index, dataLength, transferOffset);
 		try {
 			streamer.stream();
@@ -500,6 +501,9 @@ public class HttpHandler implements Runnable{
 		streaming = false;
 		try {
 			mySocket.close();
+			if(streamer != null) {
+				streamer.close();
+			}
 		} catch (IOException e) {
 		}
 	}

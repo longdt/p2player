@@ -27,6 +27,7 @@ public class DataConnector {
 	private String fileName;
 	private int pieceSize;
 	private long fileOffset;
+	private volatile boolean closed;
 
 	public DataConnector(String host, int port) throws UnknownHostException,
 			IOException {
@@ -41,7 +42,9 @@ public class DataConnector {
 
 	public synchronized boolean reconnect(boolean initData) {
 		try {
-			if (socket != null) {
+			if (closed) {
+				return false;
+			} else if (socket != null) {
 				socket.close();
 			}
 			socket = new Socket(host, port);
@@ -101,6 +104,7 @@ public class DataConnector {
 	}
 
 	public void close() {
+		closed = true;
 		if (socket != null) {
 			try {
 				socket.close();
