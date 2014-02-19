@@ -47,7 +47,7 @@ public class TorrentManager {
 		httpd = new NanoHTTPD(HTTPD_PORT, root);
 		libTorrent = new LibTorrent();
 		ConfigurationManager conf = ConfigurationManager.getInstance();
-		int upload = conf.getInt(ConfigurationManager.SESSION_UPLOAD_LIMIT, 80 * 1024);
+		int upload = conf.getInt(ConfigurationManager.SESSION_UPLOAD_LIMIT, 50 * 1024);
 		int download = conf.getInt(ConfigurationManager.SESSION_DOWNLOAD_LIMIT, 1024 * 1024);
 		libTorrent.setSession(port, root, upload, download);
 		libTorrent.setSessionOptions(true, true, true, true);
@@ -60,7 +60,7 @@ public class TorrentManager {
 	 */
 	private void loadAsyncExistTorrents() {
 		String magnet = null;
-		int flags = LibTorrent.FLAG_AUTO_MANAGED | LibTorrent.FLAG_SHARE_MODE;
+		int flags = LibTorrent.FLAG_UPLOAD_MODE; //LibTorrent.FLAG_AUTO_MANAGED | LibTorrent.FLAG_SHARE_MODE;
 		Collection<String> hashCodes = ConfigurationManager.getInstance().getStringCollection(ConfigurationManager.TORRENT_HASHCODES);
 		for (String hashCode : hashCodes) {
 			File torrent = new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION);
@@ -135,15 +135,16 @@ public class TorrentManager {
 	private void initStream(String hashCode) {
 		try {
 			cancelStream();
-//			libTorrent.setAutoManaged(hashCode, false);
-//			libTorrent.setUploadMode(hashCode, false);
-			libTorrent.setShareMode(hashCode, false);
+			libTorrent.setAutoManaged(hashCode, true);
+			libTorrent.setUploadMode(hashCode, false);
+//			libTorrent.setShareMode(hashCode, false);
 			libTorrent.resumeTorrent(hashCode);
 			if (currentStream == null) {
 				currentStream = hashCode;
 			} else if (!hashCode.equals(currentStream)) {
-//				libTorrent.setUploadMode(currentStream, true);
-				libTorrent.setShareMode(currentStream, true);
+				libTorrent.setAutoManaged(currentStream, false);
+				libTorrent.setUploadMode(currentStream, true);
+//				libTorrent.setShareMode(currentStream, true);
 				currentStream = hashCode;
 			}
 		} catch (TorrentException e) {
@@ -267,8 +268,9 @@ public class TorrentManager {
 		httpd.cancelStream();
 		try {
 			if (currentStream != null) {
-//				libTorrent.setUploadMode(currentStream, true);
-				libTorrent.setShareMode(currentStream, true);
+				libTorrent.setAutoManaged(currentStream, false);
+				libTorrent.setUploadMode(currentStream, true);
+//				libTorrent.setShareMode(currentStream, true);
 			}
 		} catch (TorrentException e) {
 			e.printStackTrace();
@@ -277,14 +279,7 @@ public class TorrentManager {
 
 	public void shutdown() {
 		long start = System.nanoTime();
-		if (currentStream != null) {
-			try {
-//				libTorrent.setUploadMode(currentStream, true);
-				libTorrent.setShareMode(currentStream, true);
-			} catch (TorrentException e) {
-				e.printStackTrace();
-			}
-		}
+		cancelStream();
 		httpd.shutdown();
 		stopAlertsProcessService();
 		libTorrent.abortSession();

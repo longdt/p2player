@@ -14,6 +14,13 @@ public interface TDataHelper {
 	
 	public abstract boolean getPieceRemain(int pieceIdx, byte[] data) throws TorrentException;
 	
+	/**
+	 * check whether data helper got a given piece
+	 * @param pieceIdx
+	 * @return
+	 */
+	public boolean hasPiece(int pieceIdx);
+	
 	public void close();
 	
 	public static class Result {

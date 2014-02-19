@@ -3,17 +3,17 @@ package com.solt.media.stream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.Map.Entry;
 import java.util.BitSet;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PiecesState;
 import com.solt.libtorrent.TorrentException;
-import com.solt.media.stream.helper.HttpDataHelper;
 import com.solt.media.stream.helper.MdDataHelper;
 import com.solt.media.stream.helper.TDataHelper;
 import com.solt.media.stream.helper.TDataHelper.Result;
@@ -278,10 +278,12 @@ public class HyperStreamer implements TorrentStreamer {
 		if (helpedPieces.get(streamPiece)) {
 			return false;
 		}
-		if (addPieceData(streamPiece, buff)) {
-			return true;
+		if (helper.hasPiece(streamPiece)) {
+			asyncAddPieceData(streamPiece, true);
+			return false;
+		} else {
+			return retrieveAndSendPice();
 		}
-		return retrieveAndSendPice();
 	}
 	
 	/**
@@ -303,8 +305,12 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 	
 	private void asyncAddPieceData(int pieceIdx) {
+		asyncAddPieceData(pieceIdx, false);
+	}
+	
+	private void asyncAddPieceData(int pieceIdx, boolean fast) {
 		if (!helpedPieces.get(pieceIdx)) {
-			apSrvice.add(pieceIdx);
+			apSrvice.add(pieceIdx, fast);
 		}
 	}
 
@@ -404,7 +410,7 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 	
 	class AddPieceService implements Runnable {
-		private BlockingQueue<Integer> pieces;
+		private BlockingDeque<Integer> pieces;
 		private BitSet requestPieces;
 		private Thread worker;
 		private byte[] buffer;
@@ -412,15 +418,18 @@ public class HyperStreamer implements TorrentStreamer {
 			int numPiece = libTorrent.getPieceNum(hashCode);
 			requestPieces = new BitSet(numPiece);
 			buffer = new byte[buff.length];
-			pieces = new ArrayBlockingQueue<Integer>(numPiece);
+			pieces = new LinkedBlockingDeque<Integer>(numPiece);
 			worker = new Thread(this);
 			worker.setDaemon(true);
 			worker.start();
 		}
 		
-		public synchronized void add(int pieceIdx) {
-			if (!requestPieces.get(pieceIdx) && pieces.offer(pieceIdx)) {
-				requestPieces.set(pieceIdx);
+		public synchronized void add(int pieceIdx, boolean fast) {
+			if (!requestPieces.get(pieceIdx)) {
+				boolean result = fast ? pieces.offerFirst(pieceIdx) : pieces.offerLast(pieceIdx);
+				if (result) {
+					requestPieces.set(pieceIdx);
+				}
 			}
 		}
 		
