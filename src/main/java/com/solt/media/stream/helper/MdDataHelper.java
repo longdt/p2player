@@ -127,4 +127,18 @@ public class MdDataHelper implements TDataHelper {
 		}
 	}
 
+	@Override
+	public boolean hasPiece(int pieceIdx) {
+		if (pieceIdx < startPiece || pieceIdx > endPiece) {
+			return false;
+		}
+		
+		long startBytes = pieceIdx * pieceSize - itemOffset;
+		long endBytes = startBytes + pieceSize;
+		if (startBytes < 0 || endBytes > itemLength) {
+			return false;
+		}
+		return true;
+	}
+
 }
