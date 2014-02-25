@@ -14,6 +14,7 @@ import com.solt.libtorrent.PartialPieceInfo.BlockState;
 import com.solt.libtorrent.TorrentException;
 import com.solt.media.util.FileUtils;
 
+@Deprecated
 public class HttpDataHelper implements TDataHelper {
 	private static final String STORE_HELPER_URL = "http://stream.sharephim.vn:443/";
 	private static final int MAX_ERROR_COUNTER = 10;
@@ -116,7 +117,8 @@ public class HttpDataHelper implements TDataHelper {
 		}
 		PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, pieceIdx);
 		if (info == null) {
-			return retrieveData(startBytes, endBytes, data, 0);
+			int incompletePiece = libTorrent.getFirstPieceIncomplete(hashCode, pieceIdx);
+			return incompletePiece > pieceIdx ? false : retrieveData(startBytes, endBytes, data, 0);
 		}
 		int start = 0;
 		int end = 0;

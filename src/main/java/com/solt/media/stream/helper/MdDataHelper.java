@@ -90,7 +90,8 @@ public class MdDataHelper implements TDataHelper {
 		try {
 			PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, pieceIdx);
 			if (info == null) {
-				return connector.getData(pieceIdx, 0, pieceSize, data);
+				int incompletePiece = libTorrent.getFirstPieceIncomplete(hashCode, pieceIdx);
+				return incompletePiece > pieceIdx ? false : connector.getData(pieceIdx, 0, pieceSize, data);
 			}
 			int start = 0;
 			int end = 0;
