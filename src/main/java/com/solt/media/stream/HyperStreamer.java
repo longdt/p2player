@@ -6,9 +6,9 @@ import java.nio.channels.SocketChannel;
 import java.util.BitSet;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.PriorityBlockingQueue;
+
+import org.apache.log4j.Logger;
 
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
@@ -20,6 +20,7 @@ import com.solt.media.stream.helper.TDataHelper.Result;
 import com.solt.media.util.Average;
 
 public class HyperStreamer implements TorrentStreamer {
+	private static final Logger logger = Logger.getLogger(HyperStreamer.class);
 	private static int DEFAULT_BUFFER_SECS = 60;
 	private static int DEFAULT_MIN_PIECES_TO_BUFFER = 5;
 	private HttpHandler handler;
@@ -279,7 +280,7 @@ public class HyperStreamer implements TorrentStreamer {
 			return false;
 		}
 		if (helper.hasPiece(streamPiece)) {
-			asyncAddPieceData(streamPiece, true);
+			asyncAddPieceData(streamPiece);
 			return false;
 		} else {
 			return retrieveAndSendPice();
@@ -305,12 +306,8 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 	
 	private void asyncAddPieceData(int pieceIdx) {
-		asyncAddPieceData(pieceIdx, false);
-	}
-	
-	private void asyncAddPieceData(int pieceIdx, boolean fast) {
 		if (!helpedPieces.get(pieceIdx)) {
-			apSrvice.add(pieceIdx, fast);
+			apSrvice.add(pieceIdx);
 		}
 	}
 
@@ -410,7 +407,7 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 	
 	class AddPieceService implements Runnable {
-		private BlockingDeque<Integer> pieces;
+		private PriorityBlockingQueue<Integer> pieces;
 		private BitSet requestPieces;
 		private Thread worker;
 		private byte[] buffer;
@@ -418,18 +415,16 @@ public class HyperStreamer implements TorrentStreamer {
 			int numPiece = libTorrent.getPieceNum(hashCode);
 			requestPieces = new BitSet(numPiece);
 			buffer = new byte[buff.length];
-			pieces = new LinkedBlockingDeque<Integer>(numPiece);
+			pieces = new PriorityBlockingQueue<Integer>();
 			worker = new Thread(this);
 			worker.setDaemon(true);
 			worker.start();
 		}
 		
-		public synchronized void add(int pieceIdx, boolean fast) {
+		public synchronized void add(int pieceIdx) {
 			if (!requestPieces.get(pieceIdx)) {
-				boolean result = fast ? pieces.offerFirst(pieceIdx) : pieces.offerLast(pieceIdx);
-				if (result) {
-					requestPieces.set(pieceIdx);
-				}
+				pieces.offer(pieceIdx);
+				requestPieces.set(pieceIdx);
 			}
 		}
 		
@@ -451,6 +446,8 @@ public class HyperStreamer implements TorrentStreamer {
 				}
 			} catch (InterruptedException e) {
 			} catch (TorrentException e) {
+			} finally {
+				logger.info("AddPieceService was stopped");
 			}
 		}
 	}
