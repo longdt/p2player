@@ -7,7 +7,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 1.0
+!define VERSION 1.0.3
 !define COMPANY SOLT
 !define URL ""
 
@@ -42,12 +42,12 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile mdpsetup.exe
+OutFile mdpsetup-${VERSION}.exe
 InstallDir $LOCALAPPDATA\MediaPlayer
 CRCCheck on
 XPStyle on
 ShowInstDetails show
-VIProductVersion 1.0.0.0
+VIProductVersion 1.0.3.0
 VIAddVersionKey ProductName MediaPlayer
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
@@ -61,7 +61,7 @@ ShowUninstDetails show
 Section -Main SEC0000
     SetOutPath $INSTDIR
     SetOverwrite on
-    File /r ..\..\Desktop\build\*
+    File /r build\*
     SetOutPath $SMSTARTUP
     CreateShortcut $SMSTARTUP\MediaPlayer.lnk $INSTDIR\MediaPlayer.exe
     WriteRegStr HKEY_CLASSES_ROOT "mdp" "" "URL:mdp protocol"
