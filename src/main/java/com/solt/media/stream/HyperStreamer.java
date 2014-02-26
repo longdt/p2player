@@ -283,6 +283,7 @@ public class HyperStreamer implements TorrentStreamer {
 			asyncAddPieceData(streamPiece);
 			return false;
 		} else {
+			libTorrent.setPieceDeadline(hashCode, streamPiece, 0);
 			return retrieveAndSendPice();
 		}
 	}
