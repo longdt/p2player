@@ -72,7 +72,7 @@ public class HttpDataHelper implements TDataHelper {
 			return Result.ERROR_RESULT;
 		}
 		
-		long startBytes = pieceIdx * pieceSize - itemOffset;
+		long startBytes = ((long)pieceIdx) * pieceSize - itemOffset;
 		long endBytes = startBytes + pieceSize;
 		int state = Result.COMPLETE;
 		int offset = 0;
@@ -110,7 +110,7 @@ public class HttpDataHelper implements TDataHelper {
 			return false;
 		}
 		
-		long startBytes = pieceIdx * pieceSize - itemOffset;
+		long startBytes = ((long)pieceIdx) * pieceSize - itemOffset;
 		long endBytes = startBytes + pieceSize;
 		if (startBytes < 0 || endBytes > itemLength) {
 			return false;
@@ -175,7 +175,7 @@ public class HttpDataHelper implements TDataHelper {
 		if (pieceIdx < startPiece || pieceIdx > endPiece) {
 			return false;
 		}
-		long startBytes = pieceIdx * pieceSize - itemOffset;
+		long startBytes = ((long)pieceIdx) * pieceSize - itemOffset;
 		long endBytes = startBytes + pieceSize;
 		if (startBytes < 0 || endBytes > itemLength) {
 			return false;
