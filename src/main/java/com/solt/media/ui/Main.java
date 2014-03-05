@@ -57,20 +57,23 @@ public class Main implements MediaPlayer {
 	}
 	
 	private void initUpdater() {
-		updater = new UpdateChecker(new UpdateListener() {
+		updater = new UpdateChecker(this, new UpdateListener() {
 			@Override
 			public boolean newVersionAvairable() {
 				return true;
 			}
 
 			@Override
-			public void downloadCompleted(File file) {
-				Program.launch(file.getAbsolutePath());
-				requestShutdown();
+			public boolean downloadCompleted() {
+				return true;
 			}
 
 			@Override
 			public void downloadFailed(ErrorCode error) {
+			}
+
+			@Override
+			public void downloadProgress(String fileName, int percent) {
 			}
 		});
 		updater.start();
