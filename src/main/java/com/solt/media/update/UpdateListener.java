@@ -7,7 +7,9 @@ import com.solt.media.update.UpdateChecker.ErrorCode;
 public interface UpdateListener {
 	public boolean newVersionAvairable();
 	
-	public void downloadCompleted(File file);
+	public boolean downloadCompleted();
+	
+	public void downloadProgress(String fileName, int percent);
 	
 	public void downloadFailed(ErrorCode error);
 }

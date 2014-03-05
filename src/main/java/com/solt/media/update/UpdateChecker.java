@@ -7,42 +7,42 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.StringTokenizer;
 
-import org.eclipse.swt.program.Program;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.solt.media.ui.Main;
+import com.solt.media.ui.MediaPlayer;
 import com.solt.media.util.Constants;
-import com.solt.media.util.Downloader;
 import com.solt.media.util.FileUtils;
-import com.solt.media.util.MultipartDownloader;
-import com.solt.media.util.SingleDownloader;
 
 /**
  * @author ThienLong
  *
  */
 public class UpdateChecker implements Runnable {
-	private static final int INITIAL = 0;
-	private static final int COMPLETE = 1;
-	private static final int INTERVAL = 10 * 60000;
-	private static final String VERSION_FIELD = "version";
-	private static final String HASHER_FIELD = "hasher";
-	private static final String LINK_FIELD = "link";
-	private static final String CHECKSUM_FIELD = "checksum";
-	private static final int NUM_PART = 4;
+	private static final int INTERVAL = 5 * 60000;
+	static final String VERSION_FIELD = "version";
+	static final String HASHER_FIELD = "hasher";
+	static final String LINK_FIELD = "link";
+	static final String CHECKSUM_FIELD = "checksum";
+	static final String UPDATE_TYPE_FIELD = "updateType";
+	static final String COMPONENTS_FIELD = "components";
+	static final String MAIN_COMPONENTS_FIELD = "main";
+	static final String LIB_COMPONENTS_FIELD = "lib";
+	static final String NAME_FIELD = "name";
 	private Thread checker;
 	private UpdateListener listener;
+	private MediaPlayer appPlayer;
+	private Boolean userAllowUpdate;
 	/**
 	 * 
 	 */
-	public UpdateChecker(UpdateListener listener) {
+	public UpdateChecker(MediaPlayer appPlayer, UpdateListener listener) {
 		checker = new Thread(this, "UpdateChecker");
 		this.listener = listener;
+		this.appPlayer = appPlayer;
 	}
 	
 	public void start() {
@@ -55,19 +55,12 @@ public class UpdateChecker implements Runnable {
 	 */
 	@Override
 	public void run() {
-		int state = INITIAL;
-		Downloader downloader = null;
-		File target = new File("setup.exe");
-		File temp = new File ("setup.exe.part");
 		try {
 			Thread.sleep(10000);
 			URL updateUrl = new URL(Constants.UPDATE_URL);
 			JSONObject content = null;
 			String version = null;
-			String hasher = null;
-			String hashFile = null;
-			String link = null;
-			String checksum = null;
+			int updateType = -1;
 			do {
 				content = (JSONObject) parseJSON(updateUrl);
 				if (content == null) {
@@ -75,45 +68,29 @@ public class UpdateChecker implements Runnable {
 					continue;
 				}
 				version = (String) content.get(VERSION_FIELD);
-				hasher = (String) content.get(HASHER_FIELD);
+				updateType = (Integer) content.get(UPDATE_TYPE_FIELD);
 				boolean newVersion = version != null && compareVersions(version, Constants.VERSION) > 0;
-				if (newVersion && listener != null && listener.newVersionAvairable()) {
-					link = (String) content.get(LINK_FIELD);
-					if (downloader == null) {
-						downloader = new SingleDownloader();
-					}
-					URL file = new URL(updateUrl, link);
-					
-					if (!downloader.download(file, temp)) {
-						listener.downloadFailed(ErrorCode.NETWORK_ERROR);
-						Thread.sleep(INTERVAL);
-						continue;
-					}
-					checksum =  (String) content.get(CHECKSUM_FIELD);
-					if (checksum == null || ((hashFile = FileUtils.getHash(hasher, temp)) != null && checksum.equalsIgnoreCase(hashFile))) {
-						temp.renameTo(target);
-						state = COMPLETE;
+				if (updateType >= 0 && newVersion) {
+					if (userAllowUpdate == null) {
+						userAllowUpdate = listener != null && listener.newVersionAvairable();
+					} 
+					if (!userAllowUpdate) {
 						break;
 					}
-					listener.downloadFailed(ErrorCode.CORRUPT_DATA);
+					Updater updater = updateType == 0? new SetupUpdater(appPlayer, updateUrl, content, listener) : new ComponentUpdater(appPlayer, updateUrl, content, listener);
+					if (updater.update()) {
+						break;
+					}
 				}
 				Thread.sleep(INTERVAL);
 			} while (true);
 		} catch (InterruptedException e) {
-			
-		} catch (MalformedURLException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			if (downloader != null) {
-				downloader.shutdown();
-			}
-		}
-		if (state == COMPLETE && listener != null) {
-			listener.downloadCompleted(target);
 		}
 	}
 	
-	private Object parseJSON(URL url) {
+	public static Object parseJSON(URL url) {
 		Reader reader = null;
 		try {
 			reader = new InputStreamReader(url.openStream());
@@ -227,6 +204,10 @@ public class UpdateChecker implements Runnable {
 			return (false);
 		}
 		return (true);
+	}
+	
+	public static boolean verify(File file, String hasher, String checksum) throws InterruptedException {
+		return checksum.equalsIgnoreCase(FileUtils.getHash(hasher, file));
 	}
 	
 	public static enum ErrorCode {
