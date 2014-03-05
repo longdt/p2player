@@ -552,17 +552,18 @@ public class HttpHandler implements Runnable{
 			long movieId = movieIdParam != null ?  Long.parseLong(movieIdParam) : -1;
 			int index = -1;
 			FileEntry[] entries = null;
+			TorrentManager torrManager = TorrentManager.getInstance();
+			do {
+				entries = libTorrent.getTorrentFiles(hashCode);
+				if (entries == null) {
+					Thread.sleep(500);
+				} else {
+					break;
+				}
+			} while (torrManager.isStreaming(hashCode));
 			if (file != null) {
 				index = Integer.parseInt(file);
 			} else {
-				do {
-					entries = libTorrent.getTorrentFiles(hashCode);
-					if (entries == null) {
-						Thread.sleep(1000);
-					} else {
-						break;
-					}
-				} while (!libTorrent.isUploadMode(hashCode));
 				if (entries != null) {
 					long maxSize = 0;
 					for (int i = 0; i < entries.length; ++i) {
@@ -573,7 +574,7 @@ public class HttpHandler implements Runnable{
 					}
 				}
 			}
-			if (index == -1) {
+			if (index == -1 || entries == null) {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "Error 404, file not found.");
 				return null;
 			}
