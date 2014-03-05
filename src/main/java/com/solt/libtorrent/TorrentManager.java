@@ -26,7 +26,7 @@ import com.solt.media.util.SystemProperties;
 public class TorrentManager {
 	public static MediaPlayer player;
 	private static final Logger logger = Logger.getLogger(TorrentManager.class);
-	private static final int HTTPD_PORT = 18080;
+	public static final int HTTPD_PORT = 18080;
 	private static final Boolean TORRENT_FILE = true;
 	private static final Boolean MAGNET_FILE = false;
 	private String currentStream;

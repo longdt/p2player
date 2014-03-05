@@ -35,10 +35,10 @@ import java.util.regex.Pattern;
 
 public class Constants {
 
-	public static String VERSION = "1.0.2";
+	public static String VERSION = "1.0.4";
 	public static long TRANSFER_BYTES_PAYED_THRESHOLD = 52428800;
 	public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
-	public static String UPDATE_URL = "http://sharephim.vn/api/update.json";
+	public static String UPDATE_URL = "http://sharephim.vn/download/info.json";
 	public static final String DOWN_TORRENT_LINK = "http://sharephim.vn/api/movie/";
 	public static final String DOWN_SUB_LINK = "http://sharephim.vn/api/sub/";
 	public static String APP_NAME = "MediaPlayer";

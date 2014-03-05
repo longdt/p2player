@@ -20,10 +20,9 @@ import com.solt.media.update.UpdateChecker.ErrorCode;
 import com.solt.media.util.DownloadListener;
 import com.solt.media.util.Downloader;
 import com.solt.media.util.SingleDownloader;
-import com.solt.mediaplayer.vlc.VLCPlayer;
 
 public class ComponentUpdater implements Updater {
-	private static final boolean DEBUG_MODE = true;
+	private static final boolean DEBUG_MODE = false;
 	public static final String LIB_FOLDER = "mediaplayer_lib";
 	private static final File updateFolder;
 	private static final File updateLib;
@@ -63,22 +62,24 @@ public class ComponentUpdater implements Updater {
 		downloader = new SingleDownloader();
 		downloader.setDownloadListener(new DownloadListener() {
 			private String fileName;
-			
+
 			@Override
 			public void onStart(URL url, File save) {
 				fileName = save.getName();
 			}
-			
+
 			@Override
 			public void onProgress(long downloaded, long total) {
-				ComponentUpdater.this.listener.downloadProgress(fileName, (int)(downloaded * 1000 / total));
+				ComponentUpdater.this.listener.downloadProgress(fileName,
+						(int) (downloaded * 1000 / total));
 			}
-			
+
 			@Override
 			public void onFailed(URL url, File save, Throwable e) {
-				ComponentUpdater.this.listener.downloadFailed(ErrorCode.NETWORK_ERROR);
+				ComponentUpdater.this.listener
+						.downloadFailed(ErrorCode.NETWORK_ERROR);
 			}
-			
+
 			@Override
 			public void onCompleted(URL url, File save) {
 				ComponentUpdater.this.listener.downloadProgress(fileName, 1000);
@@ -89,9 +90,9 @@ public class ComponentUpdater implements Updater {
 	@Override
 	public boolean update() throws InterruptedException, IOException {
 		try {
-			downloadComponents(main, updateFolder);
-			downloadComponents(lib, updateLib);
-			if (listener.downloadCompleted()) {
+			boolean done = downloadComponents(main, updateFolder)
+					&& downloadComponents(lib, updateLib);
+			if (done && listener.downloadCompleted()) {
 				performUpdate();
 				return true;
 			}
@@ -102,34 +103,35 @@ public class ComponentUpdater implements Updater {
 	}
 
 	private void performUpdate() throws IOException {
-        String separator = System.getProperty("file.separator");
-        String classpath = System.getProperty("java.class.path");
-        String path = System.getProperty("java.home")
-                + separator + "bin" + separator + "java";
-        if (RuntimeUtil.isWindows()) {
-        	path = path + ".exe";
-        }
-        List<String> cmdList = new ArrayList<String>();
-        cmdList.add(path);
-        if (DEBUG_MODE) {
-        	cmdList.add("-Xdebug");
-        	cmdList.add("-Xnoagent");
-        	cmdList.add("-Djava.compiler=NONE");
-        	cmdList.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8008");
-        }
-        cmdList.add("-cp");
-        cmdList.add(classpath);
-            cmdList.add("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir"));
-        cmdList.add(UpdateTool.class.getName());
-        for (String component : components) {
-        	cmdList.add(component);
-        }
-        ProcessBuilder processBuilder = new ProcessBuilder(cmdList);
-        processBuilder.start();
-      //  appPlayer.requestShutdown();
+		String separator = System.getProperty("file.separator");
+		String classpath = System.getProperty("java.class.path");
+		String path = System.getProperty("java.home") + separator + "bin"
+				+ separator + "java";
+		if (RuntimeUtil.isWindows()) {
+			path = path + ".exe";
+		}
+		List<String> cmdList = new ArrayList<String>();
+		cmdList.add(path);
+		if (DEBUG_MODE) {
+			cmdList.add("-Xdebug");
+			cmdList.add("-Xnoagent");
+			cmdList.add("-Djava.compiler=NONE");
+			cmdList.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8008");
+		}
+		cmdList.add("-cp");
+		cmdList.add(classpath);
+		cmdList.add("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir"));
+		cmdList.add(UpdateTool.class.getName());
+		for (String component : components) {
+			cmdList.add(component);
+		}
+		ProcessBuilder processBuilder = new ProcessBuilder(cmdList);
+		processBuilder.start();
+		appPlayer.requestShutdown();
 	}
 
-	private boolean downloadComponents(JSONArray components, File saveFolder) throws IOException, InterruptedException {
+	private boolean downloadComponents(JSONArray components, File saveFolder)
+			throws IOException, InterruptedException {
 		JSONObject c = null;
 		String url = null;
 		String name = null;
@@ -160,7 +162,8 @@ public class ComponentUpdater implements Updater {
 			return false;
 		}
 		if (UpdateChecker.verify(temp, hasher, hash)) {
-			Files.move(temp.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			Files.move(temp.toPath(), target.toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
 			components.add(target.getPath());
 			return true;
 		}

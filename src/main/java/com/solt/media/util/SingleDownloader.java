@@ -11,7 +11,7 @@ import java.net.URLConnection;
 public class SingleDownloader implements Downloader {
 	private DownloadListener listener;
 	@Override
-	public boolean download(URL file, File target) {
+	public boolean download(URL file, File target) throws InterruptedException {
 		if (listener != null) {
 			listener.onStart(file, target);
 		}
@@ -25,13 +25,15 @@ public class SingleDownloader implements Downloader {
 			total = conn.getContentLengthLong();
 			in = new BufferedInputStream(conn.getInputStream());
 			out = new BufferedOutputStream(new FileOutputStream(target));
-			file.getContent();
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[8192];
 			int length = 0;
 			if (listener != null) {
 				listener.onProgress(downloaded, total);
 			}
 			while ((length = in.read(buffer)) != -1) {
+				if (Thread.currentThread().isInterrupted()) {
+					throw new InterruptedException();
+				}
 				out.write(buffer, 0, length);
 				downloaded += length;
 				if (listener != null) {

@@ -21,7 +21,7 @@ public class MultipartDownloaderTest {
 	}
 
 	@Test
-	public void testDownload() throws MalformedURLException {
+	public void testDownload() throws MalformedURLException, InterruptedException {
 		Downloader downloader = new MultipartDownloader(4);
 		downloader.setDownloadListener(new DownloadListener() {
 			

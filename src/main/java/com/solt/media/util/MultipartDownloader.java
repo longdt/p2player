@@ -41,7 +41,7 @@ public class MultipartDownloader implements Downloader {
 	 * @see com.solt.media.util.Downloader#download(java.net.URL, java.io.File)
 	 */
 	@Override
-	public boolean download(URL file, File target) {
+	public boolean download(URL file, File target) throws InterruptedException {
 		if (listener != null) {
 			listener.onStart(file, target);
 		}
@@ -85,7 +85,10 @@ public class MultipartDownloader implements Downloader {
 			}
 			return true;
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			for (Future<Void> r : results) {
+				r.cancel(true);
+			}
+			throw e;
 		} catch (ExecutionException e) {
 			if (listener != null) {
 				listener.onFailed(file, target, e);
@@ -156,9 +159,12 @@ class PartDownloader implements Callable<Void> {
 			conn.setRequestProperty("Range", "bytes=" + startBytes + "-" + endBytes);
 			conn.connect();
 			BufferedInputStream in = new BufferedInputStream(conn.getInputStream());
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[8192];
 			int length = 0;
 			while ((length = in.read(buffer)) != -1) {
+				if (Thread.currentThread().isInterrupted()) {
+					throw new InterruptedException();
+				}
 				raf.write(buffer, 0, length);
 				downloaded.addAndGet(length);
 			}

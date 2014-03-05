@@ -5,7 +5,7 @@ import java.net.URL;
 
 public interface Downloader {
 
-	public abstract boolean download(URL file, File target);
+	public abstract boolean download(URL file, File target) throws InterruptedException;
 
 	public abstract void shutdown();
 	
