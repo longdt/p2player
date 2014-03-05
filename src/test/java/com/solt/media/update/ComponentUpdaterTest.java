@@ -23,7 +23,7 @@ public class ComponentUpdaterTest {
 	public static void tearDownAfterClass() throws Exception {
 	}
 
-	@Test
+	//@Test
 	public void testUpdate() throws InterruptedException, IOException {
 		URL updateUrl = new URL("http://sharephim.vn/download/info.json");
 		JSONObject content = (JSONObject) UpdateChecker.parseJSON(updateUrl);

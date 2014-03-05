@@ -60,7 +60,7 @@ public class UpdateChecker implements Runnable {
 			URL updateUrl = new URL(Constants.UPDATE_URL);
 			JSONObject content = null;
 			String version = null;
-			int updateType = -1;
+			long updateType = -1;
 			do {
 				content = (JSONObject) parseJSON(updateUrl);
 				if (content == null) {
@@ -68,7 +68,7 @@ public class UpdateChecker implements Runnable {
 					continue;
 				}
 				version = (String) content.get(VERSION_FIELD);
-				updateType = (Integer) content.get(UPDATE_TYPE_FIELD);
+				updateType = (Long) content.get(UPDATE_TYPE_FIELD);
 				boolean newVersion = version != null && compareVersions(version, Constants.VERSION) > 0;
 				if (updateType >= 0 && newVersion) {
 					if (userAllowUpdate == null) {
