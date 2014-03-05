@@ -236,6 +236,10 @@ public class TorrentManager {
 		return null;
 	}
 	
+	public boolean isStreaming(String hashCode) throws TorrentException {
+		return !libTorrent.isUploadMode(hashCode);
+	}
+	
 	public int getTorrentState(String hashCode) throws TorrentException {
 		return libTorrent.getTorrentState(hashCode);
 	}
