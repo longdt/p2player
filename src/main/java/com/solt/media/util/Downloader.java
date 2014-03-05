@@ -8,5 +8,7 @@ public interface Downloader {
 	public abstract boolean download(URL file, File target);
 
 	public abstract void shutdown();
+	
+	public void setDownloadListener(DownloadListener listener);
 
 }
