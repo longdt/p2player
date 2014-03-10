@@ -51,7 +51,7 @@ public class PiecesState {
 	public void setLength(int len, boolean force) {
 		if (len <= 0)
 			return;
-		stateLen = (len + 7) >> 3;
+		stateLen = ((fromIdx + len + 7) >> 3) - stateIdx;
 		if (states == null || stateLen > states.length || force) {
 			states = new byte[stateLen];
 		}
