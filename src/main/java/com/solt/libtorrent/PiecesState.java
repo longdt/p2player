@@ -64,7 +64,7 @@ public class PiecesState {
 	 * @return
 	 */
 	public boolean isDone(int index) {
-		return (states[index >> 3 - stateIdx] & (0x80 >> (index & 7))) != 0;
+		return (states[(index >> 3) - stateIdx] & (0x80 >> (index & 7))) != 0;
 	}
 	
 	/**
