@@ -241,7 +241,7 @@ public class HyperStreamer implements TorrentStreamer {
 		}
 		if (state.getNumDone() / (float) state.getLenght() < 0.3f) {
 			int last = state.getLastIncomplete();
-			if (helpedPieces.get(last)) {
+			if (last != -1 && helpedPieces.get(last)) {
 				last = state.getLastIncomplete(helpedPieces.previousClearBit(last));
 			}
 			if (last > streamPiece) {
