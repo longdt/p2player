@@ -92,30 +92,56 @@ public class PiecesState {
 	
 	/**
 	 * get first incomplete piece from <i>fromIdx</i>
-	 * @return
+	 * @return -1 if all pieces in range <i>[fromIdx</i>, <i>fromIdx + len)</i> are done
 	 */
 	public int getFirstIncomplete() {
 		int i = fromIdx;
-		for (int n = fromIdx + len; i < n && isDone(i); ++i) {
+		int n = fromIdx + len;
+		for (; i < n && isDone(i); ++i) {
 		}
-		return i;
+		return i == n ? -1 : i;
 	}
 	
+	/**
+	 * get first incomplete piece from <i>index</i>
+	 * @return -1 if all pieces in range <i>[index</i>, <i>fromIdx + len)</i> are done
+	 * @throws IndexOutOfBoundsException
+	 */
+	public int getFirstIncomplete(int index) {
+		if (index < this.fromIdx || index >= this.fromIdx + len) {
+			throw new IndexOutOfBoundsException();
+		}
+		int i = index;
+		int n = fromIdx + len;
+		for (; i < n && isDone(i); ++i) {
+		}
+		return i == n ? -1 : i;
+	}
+	
+	/**
+	 * get last incomplete piece from <i>fromIdx + len - 1</i> back to <i>fromIdx</i>
+	 * @return -1 if all pieces in range <i>[fromIdx</i>, <i>fromIdx + len)</i> are done
+	 */
 	public int getLastIncomplete() {
 		int i = fromIdx + len - 1;
-		for (; i <= fromIdx && isDone(i); --i) {
+		for (; i >= fromIdx && isDone(i); --i) {
 		}
-		return i;
+		return i == fromIdx - 1 ? -1 : i;
 	}
 	
-	public int getLastIncomplete(int fromIdx) {
-		if (fromIdx < 0) {
-			return -1;
+	/**
+	 * get last incomplete piece from a given <i>index</i> back to <i>this.fromIdx</i>
+	 * @return -1 if all pieces in range <i>[fromIdx</i>, <i>index]</i> are done
+	 * @throws IndexOutOfBoundsException
+	 */
+	public int getLastIncomplete(int index) {
+		if (index < this.fromIdx || index >= this.fromIdx + len) {
+			throw new IndexOutOfBoundsException();
 		}
-		int i = fromIdx;
-		for (; i <= this.fromIdx && isDone(i); --i) {
+		int i = index;
+		for (; i >= this.fromIdx && isDone(i); --i) {
 		}
-		return i;
+		return i == this.fromIdx - 1 ? -1 : i;
 	}
 	
 	private static byte[] BitsSetTable256 = new byte[256];
