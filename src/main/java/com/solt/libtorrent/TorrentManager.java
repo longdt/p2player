@@ -135,14 +135,14 @@ public class TorrentManager {
 	private void initStream(String hashCode) {
 		try {
 			cancelStream();
-			libTorrent.setAutoManaged(hashCode, true);
+//			libTorrent.setAutoManaged(hashCode, true);
 			libTorrent.setUploadMode(hashCode, false);
 //			libTorrent.setShareMode(hashCode, false);
 			libTorrent.resumeTorrent(hashCode);
 			if (currentStream == null) {
 				currentStream = hashCode;
 			} else if (!hashCode.equals(currentStream)) {
-				libTorrent.setAutoManaged(currentStream, false);
+//				libTorrent.setAutoManaged(currentStream, false);
 				libTorrent.setUploadMode(currentStream, true);
 //				libTorrent.setShareMode(currentStream, true);
 				currentStream = hashCode;
@@ -179,7 +179,7 @@ public class TorrentManager {
 
 	public synchronized String addTorrent(File torrentFile) {
 		String hashCode = libTorrent.addTorrent(
-				torrentFile.getAbsolutePath(), 0, LibTorrent.FLAG_AUTO_MANAGED);
+				torrentFile.getAbsolutePath(), 0, 0);
 		if (hashCode != null) {
 			initStream(hashCode);
 			Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
@@ -201,7 +201,7 @@ public class TorrentManager {
 		try {
 			FileUtils.copyFile(url.openStream(), torrentFile);
 			String hashCode = libTorrent.addTorrent(
-					torrentFile.getAbsolutePath(), 0, LibTorrent.FLAG_AUTO_MANAGED);
+					torrentFile.getAbsolutePath(), 0, 0);
 			if (hashCode != null) {
 				initStream(hashCode);
 				Boolean existFile = torrents.put(hashCode, TORRENT_FILE);
@@ -221,7 +221,7 @@ public class TorrentManager {
 	
 	public synchronized String addTorrent(URI magnetUri) {
 		String hashCode = libTorrent.addMagnetUri(
-				magnetUri.toString(), 0, LibTorrent.FLAG_AUTO_MANAGED);
+				magnetUri.toString(), 0, 0);
 		if (hashCode != null) {
 			initStream(hashCode);
 			Boolean existFile = torrents.put(hashCode, MAGNET_FILE);
@@ -272,7 +272,7 @@ public class TorrentManager {
 		httpd.cancelStream();
 		try {
 			if (currentStream != null) {
-				libTorrent.setAutoManaged(currentStream, false);
+//				libTorrent.setAutoManaged(currentStream, false);
 				libTorrent.setUploadMode(currentStream, true);
 //				libTorrent.setShareMode(currentStream, true);
 			}
