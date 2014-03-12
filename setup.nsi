@@ -7,7 +7,7 @@ SetCompressor /SOLID lzma
 
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 1.0.3
+!define VERSION 1.0.5
 !define COMPANY SOLT
 !define URL ""
 
@@ -47,7 +47,7 @@ InstallDir $LOCALAPPDATA\MediaPlayer
 CRCCheck on
 XPStyle on
 ShowInstDetails show
-VIProductVersion 1.0.3.0
+VIProductVersion 1.0.5.0
 VIAddVersionKey ProductName MediaPlayer
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
