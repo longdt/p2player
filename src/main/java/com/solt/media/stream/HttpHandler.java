@@ -442,9 +442,10 @@ public class HttpHandler implements Runnable{
 			} else if (msg != null) {
 				pw.print(msg);
 			}
+		} catch (IOException e) { 
+			logger.debug("close stream: " +  req.getTransferOffset(), e);
 		} catch (Exception e) {
-			logger.debug("close stream: " +  req.getTransferOffset() + " due: " + e.getMessage());
-			//e.printStackTrace();
+			logger.error("unexpected exception: ", e);
 		} finally {
 			if (pw != null) {
 				pw.close();
