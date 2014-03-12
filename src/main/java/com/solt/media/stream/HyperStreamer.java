@@ -192,7 +192,7 @@ public class HyperStreamer implements TorrentStreamer {
 					asyncAddPieceData(incompleteIdx);
 					//use TDataHelper for fast stream
 					libTorrent.getPieceState(pState);
-					int pIdx = needDataHelp(pState, speed);
+					int pIdx = needDataHelp(incompleteIdx + 1, pState, speed);
 					if (pIdx > 0) {
 						asyncAddPieceData(pIdx);
 					}
@@ -235,10 +235,18 @@ public class HyperStreamer implements TorrentStreamer {
 	 * @return
 	 * @throws TorrentException
 	 */
-	private int needDataHelp(PiecesState state, long speed) throws TorrentException {
+	private int needDataHelp(int fromPiece, PiecesState state, long speed) throws TorrentException {
 		if (speed > 300 * 1024) {
 			return -1;
-		}
+		} else if (speed < 120 * 1024) {
+			int incomplete = state.getFirstIncomplete(fromPiece);
+			if (incomplete == -1) {
+				return -1;
+			} else if (incomplete == fromPiece || speed < 60 * 1024) {
+				return incomplete;
+			}
+		} 
+		
 		if (state.getNumDone() / (float) state.getLenght() < 0.3f) {
 			int last = state.getLastIncomplete();
 			if (last != -1 && helpedPieces.get(last)) {
