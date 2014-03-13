@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.util.StringTokenizer;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -22,6 +23,7 @@ import com.solt.media.util.FileUtils;
  *
  */
 public class UpdateChecker implements Runnable {
+	private static final Logger logger = Logger.getLogger(UpdateChecker.class);
 	private static final int INTERVAL = 5 * 60000;
 	static final String VERSION_FIELD = "version";
 	static final String HASHER_FIELD = "hasher";
@@ -35,7 +37,6 @@ public class UpdateChecker implements Runnable {
 	private Thread checker;
 	private UpdateListener listener;
 	private MediaPlayer appPlayer;
-	private Boolean userAllowUpdate;
 	/**
 	 * 
 	 */
@@ -71,10 +72,8 @@ public class UpdateChecker implements Runnable {
 				updateType = (Long) content.get(UPDATE_TYPE_FIELD);
 				boolean newVersion = version != null && compareVersions(version, Constants.VERSION) > 0;
 				if (updateType >= 0 && newVersion) {
-					if (userAllowUpdate == null) {
-						userAllowUpdate = listener != null && listener.newVersionAvairable();
-					} 
-					if (!userAllowUpdate) {
+					logger.debug("new version's avairable: " + version); 
+					if (listener == null || !listener.newVersionAvairable()) {
 						break;
 					}
 					Updater updater = updateType == 0? new SetupUpdater(appPlayer, updateUrl, content, listener) : new ComponentUpdater(appPlayer, updateUrl, content, listener);
