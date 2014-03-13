@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 public class Constants {
 
-	public static String VERSION = "1.0.5";
+	public static String VERSION = "1.0.6";
 	public static long TRANSFER_BYTES_PAYED_THRESHOLD = 52428800;
 	public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
 	public static String UPDATE_URL = "http://sharephim.vn/download/info.json";
