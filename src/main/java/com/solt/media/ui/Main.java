@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
@@ -19,6 +22,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.wb.swt.SWTResourceManager;
@@ -58,6 +62,9 @@ public class Main implements MediaPlayer {
 	
 	private void initUpdater() {
 		updater = new UpdateChecker(this, new UpdateListener() {
+			private Lock lock = new ReentrantLock();
+			private Condition cond = lock.newCondition();
+			private Boolean userAllowUpdate;
 			@Override
 			public boolean newVersionAvairable() {
 				return true;
@@ -65,7 +72,30 @@ public class Main implements MediaPlayer {
 
 			@Override
 			public boolean downloadCompleted() {
-				return true;
+				try {
+					lock.lock();
+					if (userAllowUpdate != null) {
+						return userAllowUpdate;
+					}
+					Display.getDefault().asyncExec(new Runnable() {
+					    public void run() {
+					        MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION | SWT.YES | SWT.NO);
+					        messageBox.setText("Mdplayer Update Information");
+					        messageBox.setMessage("Mdplayer has release new version. Do u want update now?");
+					        int buttonID = messageBox.open();
+					        lock.lock();
+					        userAllowUpdate = new Boolean(buttonID == SWT.YES ? true : false);
+					        cond.signalAll();
+							lock.unlock();
+					    }});
+				
+					cond.await();
+					return userAllowUpdate == null ? false : userAllowUpdate;
+				} catch (InterruptedException e) {
+					return false;
+				} finally {
+					lock.unlock();
+				}
 			}
 
 			@Override

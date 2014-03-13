@@ -118,10 +118,8 @@ public class ComponentUpdater implements Updater {
 			cmdList.add("-Djava.compiler=NONE");
 			cmdList.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8008");
 		}
-		cmdList.add("-cp");
-		cmdList.add(classpath);
-		cmdList.add("-Djava.io.tmpdir=" + System.getProperty("java.io.tmpdir"));
-		cmdList.add(UpdateTool.class.getName());
+		cmdList.add("-jar");
+		cmdList.add("updatetool.jar");
 		for (String component : components) {
 			cmdList.add(component);
 		}
