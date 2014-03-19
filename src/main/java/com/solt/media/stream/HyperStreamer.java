@@ -358,20 +358,15 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 
 	private int computePieceBufferSize(String hashCode, int pieceSize,
-			Average streamRate, boolean wait) {
+			Average streamRate, boolean wait) throws TorrentException {
 
 		long rate = streamRate.getAverage();
-		try {
-			long downRate = libTorrent.getTorrentDownloadRate(hashCode, true);
-			if (!wait && rate < downRate) {
-				rate = (long) (rate + rate * 0.2);
-			} else if (wait) {
-				rate = (long) (downRate * 1.2);
-			}
-		} catch (TorrentException e) {
-			e.printStackTrace();
+		long downRate = libTorrent.getTorrentDownloadRate(hashCode, true);
+		if (!wait && rate < downRate) {
+			rate = (long) (rate + rate * 0.2);
+		} else if (wait) {
+			rate = (long) (downRate * 1.2);
 		}
-
 		int buffer_secs = DEFAULT_BUFFER_SECS;
 
 		long buffer_bytes = (buffer_secs * rate);

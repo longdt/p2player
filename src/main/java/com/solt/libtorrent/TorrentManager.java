@@ -128,7 +128,7 @@ public class TorrentManager {
 			alertsService.join();
 			processAlerts = false;
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			logger.error("interrupt while wait AlertsProcService stop", e);
 		}
 	}
 
@@ -148,7 +148,7 @@ public class TorrentManager {
 				currentStream = hashCode;
 			}
 		} catch (TorrentException e) {
-			e.printStackTrace();
+			logger.error("can't init stream", e);
 		}
 	}
 	
@@ -214,7 +214,7 @@ public class TorrentManager {
 				return getMediaResource(hashCode);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("An error was rised when add torrent from url: " + url, e);
 		}
 		return null;
 	}
@@ -277,7 +277,7 @@ public class TorrentManager {
 //				libTorrent.setShareMode(currentStream, true);
 			}
 		} catch (TorrentException e) {
-			e.printStackTrace();
+			logger.error("can't cancel stream", e);
 		}
 	}
 
@@ -306,9 +306,8 @@ public class TorrentManager {
 	/**
 	 * asynchronize request add torrent
 	 * @param string
-	 * @throws MalformedURLException 
 	 */
-	public static void requestAddTorrent(String movieId, boolean file, boolean sub) throws MalformedURLException {
+	public static void requestAddTorrent(String movieId, boolean file, boolean sub) {
 		Socket socket = null;
 		try {
 			socket = new Socket("127.0.0.1", HTTPD_PORT);

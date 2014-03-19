@@ -9,6 +9,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
@@ -39,6 +40,7 @@ import com.solt.mediaplayer.vlc.remote.StateListener;
 import com.solt.mediaplayer.vlc.swt.Player;
 
 public class Main implements MediaPlayer {
+	private static final Logger logger = Logger.getLogger(Main.class);
 	protected static final String[] TORRENT_EXTENSION = {"*.torrent"};
 	protected Shell shell;
 	private Player player;
@@ -120,11 +122,11 @@ public class Main implements MediaPlayer {
 			window.open(args);
 			window.exit();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("EXCEPTION!!!", e);
 		}
 	}
 
-	private void requestPlay(String[] args) throws MalformedURLException {
+	private void requestPlay(String[] args) {
 		if (args.length > 0) {
 			String link = args[0];
 			if (link.charAt(link.length() - 1) == '/') {
@@ -144,9 +146,8 @@ public class Main implements MediaPlayer {
 	}
 	/**
 	 * Open the window.
-	 * @throws MalformedURLException 
 	 */
-	public void open(String[] args) throws MalformedURLException {
+	public void open(String[] args) {
 		if (torrManager == null) {
 			requestPlay(args);
 			return;
@@ -283,10 +284,8 @@ public class Main implements MediaPlayer {
 			conf.setStrings(ConfigurationManager.TORRENT_HASHCODES, torrManager.getTorrents());
 			conf.save();
 			updater.stop();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		} catch (IOException | InterruptedException e) {
+			logger.error("cant exit app", e);
 		}
 	}
 
@@ -359,7 +358,7 @@ public class Main implements MediaPlayer {
 						try {
 							play(url);
 						} catch (Exception e1) {
-							e1.printStackTrace();
+							logger.error("cant play file: " + path, e1);
 						}
 					}
 				}
@@ -377,21 +376,15 @@ public class Main implements MediaPlayer {
 				try {
 					String url = null;
 					if (link.startsWith("magnet:")) {
-							url = torrManager.addTorrent(URI.create(link));
+						url = torrManager.addTorrent(URI.create(link));
 					} else if (link.startsWith("http:")) {
-							url = torrManager.addTorrent(new URL(link));
+						url = torrManager.addTorrent(new URL(link));
 					}
 					if (url != null) {
-						try {
-							play(url);
-						} catch (Exception e1) {
-							e1.printStackTrace();
-						}
-	
+						play(url);
 					}
 				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					logger.error("cant play link: " + link, e1);
 				}
 			}
 		});

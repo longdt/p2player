@@ -2,11 +2,14 @@ package com.solt.libtorrent.policy;
 
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import com.solt.libtorrent.TorrentException;
 import com.solt.libtorrent.TorrentManager;
 import com.solt.media.config.ConfigurationManager;
 
 public class NumberCachePolicy implements CachePolicy {
+	private static final Logger logger = Logger.getLogger("NumberCachePolicy");
 	private TorrentManager manager;
 	private int maxNumTorrent;
 	
@@ -23,7 +26,7 @@ public class NumberCachePolicy implements CachePolicy {
 			try {
 				manager.removeTorrent(hashCode);
 			} catch (TorrentException e) {
-				e.printStackTrace();
+				logger.error("can't remove torrent " + hashCode, e);
 			}
 		}
 	}
