@@ -85,7 +85,7 @@ public class UpdateChecker implements Runnable {
 			} while (true);
 		} catch (InterruptedException e) {
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("exception occur while update", e);
 		}
 	}
 	
@@ -182,7 +182,7 @@ public class UpdateChecker implements Runnable {
 				}
 			}
 		} catch (Throwable e) {
-			e.printStackTrace();
+			logger.error("error when compare version: " + version_1 + " vs " + version_2, e);
 			return (0);
 		}
 	}

@@ -109,8 +109,12 @@ public class DataConnector {
 			try {
 				socket.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				logger.error("can't close connector", e);
 			}
 		}
+	}
+	
+	public boolean isClosed() {
+		return closed;
 	}
 }

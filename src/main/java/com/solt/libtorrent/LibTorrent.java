@@ -8,10 +8,13 @@ import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.apache.log4j.Logger;
+
 import com.solt.media.util.Constants;
 import com.solt.media.util.FileUtils;
 
 public class LibTorrent {
+	private static final Logger logger = Logger.getLogger(LibTorrent.class);
 	/**
 	 * <p>
 	 * If flag_seed_mode is set, libtorrent will assume that all files are
@@ -154,20 +157,18 @@ public class LibTorrent {
 					}
 				} catch (Exception e) {
 					// deal with exception
-					e.printStackTrace();
+					logger.error("can't extract dll lib", e);
 				} finally {
 					if (in != null) {
 						try {
 							in.close();
 						} catch (IOException e) {
-							e.printStackTrace();
 						}
 					}
 					if (out != null) {
 						try {
 							out.close();
 						} catch (IOException e) {
-							e.printStackTrace();
 						}
 					}
 				}
