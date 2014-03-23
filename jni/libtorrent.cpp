@@ -1288,7 +1288,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 			}
 		}
 	} catch (...) {
-		LOG_ERR("Exception: failed to get torrent state");
+		LOG_ERR("Exception: failed to get torrent download rate");
 		try {
 			boost::unique_lock< boost::shared_mutex > lock(access);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
@@ -1369,6 +1369,36 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 		}
 	}
 	return -1;
+}
+
+JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
+		JNIEnv *env, jobject obj, jstring hashCode, jboolean payload) {
+	jint result = -1;
+	HASH_ASSERT(env, hashCode, result);
+	libtorrent::sha1_hash hash;
+	solt::JStringToHash(env, hash, hashCode);
+	TorrentInfo *pTorrentInfo = NULL;
+	try {
+		boost::shared_lock< boost::shared_mutex > lock(access);
+		if (gSessionState) {
+			pTorrentInfo = GetTorrentInfo(env, hash);
+			if (pTorrentInfo) {
+				libtorrent::torrent_handle* pTorrent = &pTorrentInfo->handle;
+				libtorrent::torrent_status t_s = pTorrent->status(0);
+				result = payload ? t_s.upload_payload_rate : t_s.upload_rate;
+			}
+		}
+	} catch (...) {
+		LOG_ERR("Exception: failed to get torrent upload rate");
+		try {
+			boost::unique_lock< boost::shared_mutex > lock(access);
+			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
+				delete pTorrentInfo;
+			}
+		} catch (...) {
+		}
+	}
+	return result;
 }
 
 /*

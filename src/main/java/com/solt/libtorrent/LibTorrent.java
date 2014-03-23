@@ -539,6 +539,21 @@ public class LibTorrent {
 	 */
 	public native int getTorrentUploadLimit(String hashCode)
 			throws TorrentException;
+	
+	/**
+	 * get upload rate of a given torrent hashCode. The rates are given as the
+	 * number of bytes per second. If payload specified be true then the total
+	 * transfer rate of payload only, not counting protocol chatter. This might
+	 * be slightly smaller than the other rates, but if projected over a long
+	 * time (e.g. when calculating ETA:s) the difference may be noticeable.
+	 * 
+	 * @param hashCode
+	 * @param payload
+	 * @return
+	 * @throws TorrentException
+	 */
+	public native int getTorrentUploadRate(String hashCode, boolean payload)
+			throws TorrentException;
 
 	/**
 	 * Explicitly sets the upload mode of the torrent. In upload mode, the
