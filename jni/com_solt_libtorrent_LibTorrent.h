@@ -255,6 +255,14 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadLimit
 
 /*
  * Class:     com_solt_libtorrent_LibTorrent
+ * Method:    getTorrentUploadRate
+ * Signature: (Ljava/lang/String;Z)I
+ */
+JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate
+  (JNIEnv *, jobject, jstring, jboolean);
+
+/*
+ * Class:     com_solt_libtorrent_LibTorrent
  * Method:    setUploadMode
  * Signature: (Ljava/lang/String;Z)V
  */
