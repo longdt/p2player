@@ -139,7 +139,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 			error_alert = true;
 		}
 	} else {
-		LOG_ERR("unknown alert: %s", a->what());
+		LOG_ERR("unknown alert: %s %s", a->what(), a->message().c_str());
 	}
 	return done;
 }
