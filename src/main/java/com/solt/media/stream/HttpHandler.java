@@ -219,7 +219,7 @@ public class HttpHandler implements Runnable{
 		StringBuilder info = new StringBuilder();
 		Set<String> torrents = TorrentManager.getInstance().getTorrents();
 		info.append("<html><head><meta http-equiv='refresh' content='1' ></head><body><table>");
-		info.append("<tr><td>hashcode<td>state<td>progress<td>downloaded<td>download rate<td>name<td>upload mode<td>share mode<td>auto manage\n");
+		info.append("<tr><td>hashcode<td>state<td>progress<td>downloaded<td>download rate<td>upload rate<td>name<td>upload mode<td>share mode<td>auto manage\n");
 		try {
 			for (String hashCode : torrents) {
 				info.append("<tr><td>").append(hashCode)
@@ -227,6 +227,7 @@ public class HttpHandler implements Runnable{
 						.append("<td>").append(libTorrent.getTorrentProgress(hashCode))
 						.append("<td>").append(libTorrent.getTorrentProgressSize(hashCode, 0))
 						.append("<td>").append(libTorrent.getTorrentDownloadRate(hashCode, true))
+						.append("<td>").append(libTorrent.getTorrentUploadRate(hashCode, true))
 						.append("<td>").append(libTorrent.getTorrentName(hashCode))
 						.append("<td>").append(libTorrent.isUploadMode(hashCode))
 						.append("<td>").append(libTorrent.isShareMode(hashCode))
@@ -579,6 +580,7 @@ public class HttpHandler implements Runnable{
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "Error 404, file not found.");
 				return null;
 			}
+			torrManager.initStream(hashCode);
 			File f = new File(rootDir, entries[index].getPath());
 
 			// Get MIME type from file name extension, if possible
