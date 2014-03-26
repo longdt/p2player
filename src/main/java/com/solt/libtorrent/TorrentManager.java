@@ -132,9 +132,8 @@ public class TorrentManager {
 		}
 	}
 
-	private void initStream(String hashCode) {
+	public synchronized void initStream(String hashCode) {
 		try {
-			cancelStream();
 //			libTorrent.setAutoManaged(hashCode, true);
 			libTorrent.setUploadMode(hashCode, false);
 //			libTorrent.setShareMode(hashCode, false);
@@ -142,8 +141,9 @@ public class TorrentManager {
 			if (currentStream == null) {
 				currentStream = hashCode;
 			} else if (!hashCode.equals(currentStream)) {
+				cancelStream();
 //				libTorrent.setAutoManaged(currentStream, false);
-				libTorrent.setUploadMode(currentStream, true);
+//				libTorrent.setUploadMode(currentStream, true);
 //				libTorrent.setShareMode(currentStream, true);
 				currentStream = hashCode;
 			}
@@ -237,7 +237,7 @@ public class TorrentManager {
 	}
 	
 	public boolean isStreaming(String hashCode) throws TorrentException {
-		return !libTorrent.isUploadMode(hashCode);
+		return hashCode.equals(currentStream);
 	}
 	
 	public int getTorrentState(String hashCode) throws TorrentException {
