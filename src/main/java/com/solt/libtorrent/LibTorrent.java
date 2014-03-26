@@ -129,6 +129,12 @@ public class LibTorrent {
 
 	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : "libtorrent.dll";
 	
+	static class NativeTorrentListener {
+		public static void hashPieceFailed(String hashCode, int pieceIdx) {
+			System.out.println(hashCode + " hash fail piece: " + pieceIdx);
+		}
+	}
+	
 	static {
 		loadLibraryFromJar();
 	}
@@ -308,6 +314,7 @@ public class LibTorrent {
 	public native String addAsyncMagnetUri(String magnetLink, int storageMode,
 			int flags);
 
+	//FIXME need use torrent_alert_handler
 	public native boolean saveResumeData();
 
 	// -----------------------------------------------------------------------------

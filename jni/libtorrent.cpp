@@ -30,7 +30,7 @@ if (!hashJString) { \
 										"Exception: torrent's hashcode must not null"); \
 	return valueIfFailed; \
 } else if (env->GetStringUTFLength(hashJString) < 40) { \
-	env->ThrowNew(torrentException, "Exception: invalid hash code torrent"); \
+	env->ThrowNew(gJniObject.torrentException, "Exception: invalid hash code torrent"); \
 	return valueIfFailed; \
 }
 
@@ -49,11 +49,8 @@ static boost::mutex alert_mutex;
 static libtorrent::proxy_settings gProxy;
 std::string gDefaultSave;
 static volatile bool gSessionState = false;
-static jclass partialPiece = NULL;
-static jmethodID partialPieceInit = NULL;
-static jclass torrentException = NULL;
-static jclass fileEntry = NULL;
-static jmethodID fileEntryInit = NULL;
+solt::jniobject gJniObject;
+
 inline void gSession_init() {
 	using namespace libtorrent;
 	if (!gSession) {
@@ -108,8 +105,8 @@ TorrentInfo* GetTorrentInfo(JNIEnv *env, libtorrent::sha1_hash &hash) {
 			gTorrents.find(hash);
 	if (iter != gTorrents.end()) {
 		result = iter->second;
-	} else if (torrentException) {
-		env->ThrowNew(torrentException,
+	} else if (gJniObject.torrentException) {
+		env->ThrowNew(gJniObject.torrentException,
 								"Exception: torrent handle not found");
 	} else {
 		env->ThrowNew(env->FindClass(
@@ -135,7 +132,8 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		gSession_init();
 		gSession->set_alert_mask(
 				libtorrent::alert::error_notification
-						| libtorrent::alert::storage_notification);
+						| libtorrent::alert::storage_notification
+						| libtorrent::alert::status_notification);
 
 		int listenPort = 0;
 		if (ListenPort > 0) {
@@ -184,21 +182,8 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 
 		//add stream plugin
 		gSession->add_extension(&solt::create_stream_plugin);
-		//init partialpieceinfo class and constructor
-		jclass ppieceinfo = env->FindClass(
-				"com/solt/libtorrent/PartialPieceInfo");
-		partialPiece = (jclass) env->NewGlobalRef(ppieceinfo);
-		env->DeleteLocalRef(ppieceinfo);
-		partialPieceInit = env->GetMethodID(partialPiece,
-				"<init>", "(III[I)V");
-		jclass exception = env->FindClass(
-				"com/solt/libtorrent/TorrentException");
-		torrentException = (jclass) env->NewGlobalRef(exception);
-		env->DeleteLocalRef(exception);
-		jclass entry = env->FindClass("com/solt/libtorrent/FileEntry");
-		fileEntry = (jclass) env->NewGlobalRef(entry);
-		fileEntryInit = env->GetMethodID(fileEntry, "<init>", "(Ljava/lang/String;JJJZZZ)V");
-		env->DeleteLocalRef(entry);
+		//init jniobject
+		gJniObject.init(env);
 		LOG_DEBUG("ListenPort: %d\n", listenPort);
 		LOG_DEBUG("DownloadLimit: %d\n", downloadLimit);
 		LOG_DEBUG("UploadLimit: %d\n", uploadLimit);
@@ -761,15 +746,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession(
 			gSession_del();
 			//free gTorrents
 			gTorrents.clear();
-			//free partialpieceinfo class and constructor (need)
-			env->DeleteGlobalRef(partialPiece);
-			partialPiece = NULL;
-			partialPieceInit = NULL;
-			env->DeleteGlobalRef(torrentException);
-			torrentException = NULL;
-			env->DeleteGlobalRef(fileEntry);
-			fileEntry = NULL;
-			fileEntryInit = NULL;
+			gJniObject.release(env);
 			gSessionState = false;
 			result = JNI_TRUE;
 		}
@@ -784,13 +761,13 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession(
 //-----------------------------------------------------------------------------
 
 
-inline jboolean removeTorrent(libtorrent::torrent_handle* pTorrent) {
+inline jboolean removeTorrent(JNIEnv *env, libtorrent::torrent_handle* pTorrent) {
 	pTorrent->auto_managed(false);
 	pTorrent->pause();
 	if (pTorrent->need_save_resume_data()) {
 		// the alert handler for save_resume_data_alert
 		// will save it to disk
-		solt::torrent_alert_handler alert_handler(pTorrent->info_hash(),
+		solt::torrent_alert_handler alert_handler(env, pTorrent->info_hash(),
 				torrent_alert_handler::alert_type::save_resume_data);
 	//	no need alert_mutex lock here due get unique lock access
 	//	boost::mutex::scoped_lock l(alert_mutex);
@@ -813,10 +790,10 @@ inline jboolean removeTorrent(libtorrent::torrent_handle* pTorrent) {
 	return JNI_TRUE;
 }
 
-inline jboolean deleteTorrent(libtorrent::torrent_handle* pTorrent) {
+inline jboolean deleteTorrent(JNIEnv *env, libtorrent::torrent_handle* pTorrent) {
 	std::string resumeFile = combine_path(gDefaultSave, combine_path(RESUME
 						, to_hex(pTorrent->info_hash().to_string()) + RESUME));
-	solt::torrent_alert_handler alert_handler(pTorrent->info_hash(),
+	solt::torrent_alert_handler alert_handler(env, pTorrent->info_hash(),
 			torrent_alert_handler::alert_type::torrent_deleted);
 //	no need alert_mutex lock here due get unique lock access
 //	boost::mutex::scoped_lock l(alert_mutex);
@@ -858,8 +835,8 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_removeTorrent(
 				LOG_DEBUG("Remove torrent name %s", pTorrent->name().c_str());
 				result =
 						delData ?
-								deleteTorrent(pTorrent) :
-								removeTorrent(pTorrent);
+								deleteTorrent(env, pTorrent) :
+								removeTorrent(env, pTorrent);
 				if (gTorrents.erase(hash) > 0) {
 					delete pTorrentInfo;
 				}
@@ -1056,7 +1033,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 			}
 		} catch (...) {
 		}
-		env->ThrowNew(torrentException,
+		env->ThrowNew(gJniObject.torrentException,
 							"Exception: failed when set read piece's data");
 	}
 }
@@ -1080,7 +1057,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 					boost::mutex::scoped_lock l(alert_mutex);
 					std::deque<alert*> alerts;
 					gSession->pop_alerts(&alerts);
-					torrent_alert_handler handler;
+					torrent_alert_handler handler(env);
 					for (std::deque<alert*>::iterator i = alerts.begin()
 						, end(alerts.end()); i != end; ++i)
 					{
@@ -1111,7 +1088,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 			}
 		} catch (...) {
 		}
-		env->ThrowNew(torrentException,
+		env->ThrowNew(gJniObject.torrentException,
 							"Exception: failed to read piece's data");
 	}
 	return result;
@@ -1144,7 +1121,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 			}
 		} catch (...) {
 		}
-		env->ThrowNew(torrentException,
+		env->ThrowNew(gJniObject.torrentException,
 							"Exception: failed when add piece's data");
 	}
  }
@@ -2068,7 +2045,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 					return NULL;
 				}
 				jobjectArray pieces = env->NewObjectArray(queue.size(),
-						partialPiece, NULL);
+						gJniObject.partialPiece, NULL);
 				int i = 0;
 				for (std::vector<libtorrent::partial_piece_info>::iterator
 						iter = queue.begin(), end = queue.end(); iter != end;
@@ -2076,8 +2053,8 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 					//create new PartialPieceInfo object
 					jintArray blocks = solt::blocksToArray(env, iter->blocks_in_piece,
 							iter->blocks);
-					jobject piece = env->NewObject(partialPiece,
-							partialPieceInit, iter->piece_index,
+					jobject piece = env->NewObject(gJniObject.partialPiece,
+							gJniObject.partialPieceInit, iter->piece_index,
 							iter->piece_state, iter->blocks_in_piece, blocks);
 					env->SetObjectArrayElement(pieces, i, piece);
 					++i;
@@ -2341,7 +2318,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFil
 					libtorrent::torrent_info const& info =
 							pTorrent->get_torrent_info();
 					int files_num = info.num_files();
-					result = env->NewObjectArray(files_num, fileEntry, NULL);
+					result = env->NewObjectArray(files_num, gJniObject.fileEntry, NULL);
 					jobject entry = NULL;
 					for (int i = 0; i < info.num_files(); ++i) {
 						libtorrent::file_entry const& file = info.file_at(i);
@@ -2349,7 +2326,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFil
 						jboolean execAttr = file.executable_attribute ? JNI_TRUE : JNI_FALSE;
 						jboolean hiddenAttr = file.hidden_attribute ? JNI_TRUE : JNI_FALSE;
 						jboolean padFile = file.pad_file ? JNI_TRUE : JNI_FALSE;
-						entry = env->NewObject(fileEntry, fileEntryInit, path, file.offset, file.size, file.file_base, padFile, hiddenAttr, execAttr);
+						entry = env->NewObject(gJniObject.fileEntry, gJniObject.fileEntryInit, path, file.offset, file.size, file.file_base, padFile, hiddenAttr, execAttr);
 						env->SetObjectArrayElement(result, i, entry);
 					}
 				}
@@ -2531,7 +2508,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentSize(
 //-----------------------------------------------------------------------------
 
 JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_handleAlerts
-  (JNIEnv *, jobject) {
+  (JNIEnv *env, jobject) {
 	boost::shared_lock< boost::shared_mutex > lock(access);
 	if (!gSessionState) {
 	  return;
@@ -2539,7 +2516,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_handleAlerts
 	// loop through the alert queue to see if anything has happened.
 	std::deque<alert*> alerts;
 	gSession->pop_alerts(&alerts);
-	torrent_alert_handler handler;
+	torrent_alert_handler handler(env);
 	for (std::deque<alert*>::iterator i = alerts.begin()
 		, end(alerts.end()); i != end; ++i)
 	{
