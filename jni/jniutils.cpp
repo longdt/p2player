@@ -5,6 +5,7 @@
  *      Author: user
  */
 #include "jniutils.h"
+extern solt::jniobject gJniObject;
 
 namespace solt {
 int SaveFile(std::string const& filename, std::vector<char>& v) {
@@ -29,6 +30,14 @@ int SaveFile(std::string const& filename, std::vector<char>& v) {
 		return -3;
 	}
 	return 0;
+}
+
+void notifyHashFailedAlert(JNIEnv *env, const libtorrent::hash_failed_alert *alert) {
+	char ih[41];
+	const libtorrent::sha1_hash &hashCode = alert->handle.info_hash();
+	libtorrent::to_hex((char const*) &hashCode[0], 20, ih);
+	jstring hash = env->NewStringUTF(ih);
+	env->CallStaticVoidMethod(gJniObject.listenerClass, gJniObject.listenerHashPieceFailed, hash, alert->piece_index);
 }
 }
 

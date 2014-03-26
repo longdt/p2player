@@ -28,7 +28,61 @@
 namespace solt {
 #define RESUME ".resume"
 
+class jniobject {
+public:
+	jclass partialPiece;
+	jmethodID partialPieceInit;
+	jclass torrentException;
+	jclass fileEntry;
+	jmethodID fileEntryInit;
+	jclass listenerClass;
+	jmethodID listenerHashPieceFailed;
+
+	jniobject() : partialPiece(NULL), partialPieceInit(NULL), torrentException(NULL), fileEntry(NULL), fileEntryInit(NULL), listenerClass(NULL), listenerHashPieceFailed(NULL) {}
+	void init(JNIEnv *env) {
+		//init partialpieceinfo class and constructor
+		jclass ppieceinfo = env->FindClass(
+				"com/solt/libtorrent/PartialPieceInfo");
+		partialPiece = (jclass) env->NewGlobalRef(ppieceinfo);
+		env->DeleteLocalRef(ppieceinfo);
+		partialPieceInit = env->GetMethodID(partialPiece,
+				"<init>", "(III[I)V");
+		//init TorrentException jclass
+		jclass exception = env->FindClass(
+				"com/solt/libtorrent/TorrentException");
+		torrentException = (jclass) env->NewGlobalRef(exception);
+		env->DeleteLocalRef(exception);
+		//init FileEntry jclass, jmethod
+		jclass entry = env->FindClass("com/solt/libtorrent/FileEntry");
+		fileEntry = (jclass) env->NewGlobalRef(entry);
+		fileEntryInit = env->GetMethodID(fileEntry, "<init>", "(Ljava/lang/String;JJJZZZ)V");
+		env->DeleteLocalRef(entry);
+		//init NativeTorrentListener jmethod
+		jclass listenerCl = env->FindClass("com/solt/libtorrent/LibTorrent$NativeTorrentListener");;
+		listenerClass = (jclass) env->NewGlobalRef(listenerCl);
+		listenerHashPieceFailed = env->GetStaticMethodID(listenerClass, "hashPieceFailed", "(Ljava/lang/String;I)V");
+		env->DeleteLocalRef(listenerCl);
+	}
+
+	void release(JNIEnv *env) {
+		//free partialpieceinfo class and constructor (need)
+		env->DeleteGlobalRef(partialPiece);
+		partialPiece = NULL;
+		partialPieceInit = NULL;
+		env->DeleteGlobalRef(torrentException);
+		torrentException = NULL;
+		env->DeleteGlobalRef(fileEntry);
+		fileEntry = NULL;
+		fileEntryInit = NULL;
+		env->DeleteGlobalRef(listenerClass);
+		listenerClass = NULL;
+		listenerHashPieceFailed = NULL;
+	}
+};
+
 int SaveFile(std::string const& filename, std::vector<char>& v);
+
+void notifyHashFailedAlert(JNIEnv *env, const libtorrent::hash_failed_alert *alert);
 
 inline void JStringToHash(JNIEnv *env, libtorrent::sha1_hash &hash,
 		jstring JniString) {

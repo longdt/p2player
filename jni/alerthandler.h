@@ -10,6 +10,7 @@
 #include "libtorrent/alert_types.hpp"
 #include "libtorrent/alert.hpp"
 #include "piecedataqueue.h"
+#include <jni.h>
 
 namespace solt {
 using namespace libtorrent;
@@ -20,11 +21,11 @@ public:
 		torrent_deleted, torrent_add, save_resume_data, others
 	};
 
-	torrent_alert_handler(sha1_hash torrent_hash, alert_type expected_type) :
-		done(false), error_alert(false), torrent_hash(torrent_hash), expected_type(expected_type) {
+	torrent_alert_handler(JNIEnv *env, sha1_hash torrent_hash, alert_type expected_type) : 
+		env(env), done(false), error_alert(false), torrent_hash(torrent_hash), expected_type(expected_type) {
 	}
 
-	torrent_alert_handler() : done(false), error_alert(false), expected_type(others){}
+	torrent_alert_handler(JNIEnv *env) : env(env), done(false), error_alert(false), expected_type(others){}
 
 	bool handle(const alert* a);
 
@@ -39,6 +40,7 @@ private:
 	bool error_alert;
 	bool done;
 	sha1_hash torrent_hash;
+	JNIEnv *env;
 };
 
 inline torrent_alert_handler::alert_type get_alert_type(const libtorrent::alert* a) {

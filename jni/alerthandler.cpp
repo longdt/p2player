@@ -138,6 +138,8 @@ bool torrent_alert_handler::handle(const alert* a) {
 			done = true;
 			error_alert = true;
 		}
+	} else if (const hash_failed_alert* p = alert_cast<hash_failed_alert>(a)) {
+		notifyHashFailedAlert(env, p);
 	} else {
 		LOG_ERR("unknown alert: %s %s", a->what(), a->message().c_str());
 	}
