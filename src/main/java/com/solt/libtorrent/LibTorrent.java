@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
 
@@ -130,8 +132,20 @@ public class LibTorrent {
 	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : "libtorrent.dll";
 	
 	static class NativeTorrentListener {
+		private static final BlockingQueue<TorrentListener> listeners = new LinkedBlockingQueue<>();
+		
 		public static void hashPieceFailed(String hashCode, int pieceIdx) {
-			System.out.println(hashCode + " hash fail piece: " + pieceIdx);
+			for (TorrentListener l : listeners) {
+				l.hashPieceFailed(hashCode, pieceIdx);
+			}
+		}
+		
+		public static void addListener(TorrentListener listener) {
+			listeners.add(listener);
+		}
+		
+		public static void removeListener(TorrentListener listener) {
+			listeners.remove(listener);
 		}
 	}
 	
@@ -885,6 +899,14 @@ public class LibTorrent {
 	// -----------------------------------------------------------------------------
 	
 	public native void handleAlerts();
+	
+	public void addTorrentListener(TorrentListener listener) {
+		NativeTorrentListener.addListener(listener);
+	}
+	
+	public void removeTorrentListener(TorrentListener listener) {
+		NativeTorrentListener.removeListener(listener);
+	}
 	
 	public int getBestStreamableFile(String hashCode) throws TorrentException {
 		FileEntry[] entries = getTorrentFiles(hashCode);
