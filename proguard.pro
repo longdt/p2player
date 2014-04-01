@@ -26,6 +26,10 @@
 
 -keep class org.**
 
+-keep class com.solt.libtorrent.LibTorrent$NativeTorrentListener {
+	*;
+}
+
 -keep class com.solt.libtorrent.FileEntry {
     <init>(...);
 }
