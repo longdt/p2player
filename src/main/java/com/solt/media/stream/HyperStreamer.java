@@ -14,9 +14,11 @@ import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
 import com.solt.libtorrent.PiecesState;
 import com.solt.libtorrent.TorrentException;
+import com.solt.libtorrent.TorrentListener;
 import com.solt.media.stream.helper.MdDataHelper;
 import com.solt.media.stream.helper.TDataHelper;
 import com.solt.media.stream.helper.TDataHelper.Result;
+import com.solt.media.util.AtomicBitSet;
 import com.solt.media.util.Average;
 
 public class HyperStreamer implements TorrentStreamer {
@@ -37,7 +39,7 @@ public class HyperStreamer implements TorrentStreamer {
 	private int startPiece;
 	private int startPieceOffset;
 	private byte[] buff;
-	private BitSet helpedPieces;
+	private AtomicBitSet helpedPieces;
 	private AddPieceService apSrvice;
 
 	public HyperStreamer(HttpHandler handler, long movieId, String hashCode, int index,
@@ -62,7 +64,7 @@ public class HyperStreamer implements TorrentStreamer {
 		schannel.configureBlocking(false);
 //		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
 		helper = new MdDataHelper(libTorrent, hashCode, movieId, index);
-		helpedPieces = new BitSet(libTorrent.getPieceNum(hashCode));
+		helpedPieces = new AtomicBitSet(libTorrent.getPieceNum(hashCode));
 		apSrvice = new AddPieceService();
 	}
 	
@@ -250,25 +252,21 @@ public class HyperStreamer implements TorrentStreamer {
 		if (state.getNumDone() / (float) state.getLenght() < 0.3f) {
 			int last = state.getLastIncomplete();
 			if (last != -1 && helpedPieces.get(last)) {
-				last = state.getLastIncomplete(helpedPieces.previousClearBit(last));
+				last = state.getLastIncomplete(last - 1);
 			}
-			if (last > streamPiece) {
+			if (last > streamPiece && !helpedPieces.get(last)) {
 				return last;
 			}
 		}
 		return -1;
 	}
 
-	private synchronized boolean retrieveAndSendPice() throws TorrentException, IOException, InterruptedException {
-		if (helpedPieces.get(streamPiece)) {
-			return false;
-		}
+	private boolean retrieveAndSendPice() throws TorrentException, IOException, InterruptedException {
 		Result result = helper.retrievePiece(streamPiece, buff);
 		System.err.println("retrieveAndSendPice: " + streamPiece);
 		if (result.getState() != Result.ERROR) {
 			if (result.getState() == Result.COMPLETE) {
 				libTorrent.addTorrentPiece(hashCode, streamPiece, buff);
-				helpedPieces.set(streamPiece);
 			}
 			int offset = (streamPiece == startPiece) ? startPieceOffset : result.getOffset();
 			int len = result.getLength() - (offset - result.getOffset());
@@ -296,28 +294,8 @@ public class HyperStreamer implements TorrentStreamer {
 		}
 	}
 	
-	/**
-	 * add piece data from mdserver via helper.
-	 * @param pieceIdx
-	 * @return true if success. false if already add or fail
-	 * @throws TorrentException
-	 */
-	private synchronized boolean addPieceData(int pieceIdx, byte[] buff) throws TorrentException {
-		if (helpedPieces.get(pieceIdx)) {
-			return false;
-		} else if (helper.getPieceRemain(pieceIdx, buff)) {
-			System.err.println("addPieceData: " + pieceIdx);
-			libTorrent.addTorrentPiece(hashCode, pieceIdx, buff);
-			helpedPieces.set(pieceIdx);
-			return true;
-		}
-		return false;
-	}
-	
 	private void asyncAddPieceData(int pieceIdx) {
-		if (!helpedPieces.get(pieceIdx)) {
-			apSrvice.add(pieceIdx);
-		}
+		apSrvice.add(pieceIdx);
 	}
 
 	protected long getPieceRemain(int currCancelPiece) throws TorrentException {
@@ -410,29 +388,26 @@ public class HyperStreamer implements TorrentStreamer {
 		apSrvice.close();
 	}
 	
-	class AddPieceService implements Runnable {
+	class AddPieceService implements Runnable, TorrentListener {
 		private PriorityBlockingQueue<Integer> pieces;
-		private BitSet requestPieces;
 		private Thread worker;
-		private byte[] buffer;
 		public AddPieceService() throws TorrentException {
-			int numPiece = libTorrent.getPieceNum(hashCode);
-			requestPieces = new BitSet(numPiece);
-			buffer = new byte[buff.length];
 			pieces = new PriorityBlockingQueue<Integer>();
 			worker = new Thread(this);
 			worker.setDaemon(true);
 			worker.start();
+			libTorrent.addTorrentListener(this);
 		}
 		
 		public synchronized void add(int pieceIdx) {
-			if (!requestPieces.get(pieceIdx)) {
+			if (!helpedPieces.get(pieceIdx)) {
 				pieces.offer(pieceIdx);
-				requestPieces.set(pieceIdx);
+				helpedPieces.set(pieceIdx);
 			}
 		}
 		
 		public void close() {
+			libTorrent.removeTorrentListener(this);
 			worker.interrupt();
 			try {
 				worker.join();
@@ -444,14 +419,24 @@ public class HyperStreamer implements TorrentStreamer {
 		public void run() {
 			int pieceIdx = 0;
 			try {
+				byte[] buffer = new byte[buff.length];
 				while (true) {
 					pieceIdx = pieces.take();
-					addPieceData(pieceIdx, buffer);
+					if (helper.getPieceRemain(pieceIdx, buffer)) {
+						libTorrent.addTorrentPiece(hashCode, pieceIdx, buffer);
+					}
 				}
 			} catch (InterruptedException e) {
 			} catch (TorrentException e) {
 			} finally {
 				logger.info("AddPieceService was stopped");
+			}
+		}
+
+		@Override
+		public synchronized void hashPieceFailed(String hashCode, int pieceIdx) {
+			if (HyperStreamer.this.hashCode.equals(hashCode)) {
+				helpedPieces.clear(pieceIdx);
 			}
 		}
 	}
