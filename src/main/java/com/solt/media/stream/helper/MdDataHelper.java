@@ -2,6 +2,8 @@ package com.solt.media.stream.helper;
 
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import com.solt.libtorrent.FileEntry;
 import com.solt.libtorrent.LibTorrent;
 import com.solt.libtorrent.PartialPieceInfo;
@@ -9,6 +11,7 @@ import com.solt.libtorrent.PartialPieceInfo.BlockState;
 import com.solt.libtorrent.TorrentException;
 
 public class MdDataHelper implements TDataHelper {
+	private static final Logger logger = Logger.getLogger(MdDataHelper.class);
 	private static final String HOST = "stream.sharephim.vn";
 	private static final int PORT = 443;
 	private static final int MAX_ERROR_COUNTER = 10;
@@ -36,9 +39,9 @@ public class MdDataHelper implements TDataHelper {
 			connector = new DataConnector(HOST, PORT);
 			connector.initData(path, fileId, (byte)item, pieceSize, itemOffset);
 		} catch (TorrentException e) {
-			e.printStackTrace();
+			logger.error("invalid torrent hashcode: " + hashCode, e);
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.error("can't init data connector", e);
 		}
 	}
 	
@@ -65,11 +68,18 @@ public class MdDataHelper implements TDataHelper {
 			state = Result.PARTIAL;
 		}
 		try {
+			long reqDataLen = endBytes - startBytes;
+			long startTime = System.currentTimeMillis();
+			logger.debug("start retrieve piece " + pieceIdx);
 			if(connector.getData(pieceIdx, offset, (int)(endBytes - startBytes), data)) {
+				float speed = (reqDataLen * 1000f / 1024f) / (System.currentTimeMillis() - startTime + 1);
+				logger.debug("end retrieve piece " + pieceIdx + " with speed " + speed + "KB/s");
 				return new Result(state, offset, (int)(endBytes - startBytes));
+			} else {
+				++errCnt;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.debug("can retrieve a given piece", e);
 			connector.reconnect(true);
 			++errCnt;
 		}
@@ -87,12 +97,24 @@ public class MdDataHelper implements TDataHelper {
 		if (startBytes < 0 || endBytes > itemLength) {
 			return false;
 		}
+		long reqDataLen = 0;
+		long startTime = System.currentTimeMillis();
+		boolean result = true;
+		PartialPieceInfo info = null;
 		try {
-			PartialPieceInfo info = libTorrent.getPartialPieceInfo(hashCode, pieceIdx);
+			info = libTorrent.getPartialPieceInfo(hashCode, pieceIdx);
 			if (info == null) {
 				int incompletePiece = libTorrent.getFirstPieceIncomplete(hashCode, pieceIdx);
-				return incompletePiece > pieceIdx ? false : connector.getData(pieceIdx, 0, pieceSize, data);
+				if (incompletePiece > pieceIdx) {
+					result = false;
+					return result;
+				}
+				logger.debug("start retrieve piece " + pieceIdx);
+				reqDataLen = pieceSize;
+				result = connector.getData(pieceIdx, 0, pieceSize, data);
+				return result;
 			}
+			logger.debug("start retrieve piece " + pieceIdx);
 			int start = 0;
 			int end = 0;
 			boolean isReq = false;
@@ -101,8 +123,10 @@ public class MdDataHelper implements TDataHelper {
 					end = end + info.getBlockSize(i);
 					isReq = true;
 				} else if (isReq) {
+					reqDataLen += (end - start);
 					if(!connector.getData(pieceIdx, start, end - start, data)) {
-						return false;
+						result = false;
+						return result;
 					}
 					end += info.getBlockSize(i);
 					start = end;
@@ -112,11 +136,23 @@ public class MdDataHelper implements TDataHelper {
 					end = start;
 				}
 			}
-			return isReq ? connector.getData(pieceIdx, start, end - start, data) : true;
+			if (isReq) {
+				reqDataLen += (end -start);
+				result = connector.getData(pieceIdx, start, end - start, data);
+				return result;
+			}
+			return true;
 		} catch (IOException e) {
-			e.printStackTrace();
+			logger.debug("cant get remain data of piece", e);
 			connector.reconnect(true);
 			++errCnt;
+		} finally {
+			if (result) {
+				float speed = (reqDataLen * 1000f / 1024f) / (System.currentTimeMillis() - startTime + 1);
+				logger.debug("end retrieve piece " + pieceIdx + " with speed " + speed + "KB/s");
+			} else if (info != null) {
+				logger.debug("error when retrive piece " + pieceIdx);
+			}
 		}
 		return false;
 	}
