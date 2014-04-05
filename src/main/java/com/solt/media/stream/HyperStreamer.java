@@ -32,6 +32,7 @@ public class HyperStreamer implements TorrentStreamer {
 	private LibTorrent libTorrent;
 	private SocketChannel schannel;
 	private int pieceSize;
+	private int pieceNum;
 	private TDataHelper helper;
 	private int streamPiece;
 	private int endPiece;
@@ -53,6 +54,7 @@ public class HyperStreamer implements TorrentStreamer {
 		long torrentOffset = fileOffset + libTorrent.getTorrentFiles(hashCode)[index]
 				.getOffset();
 		pieceSize = libTorrent.getPieceSize(hashCode, false);
+		pieceNum = libTorrent.getPieceNum(hashCode);
 		buff = new byte[pieceSize];
 		streamPiece = (int) (torrentOffset / pieceSize);
 		endPiece = (int) ((torrentOffset + pending) / pieceSize) + 1;
@@ -64,7 +66,7 @@ public class HyperStreamer implements TorrentStreamer {
 		schannel.configureBlocking(false);
 //		helper = new HttpDataHelper(libTorrent, hashCode, index, fileOffset, dataLength);
 		helper = new MdDataHelper(libTorrent, hashCode, movieId, index);
-		helpedPieces = new AtomicBitSet(libTorrent.getPieceNum(hashCode));
+		helpedPieces = new AtomicBitSet(pieceNum);
 		apSrvice = new AddPieceService();
 	}
 	
@@ -116,7 +118,7 @@ public class HyperStreamer implements TorrentStreamer {
 					streamPiece);
 			
 //			System.err.println("PIECE_BUFFER_SIZE = " + PIECE_BUFFER_SIZE);
-			if (state != 4 && state != 5
+			if (state != 4 && state != 5 && incompleteIdx < pieceNum
 					&& streamPiece + PIECE_BUFFER_SIZE > incompleteIdx) {
 				//set deadline
 				long currentTime = System.currentTimeMillis();
@@ -234,7 +236,7 @@ public class HyperStreamer implements TorrentStreamer {
 	 * determine which piece should help
 	 * @param state
 	 * @param speed
-	 * @return
+	 * @return pieceIdx which need helper request data
 	 * @throws TorrentException
 	 */
 	private int needDataHelp(int fromPiece, PiecesState state, long speed) throws TorrentException {
@@ -242,7 +244,7 @@ public class HyperStreamer implements TorrentStreamer {
 			return -1;
 		} else if (speed < 120 * 1024) {
 			int incomplete = state.getFirstIncomplete(fromPiece);
-			if (incomplete == -1) {
+			if (incomplete == -1 || incomplete >= pieceNum) {
 				return -1;
 			} else if (incomplete == fromPiece || speed < 60 * 1024) {
 				return incomplete;
@@ -251,6 +253,9 @@ public class HyperStreamer implements TorrentStreamer {
 		
 		if (state.getNumDone() / (float) state.getLenght() < 0.3f) {
 			int last = state.getLastIncomplete();
+			if (last >= pieceNum) {
+				last = pieceNum - 1;
+			}
 			if (last != -1 && helpedPieces.get(last)) {
 				last = state.getLastIncomplete(last - 1);
 			}
@@ -399,6 +404,12 @@ public class HyperStreamer implements TorrentStreamer {
 			libTorrent.addTorrentListener(this);
 		}
 		
+		/**
+		 * add request get piece data of a give pieceIdx.
+		 * 
+		 * @param pieceIdx
+		 * @throws IndexOutOfBoundsException if pieceIdx < 0 || pieceIdx >= pieceNum
+		 */
 		public synchronized void add(int pieceIdx) {
 			if (!helpedPieces.get(pieceIdx)) {
 				pieces.offer(pieceIdx);
