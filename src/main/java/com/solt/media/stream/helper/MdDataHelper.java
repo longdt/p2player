@@ -37,7 +37,9 @@ public class MdDataHelper implements TDataHelper {
 			endPiece = (int) ((itemOffset + itemLength) / pieceSize) + 1;
 			String path = entries[item].getPath().replace('\\', '/');
 			connector = new DataConnector(HOST, PORT);
-			connector.initData(path, fileId, (byte)item, pieceSize, itemOffset);
+			if (!connector.initData(path, fileId, (byte)item, pieceSize, itemOffset)) {
+				logger.info("Helper hasn't torrent data file: " + hashCode);
+			}
 		} catch (TorrentException e) {
 			logger.error("invalid torrent hashcode: " + hashCode, e);
 		} catch (IOException e) {
