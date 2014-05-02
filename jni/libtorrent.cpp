@@ -43,7 +43,7 @@ void gSession_del(bool saveState = true);
 //-----------------------------------------------------------------------------
 std::map<libtorrent::sha1_hash, TorrentInfo*> gTorrents;
 static libtorrent::session *gSession = NULL;
-static boost::shared_mutex access;
+static boost::shared_mutex gAccess;
 static boost::mutex down_queue_mutex;
 static boost::mutex alert_mutex;
 static libtorrent::proxy_settings gProxy;
@@ -120,7 +120,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSession(
 		JNIEnv *env, jobject obj, jint ListenPort, jstring SavePath,
 		jint UploadLimit, jint DownloadLimit) {
 	jboolean result = JNI_TRUE;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		solt::JniToStdString(env, &gDefaultSave, SavePath);
 		// create directory for resume files
@@ -227,7 +227,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setProxy(
 	solt::JniToStdString(env, &userName, UserName);
 	std::string password;
 	solt::JniToStdString(env, &password, Password);
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			if (type > 0) {
@@ -261,7 +261,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setSessionOptions
 		JNIEnv *env, jobject obj, jboolean DHT, jboolean LSD, jboolean UPNP,
 		jboolean NATPMP) {
 	jboolean result = JNI_TRUE;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			if (DHT == JNI_TRUE)
@@ -317,7 +317,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addTorrent(
 		return result;
 	}
 	const libtorrent::sha1_hash &hashCode = t->info_hash();
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			//find torrent_handle
@@ -408,7 +408,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addMagnetUri(
 		return result;
 	}
 	const libtorrent::sha1_hash &hashCode = torrentParams.info_hash;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			//find torrent_handle
@@ -494,7 +494,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncTorrent(
 		return result;
 	}
 	const libtorrent::sha1_hash &hashCode = t->info_hash();
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			//find torrent_handle
@@ -569,7 +569,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncMagnetUri(
 		return result;
 	}
 	const libtorrent::sha1_hash &hashCode = torrentParams.info_hash;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			//find torrent_handle
@@ -626,7 +626,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_addAsyncMagnetUri(
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseSession(
 		JNIEnv *, jobject) {
 	jboolean result = JNI_TRUE;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			gSession->pause();
@@ -648,7 +648,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_pauseSession(
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_resumeSession(
 		JNIEnv *, jobject) {
 	jboolean result = JNI_TRUE;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			gSession->resume();
@@ -678,7 +678,7 @@ bool saveResumeData() {
 		if (!(h.is_valid() && h.has_metadata() && h.need_save_resume_data()))
 			continue;
 
-		h.save_resume_data(torrent_handle::save_resume_flags_t::flush_disk_cache);
+		h.save_resume_data(torrent_handle::flush_disk_cache);
 		++num_resume_data;
 	}
 
@@ -718,7 +718,7 @@ bool saveResumeData() {
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_saveResumeData
   (JNIEnv *, jobject) {
 	bool result = false;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			result = saveResumeData();
@@ -736,7 +736,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_saveResumeData
 JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_abortSession(
 		JNIEnv *env, jobject, jboolean save) {
 	jboolean result = JNI_FALSE;
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	try {
 		if (gSessionState) {
 			gSession->pause();
@@ -768,10 +768,10 @@ inline jboolean removeTorrent(JNIEnv *env, libtorrent::torrent_handle* pTorrent)
 		// the alert handler for save_resume_data_alert
 		// will save it to disk
 		solt::torrent_alert_handler alert_handler(env, pTorrent->info_hash(),
-				torrent_alert_handler::alert_type::save_resume_data);
+				torrent_alert_handler::save_resume_data);
 	//	no need alert_mutex lock here due get unique lock access
 	//	boost::mutex::scoped_lock l(alert_mutex);
-		pTorrent->save_resume_data(libtorrent::torrent_handle::save_resume_flags_t::flush_disk_cache);
+		pTorrent->save_resume_data(libtorrent::torrent_handle::flush_disk_cache);
 		// loop through the alert queue to see if anything has happened.
 		while (!alert_handler.is_done()) {
 			libtorrent::alert const* a = gSession->wait_for_alert(
@@ -794,7 +794,7 @@ inline jboolean deleteTorrent(JNIEnv *env, libtorrent::torrent_handle* pTorrent)
 	std::string resumeFile = combine_path(gDefaultSave, combine_path(RESUME
 						, to_hex(pTorrent->info_hash().to_string()) + RESUME));
 	solt::torrent_alert_handler alert_handler(env, pTorrent->info_hash(),
-			torrent_alert_handler::alert_type::torrent_deleted);
+			torrent_alert_handler::torrent_deleted);
 //	no need alert_mutex lock here due get unique lock access
 //	boost::mutex::scoped_lock l(alert_mutex);
 	gSession->remove_torrent(*pTorrent, libtorrent::session::delete_files);
@@ -825,7 +825,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_removeTorrent(
 	HASH_ASSERT(env, hashCode, result);
 	libtorrent::sha1_hash hash;
 	solt::JStringToHash(env, hash, hashCode);
-	boost::unique_lock< boost::shared_mutex > lock(access);
+	boost::unique_lock< boost::shared_mutex > lock(gAccess);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
 		if (gSessionState) {
@@ -861,7 +861,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -873,7 +873,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_pauseTorrent(
 	} catch (...) {
 		LOG_ERR("Exception: failed to pause torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -889,7 +889,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -901,7 +901,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_resumeTorrent(
 	} catch (...) {
 		LOG_ERR("Exception: failed to resume torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -918,7 +918,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgress(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -946,7 +946,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgress(
 	} catch (...) {
 		LOG_ERR("Exception: failed to progress torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -964,7 +964,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -997,7 +997,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed to progress torrent size");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1015,7 +1015,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo* pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo && pieceIdx < pTorrentInfo->handle.get_torrent_info().num_pieces()) {
@@ -1027,7 +1027,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed when set  read piece's data");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1046,7 +1046,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo* pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1082,7 +1082,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed to read piece's data");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1102,7 +1102,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo* pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo && pieceIdx < pTorrentInfo->handle.get_torrent_info().num_pieces()) {
@@ -1115,7 +1115,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed when add piece's data");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1186,7 +1186,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1203,7 +1203,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed to set download limit torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1223,7 +1223,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1236,7 +1236,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentProgressSi
 	} catch (...) {
 		LOG_ERR("Exception: failed to get download limit torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1255,7 +1255,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1267,7 +1267,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	} catch (...) {
 		LOG_ERR("Exception: failed to get torrent download rate");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1288,7 +1288,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1305,7 +1305,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	} catch (...) {
 		LOG_ERR("Exception: failed to set upload limit torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1325,7 +1325,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1338,7 +1338,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentDownloadRat
 	} catch (...) {
 		LOG_ERR("Exception: failed to get upload limit torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1356,7 +1356,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1368,7 +1368,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get torrent upload rate");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1389,7 +1389,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1402,7 +1402,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to set upload mode torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1418,7 +1418,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1430,7 +1430,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to check upload mode");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1452,7 +1452,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1465,7 +1465,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to set share mode torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1486,7 +1486,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1498,7 +1498,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to check share mode");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1519,7 +1519,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1532,7 +1532,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to check auto managed torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1553,7 +1553,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1566,7 +1566,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to set auto managed torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1583,7 +1583,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1596,7 +1596,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get piece num");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1614,7 +1614,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1633,7 +1633,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get piece num");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1655,7 +1655,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo* pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1700,7 +1700,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get first piece incomplete");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1719,7 +1719,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	TorrentInfo* pTorrentInfo = NULL;
 	jbyte *pState = env->GetByteArrayElements(states, NULL);
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1746,7 +1746,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get first piece incomplete");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1769,7 +1769,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1782,7 +1782,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to set piece priority torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1803,7 +1803,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1816,7 +1816,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentUploadRate(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get piece priority torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1850,7 +1850,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo && pieceIdx < pTorrentInfo->handle.get_torrent_info().num_pieces()) {
@@ -1863,7 +1863,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to set piece deadline torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1883,7 +1883,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1896,7 +1896,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to reset piece deadline torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1916,7 +1916,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1931,7 +1931,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to clear piece deadline torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1947,7 +1947,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -1957,7 +1957,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to cancel piece torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -1980,7 +1980,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2010,7 +2010,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to init piece partial piece");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2031,7 +2031,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2065,7 +2065,7 @@ JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_setPieceDeadline(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get piece download queue");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2099,7 +2099,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentState(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2118,7 +2118,7 @@ JNIEXPORT jint JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentState(
 	} catch (...) {
 		LOG_ERR("Exception: failed to get torrent state");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2172,7 +2172,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentStatusTe
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2251,7 +2251,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentStatusTe
 	} catch (...) {
 		LOG_ERR("Exception: failed to get torrent status text");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2265,7 +2265,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_getSessionStatusTe
 		JNIEnv *env, jobject obj) {
 	jstring result = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			std::string out;
 			char str[500];
@@ -2309,7 +2309,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFil
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2335,7 +2335,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFil
 	} catch (...) {
 		LOG_ERR("Exception: failed to get torrent files");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2362,7 +2362,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setTorrentFilesPr
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2393,7 +2393,7 @@ JNIEXPORT jboolean JNICALL Java_com_solt_libtorrent_LibTorrent_setTorrentFilesPr
 	} catch (...) {
 		LOG_ERR("Exception: failed to set files priority");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2414,7 +2414,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFiles
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2441,7 +2441,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentFiles
 	} catch (...) {
 		LOG_ERR("Exception: failed to get files priority");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			gTorrents.erase(hash);
 		} catch (...) {
 		}
@@ -2459,7 +2459,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentName(
 	solt::JStringToHash(env, hash, hashCode);
 	TorrentInfo *pTorrentInfo = NULL;
 	try {
-		boost::shared_lock< boost::shared_mutex > lock(access);
+		boost::shared_lock< boost::shared_mutex > lock(gAccess);
 		if (gSessionState) {
 			pTorrentInfo = GetTorrentInfo(env, hash);
 			if (pTorrentInfo) {
@@ -2471,7 +2471,7 @@ JNIEXPORT jstring JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentName(
 	} catch (...) {
 		LOG_ERR("Exception: failed to pause torrent");
 		try {
-			boost::unique_lock< boost::shared_mutex > lock(access);
+			boost::unique_lock< boost::shared_mutex > lock(gAccess);
 			if (pTorrentInfo != NULL && gTorrents.erase(hash) > 0) {
 				delete pTorrentInfo;
 			}
@@ -2509,7 +2509,7 @@ JNIEXPORT jlong JNICALL Java_com_solt_libtorrent_LibTorrent_getTorrentSize(
 
 JNIEXPORT void JNICALL Java_com_solt_libtorrent_LibTorrent_handleAlerts
   (JNIEnv *env, jobject) {
-	boost::shared_lock< boost::shared_mutex > lock(access);
+	boost::shared_lock< boost::shared_mutex > lock(gAccess);
 	if (!gSessionState) {
 	  return;
 	}

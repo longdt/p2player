@@ -2,29 +2,11 @@ Workaround bug cancel piece:
 if (!m_picker->mark_as_downloading(interesting_blocks.front(), c.peer_info_struct(), piece_picker::fast))
 						break;
 
-
-if ( content_stream_bps_min == 0 ){
-
-		// hack in some test values for torrents that don't have a bps in them yet
-	
-	long	size = torrent.getSize();
-	
-	if ( size < 200*1024*1024 ){
-	
-		content_stream_bps_min = 30*1024;
-		
-	}else if ( size < 1000*1024*1024L ){
-		
-		content_stream_bps_min = 200*1024;
-		
-	}else{
-
-		content_stream_bps_min = 400*1024;
-	}
-}
-
-		// bump it up by a bit to be conservative to deal with fluctuations, discards etc.
-	
-content_stream_bps_min += content_stream_bps_min / content_stream_bps_min_increase_ratio;
-
-content_stream_bps_max = content_stream_bps_min + ( content_stream_bps_min / content_stream_bps_max_increase_ratio );
+linux build:
+boost:
+./boostrap.sh
+./bjam -a link=static --with-system --with-thread cxxflags='-fPIC'
+libtorrent:
+install dependency: libssl-dev
+./configure CPPFLAGS="-I/usr/lib/jvm/java-7-openjdk-amd64/include -I/usr/lib/jvm/java-7-openjdk-amd64/include/linux -I/media/thienlong/data/c-lib/boost_1_55_0 -fPIC" LIBS="/media/thienlong/data/c-lib/boost_1_55_0/stage/lib/libboost_thread.a" --with-boost-libdir=/media/thienlong/data/c-lib/boost_1_55_0/stage/lib
+make

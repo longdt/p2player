@@ -54,7 +54,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 
 	if (const add_torrent_alert* p = alert_cast<add_torrent_alert>(a))
 	{
-		if (expected_type == alert_type::torrent_add && torrent_hash == p->handle.info_hash()) {
+		if (expected_type == torrent_add && torrent_hash == p->handle.info_hash()) {
 			done = true;
 		}
 		if (p->error)
@@ -66,7 +66,8 @@ bool torrent_alert_handler::handle(const alert* a) {
 		{
 			error_alert = false;
 			//update gTorrents
-			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
+			sha1_hash hash = p->handle.info_hash();
+			TorrentInfo* pTorrentInfo = GetTorrentInfo(hash);
 			if (pTorrentInfo) {
 				pTorrentInfo->handle = p->handle;
 				p->handle.set_max_connections(SOLT_TORRENT_MAX_CONNECTION_PER_TORRENT);
@@ -98,7 +99,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 											, to_hex(p->handle.info_hash().to_string()) + RESUME));
 						solt::SaveFile(filename, out);
 		}
-		if (expected_type == alert_type::save_resume_data && torrent_hash == p->handle.info_hash()) {
+		if (expected_type == save_resume_data && torrent_hash == p->handle.info_hash()) {
 			error_alert = false;
 			done = true;
 		}
@@ -106,7 +107,7 @@ bool torrent_alert_handler::handle(const alert* a) {
 	}
 	else if (const save_resume_data_failed_alert* p = alert_cast<save_resume_data_failed_alert>(a))
 	{
-		if (expected_type == alert_type::save_resume_data && torrent_hash == p->handle.info_hash()) {
+		if (expected_type == save_resume_data && torrent_hash == p->handle.info_hash()) {
 			error_alert = true;
 			done = true;
 		}
@@ -119,7 +120,8 @@ bool torrent_alert_handler::handle(const alert* a) {
 		p->handle.save_resume_data();
 	} else if (const read_piece_alert* p = alert_cast<read_piece_alert>(a)) {
 		if (p->handle.is_valid()) {
-			TorrentInfo* pTorrentInfo = GetTorrentInfo(p->handle.info_hash());
+			sha1_hash hash = p->handle.info_hash();
+			TorrentInfo* pTorrentInfo = GetTorrentInfo(hash);
 			if (pTorrentInfo) {
 				read_piece_alert* old = (pTorrentInfo->piece_queue).push(p->piece,(read_piece_alert *) p->clone().release());
 				if (old) {
@@ -129,12 +131,12 @@ bool torrent_alert_handler::handle(const alert* a) {
 		}
 	} else if (const torrent_deleted_alert* p = alert_cast<libtorrent::torrent_deleted_alert>(a)) {
 		LOG_ERR("torrent_deleted_alert");
-		if (expected_type == alert_type::torrent_deleted && torrent_hash == p->info_hash) {
+		if (expected_type == torrent_deleted && torrent_hash == p->info_hash) {
 			done = true;
 			error_alert = false;
 		}
 	} else if (const torrent_delete_failed_alert* p = alert_cast<torrent_delete_failed_alert>(a)) {
-		if (expected_type == alert_type::torrent_deleted && torrent_hash == p->handle.info_hash()) {
+		if (expected_type == torrent_deleted && torrent_hash == p->handle.info_hash()) {
 			done = true;
 			error_alert = true;
 		}
