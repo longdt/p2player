@@ -17,9 +17,9 @@ using namespace libtorrent;
 
 struct torrent_alert_handler {
 public:
-	enum alert_type {
+typedef	enum alert_type {
 		torrent_deleted, torrent_add, save_resume_data, others
-	};
+	} alert_type;
 
 	torrent_alert_handler(JNIEnv *env, sha1_hash torrent_hash, alert_type expected_type) : 
 		env(env), done(false), error_alert(false), torrent_hash(torrent_hash), expected_type(expected_type) {
@@ -44,7 +44,7 @@ private:
 };
 
 inline torrent_alert_handler::alert_type get_alert_type(const libtorrent::alert* a) {
-	return torrent_alert_handler::alert_type::others;
+	return torrent_alert_handler::others;
 }
 } /* namespace solt */
 #endif /* ALERTHANDLER_H_ */
