@@ -160,7 +160,7 @@ public class Main implements MediaPlayer {
         Runtime.getRuntime().addShutdownHook(new Thread("Shutdowner") {
             @Override
             public void run() {
-                requestShutdown();
+                exit();
             }
         });
 		while (!shell.isDisposed()) {
@@ -275,9 +275,11 @@ public class Main implements MediaPlayer {
 	}
 	
 	private void exit() {
+		TorrentManager torrManager = this.torrManager;
 		if (torrManager == null) {
 			return;
 		}
+		this.torrManager = null;
 		torrManager.shutdown();
 		try {
 			ConfigurationManager conf = ConfigurationManager.getInstance();
