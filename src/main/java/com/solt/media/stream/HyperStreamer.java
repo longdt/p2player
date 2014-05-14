@@ -291,7 +291,7 @@ public class HyperStreamer implements TorrentStreamer {
 			return false;
 		}
 		if (helper.hasPiece(streamPiece)) {
-			asyncAddPieceData(streamPiece);
+			apSrvice.add(streamPiece);
 			return false;
 		} else {
 			libTorrent.setPieceDeadline(hashCode, streamPiece, 0);
@@ -300,7 +300,9 @@ public class HyperStreamer implements TorrentStreamer {
 	}
 	
 	private void asyncAddPieceData(int pieceIdx) {
-		apSrvice.add(pieceIdx);
+		if (helper.hasPiece(pieceIdx)) {
+			apSrvice.add(pieceIdx);
+		}
 	}
 
 	protected long getPieceRemain(int currCancelPiece) throws TorrentException {
