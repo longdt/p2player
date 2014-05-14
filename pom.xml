@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.solt</groupId>
   <artifactId>mediaplayer</artifactId>
-  <version>1.0.8</version>
+  <version>1.0.9</version>
   <build>
   	<plugins>
 		<plugin>
@@ -24,9 +24,9 @@
   	<dependency>
   		<groupId>swt</groupId>
   		<artifactId>swt-win32</artifactId>
-  		<version>3.7.2</version>
+  		<version>4.3</version>
   		<scope>system</scope>
-  		<systemPath>${basedir}/lib/swt-3.7.2-win32-win32-x86.jar</systemPath>
+  		<systemPath>${basedir}/lib/swt-4.3-win32-win32-x86.jar</systemPath>
   	</dependency>
   	<dependency>
   		<groupId>com.googlecode.json-simple</groupId>

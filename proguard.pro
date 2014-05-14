@@ -3,7 +3,7 @@
 
 -libraryjars 'C:\Program Files\Java\jre7\lib\rt.jar'
 -libraryjars build\mediaplayer_lib\log4j-1.2.17.jar
--libraryjars build\mediaplayer_lib\swt-3.7.2-win32-win32-x86.jar
+-libraryjars build\mediaplayer_lib\swt-4.3-win32-win32-x86.jar
 -libraryjars build\mediaplayer_lib\hamcrest-core-1.1.jar
 -libraryjars build\mediaplayer_lib\jna-3.5.2.jar
 -libraryjars build\mediaplayer_lib\json-simple-1.1.1.jar
@@ -27,7 +27,8 @@
 -keep class org.**
 
 -keep class com.solt.libtorrent.LibTorrent$NativeTorrentListener {
-	*;
+    <fields>;
+    <methods>;
 }
 
 -keep class com.solt.libtorrent.FileEntry {
@@ -131,12 +132,6 @@
 # Remove debugging - All logging API calls. Remove all invocations of the
 # logging API whose return values are not used.
 -assumenosideeffects public class java.util.logging.* {
-    <methods>;
-}
-
-# Remove debugging - All Log4j API calls. Remove all invocations of the
-# Log4j API whose return values are not used.
--assumenosideeffects public class org.apache.log4j.** {
     <methods>;
 }
 
