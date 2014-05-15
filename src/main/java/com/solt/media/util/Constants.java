@@ -38,7 +38,7 @@ public class Constants {
 	public static String VERSION = "1.0.9";
 	public static long TRANSFER_BYTES_PAYED_THRESHOLD = 52428800;
 	public static long DOWNLOAD_BYTES_PAYED_THRESHOLD = 62914560;
-	public static String UPDATE_URL = "http://sharephim.vn/download/info.json";
+	public static String UPDATE_URL = "http://sharephim.vn/api/update.json?os=";
 	public static final String DOWN_TORRENT_LINK = "http://sharephim.vn/api/movie/";
 	public static final String DOWN_SUB_LINK = "http://sharephim.vn/api/sub/";
 	public static String APP_NAME = "MediaPlayer";
@@ -88,7 +88,7 @@ public class Constants {
 	static {
 
 		if (isWindows) {
-
+			UPDATE_URL = UPDATE_URL + "windows";
 			Float ver = null;
 
 			try {
@@ -177,7 +177,7 @@ public class Constants {
 
 	static {
 		if (isOSX) {
-
+			UPDATE_URL = UPDATE_URL + "mac";
 			int first_digit = 0;
 			int second_digit = 0;
 
@@ -209,6 +209,9 @@ public class Constants {
 			isOSX_10_6_OrHigher = false;
 			isOSX_10_7_OrHigher = false;
 
+		}
+		if (isLinux) {
+			UPDATE_URL = UPDATE_URL + "linux";
 		}
 	}
 
