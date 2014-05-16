@@ -132,7 +132,7 @@ public class LibTorrent {
 	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : "libtorrent.dll";
 	
 	static class NativeTorrentListener {
-		private static final BlockingQueue<TorrentListener> listeners = new LinkedBlockingQueue<>();
+		private static final BlockingQueue<TorrentListener> listeners = new LinkedBlockingQueue<TorrentListener>();
 		
 		public static void hashPieceFailed(String hashCode, int pieceIdx) {
 			for (TorrentListener l : listeners) {

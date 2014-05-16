@@ -285,9 +285,14 @@ public class Main implements MediaPlayer {
 			ConfigurationManager conf = ConfigurationManager.getInstance();
 			conf.setStrings(ConfigurationManager.TORRENT_HASHCODES, torrManager.getTorrents());
 			conf.save();
-			updater.stop();
-		} catch (IOException | InterruptedException e) {
-			logger.error("cant exit app", e);
+		} catch (IOException e) {
+			logger.error("cant save app configuration", e);
+		} finally {
+			try {
+				updater.stop();
+			} catch (InterruptedException e) {
+				logger.error("cant stop updater", e);
+			}
 		}
 	}
 
