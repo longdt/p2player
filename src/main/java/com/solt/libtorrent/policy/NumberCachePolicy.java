@@ -21,7 +21,13 @@ public class NumberCachePolicy implements CachePolicy {
 	@Override
 	public void prepare(String torrentFile) {
 		Set<String> torrents = manager.getTorrents();
-		if (torrents.size() >= maxNumTorrent) {
+		if (torrents.size() > maxNumTorrent) {
+			removeOldest(torrents, torrents.size() - maxNumTorrent);
+		}
+	}
+	
+	private void removeOldest(Set<String> torrents, int num) {
+		for (int i = 0; i < num; ++i) {
 			String hashCode = torrents.iterator().next();
 			try {
 				manager.removeTorrent(hashCode);
