@@ -7,7 +7,9 @@ import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
@@ -62,22 +64,44 @@ public class TorrentManager {
 		String magnet = null;
 		int flags = LibTorrent.FLAG_UPLOAD_MODE; //LibTorrent.FLAG_AUTO_MANAGED | LibTorrent.FLAG_SHARE_MODE;
 		Collection<String> hashCodes = ConfigurationManager.getInstance().getStringCollection(ConfigurationManager.TORRENT_HASHCODES);
+		Set<File> torrentFiles = new HashSet<File>(Arrays.asList(torrentsDir.listFiles()));
 		for (String hashCode : hashCodes) {
 			File torrent = new File(torrentsDir, hashCode + Constants.TORRENT_FILE_EXTENSION);
 			if (torrent.isFile()) {
 				hashCode = libTorrent.addAsyncTorrent(torrent.getAbsolutePath(), 0,
 						flags);
+				torrentFiles.remove(torrent);
 				if (hashCode != null) {
 					torrents.put(hashCode, TORRENT_FILE);
 				}
 			} else {
 				torrent = new File(torrentsDir, hashCode + Constants.MAGNET_FILE_EXTENSION);
 				if (torrent.isFile()) {
+					torrentFiles.remove(torrent);
 					magnet = FileUtils.getStringContent(torrent);
 					hashCode = libTorrent.addAsyncMagnetUri(magnet, 0, flags);
 					if (hashCode != null) {
 						torrents.put(hashCode, MAGNET_FILE);
 					}
+				}
+			}
+		}
+		//load other torrents in torrentsDir
+		String hashCode = null;
+		String filePath = null;
+		for (File other : torrentFiles) {
+			filePath = other.getAbsolutePath();
+			if (filePath.endsWith(Constants.TORRENT_FILE_EXTENSION)) {
+				hashCode = libTorrent.addAsyncTorrent(filePath, 0,
+						flags);
+				if (hashCode != null) {
+					torrents.put(hashCode, TORRENT_FILE);
+				}
+			} else if (filePath.endsWith(Constants.MAGNET_FILE_EXTENSION)) {
+				magnet = FileUtils.getStringContent(other);
+				hashCode = libTorrent.addAsyncMagnetUri(magnet, 0, flags);
+				if (hashCode != null) {
+					torrents.put(hashCode, MAGNET_FILE);
 				}
 			}
 		}
