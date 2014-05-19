@@ -129,7 +129,7 @@ public class LibTorrent {
 	public static final int DEFAULT_FLAGS = FLAG_UPDATE_SUBSCRIBE
 			| FLAG_AUTO_MANAGED | FLAG_PAUSED | FLAG_APPLY_IP_FILTER;
 
-	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : "libtorrent.dll";
+	private static final String LIBTORRENT_DLL = Constants.isLinux ? "libtorrent.so" : (Constants.isWindows ? "libtorrent.dll" : "libtorrent.dylib");
 	
 	static class NativeTorrentListener {
 		private static final BlockingQueue<TorrentListener> listeners = new LinkedBlockingQueue<TorrentListener>();
