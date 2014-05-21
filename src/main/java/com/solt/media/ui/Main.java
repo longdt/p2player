@@ -172,20 +172,28 @@ public class Main implements MediaPlayer {
 		display.dispose();
 	}
 	
-	public synchronized void play(final String url, final String subFile) {
+	public synchronized void play(final String url, final String subFile, final String otherSubName, final String otherSubUrl) {
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
 		    	shell.setVisible(true);
 				shell.forceActive();
 				shell.forceFocus();
 				initPlayer();
-				player.open(url, subFile, true);
+				if (otherSubName == null) {
+					player.open(url, subFile, true);
+				} else {
+					player.open(url, subFile, true, otherSubName, otherSubUrl);
+				}
 		    }
 		});
 	}
 	
 	public void play(final String url) {
 		play(url, null);
+	}
+	
+	public void play(final String url, final String subFile) {
+		play(url, subFile, null, null);
 	}
 	
 	public synchronized void prepare() {
