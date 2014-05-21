@@ -39,6 +39,14 @@
     <methods>;
 }
 
+-keep class com.solt.media.util.SystemProperties {
+    <methods>;
+}
+
+-keep class com.solt.media.util.FileUtils {
+    <methods>;
+}
+
 # Keep - Applications. Keep all application classes, along with their 'main'
 # methods.
 -keepclasseswithmembers public class * {
