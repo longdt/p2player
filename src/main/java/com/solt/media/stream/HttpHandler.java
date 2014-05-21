@@ -54,6 +54,8 @@ public class HttpHandler implements Runnable{
 	public static final String PARAM_SUB = "sub";
 
 	private static final String HEADER_FILENAME = "filename";
+	
+	private static final String HEADER_OTHER_SUB = "othersub";
 
 	private static final Logger logger = Logger.getLogger(HttpHandler.class);
 	private static final PieceInfoComparator pieceComparator = new PieceInfoComparator();
@@ -156,15 +158,16 @@ public class HttpHandler implements Runnable{
 					mediaUrl = mediaUrl + "&" + PARAM_MOVIEID + "=" + movieId;
 				}
 				String subFile = null;
+				String otherSub = null;
 				if (sub) {
 					URLConnection subConn = new URL(Constants.DOWN_SUB_LINK + movieId).openConnection();
 					String fileName = subConn.getHeaderField(HEADER_FILENAME);
+					otherSub = subConn.getHeaderField(HEADER_OTHER_SUB);
 					if (fileName == null) {
-						TorrentManager.player.play(mediaUrl, subFile);
+						TorrentManager.player.play(mediaUrl);
 						sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 						return;
 					}
-					fileName = "sharephim." + FileUtils.getExtension(fileName);
 					File temp = new File(SystemProperties.getMetaDataPath(), fileName);
 					if (FileUtils.copyFile(subConn.getInputStream(), temp)) {
 						subFile = temp.getAbsolutePath();
@@ -173,7 +176,8 @@ public class HttpHandler implements Runnable{
 						temp.delete();
 					}
 				}
-				TorrentManager.player.play(mediaUrl, subFile);
+				String otherSubUrl = otherSub != null ? Constants.DOWN_SUB_LINK + otherSub.substring(0, 2).toLowerCase() + "/" + movieId : null;
+				TorrentManager.player.play(mediaUrl, subFile, otherSub, otherSubUrl);
 				sendMessage(HttpStatus.HTTP_OK, mediaUrl);
 			} else {
 				sendMessage(HttpStatus.HTTP_NOTFOUND, "false");
