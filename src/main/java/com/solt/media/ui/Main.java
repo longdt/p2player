@@ -394,6 +394,8 @@ public class Main implements MediaPlayer {
 						url = torrManager.addTorrent(URI.create(link));
 					} else if (link.startsWith("http:")) {
 						url = torrManager.addTorrent(new URL(link));
+					} else if (link.startsWith("mdp:")) {
+						requestPlay(new String[] {link});
 					}
 					if (url != null) {
 						play(url);
