@@ -2,21 +2,18 @@ package com.solt.media.update;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.swt.program.Program;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import uk.co.caprica.vlcj.runtime.RuntimeUtil;
-
 import com.solt.media.ui.MediaPlayer;
 import com.solt.media.update.UpdateChecker.ErrorCode;
+import com.solt.media.util.Constants;
 import com.solt.media.util.DownloadListener;
 import com.solt.media.util.Downloader;
 import com.solt.media.util.SingleDownloader;
@@ -107,7 +104,7 @@ public class ComponentUpdater implements Updater {
 		String classpath = System.getProperty("java.class.path");
 		String path = System.getProperty("java.home") + separator + "bin"
 				+ separator + "java";
-		if (RuntimeUtil.isWindows()) {
+		if (Constants.isWindows) {
 			path = path + ".exe";
 		}
 		List<String> cmdList = new ArrayList<String>();
