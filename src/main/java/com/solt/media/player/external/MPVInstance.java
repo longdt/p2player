@@ -10,6 +10,9 @@ import com.solt.mediaplayer.mplayer.util.Utils;
 public class MPVInstance implements PlayerInstance {
 	private static final File BINARY_PATH = new File("archive/mpv");
 	private boolean delay = false;
+	private Process process;
+	private volatile boolean terminated;
+	
 	public void exit() {
 			String	process_name = BINARY_PATH.getName();
 			if ( delay ){
@@ -77,7 +80,18 @@ public class MPVInstance implements PlayerInstance {
 			cmdList.add(subOpts.toString());
 		}
 		cmdList.add(url);
-		Runtime.getRuntime().exec(cmdList.toArray(new String[0]));
+		process = Runtime.getRuntime().exec(cmdList.toArray(new String[0]));
+	}
+
+	@Override
+	public void waitForTerminate() throws InterruptedException {
+		process.waitFor();
+		terminated = true;
+	}
+
+	@Override
+	public boolean isTerminated() {
+		return terminated;
 	}
 	
 }
