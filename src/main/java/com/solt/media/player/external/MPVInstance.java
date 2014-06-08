@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.solt.mediaplayer.mplayer.util.Utils;
+import com.solt.media.util.Constants;
 
 public class MPVInstance implements PlayerInstance {
 	private static final File BINARY_PATH = new File("archive/mpv");
@@ -37,7 +37,7 @@ public class MPVInstance implements PlayerInstance {
 		String[]	command )
 	{
 		try{
-			if ( !Utils.isWindows() ){
+			if ( !Constants.isWindows){
 			
 				command[0] = findCommand( command[0] );
 			}
