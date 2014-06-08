@@ -30,6 +30,9 @@ public class ExtenalPlayer {
 	
 	public void stop() {
 		monitor.shutdown();
+		if (instance != null) {
+			instance.exit();
+		}
 	}
 	
 	class InstanceMonitor extends Thread {
